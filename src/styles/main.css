@@ -330,5 +330,6 @@ body.is-static .hotspots { display: none; }
 }
 body.reduce-motion .chapter [data-r], body.reduce-motion .chapter .line > span[data-r] { transform: none !important; }
 /* modo captura: solo la escena */
-body.capture .top, body.capture .rail, body.capture .journey, body.capture .hotspots, body.capture .skip { visibility: hidden; }
+body.capture .top, body.capture .rail, body.capture .journey, body.capture .skip { visibility: hidden; }
+body.capture .hotspots { display: none; }
 body.reduce-motion .hotspot::after, body.reduce-motion .scroll-cue i::after { animation: none; }

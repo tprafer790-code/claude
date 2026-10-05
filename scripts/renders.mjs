@@ -16,7 +16,9 @@ for (const [w, h, suffix] of [[1600, 900, ''], [720, 1280, '-v']]) {
   page.setDefaultTimeout(600000);
   await page.goto(`${base}?capture&dpr=1&q=high`);
   await page.waitForFunction(() => window.__silva, null, { timeout: 300000 });
+  const only = process.env.ONLY ? process.env.ONLY.split(',') : null; // p. ej. ONLY=estancia
   for (let i = 0; i < chapters.length; i++) {
+    if (only && !only.includes(chapters[i])) continue;
     await page.evaluate((k) => { const S = window.__silva; const u = S.keyCenter(k); window.scrollTo(0, S.scrollToU(u)); S.state.freeze = true; }, stillKeys[i]);
     const f0 = await page.evaluate(() => window.__silva.engine.stats.frames);
     await page.waitForFunction((f) => window.__silva.engine.stats.frames >= f + 2, f0, { polling: 500 });
