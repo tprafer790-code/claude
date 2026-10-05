@@ -1,0 +1,1115 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sinapsis">
+<meta name="theme-color" content="#130E31">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head><body><title>Sinapsis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: app móvil de una columna (máx. 560px), barra de pestañas fija abajo; en misión, pantalla completa con una sola tarea a la vista. */
+:root{
+  --ink:#130E31;        /* fondo nocturno */
+  --ink-2:#1D1748;      /* superficie */
+  --ink-3:#2A2263;      /* superficie elevada */
+  --line:rgba(226,218,255,.12);
+  --fg:#F6F3FF;
+  --muted:#B4ACDD;
+  --coral:#FF6A55;
+  --sun:#FFC83D;
+  --mint:#2EE0A4;
+  --sky:#53A9FF;
+  --pink:#FF5DA9;
+  --violet:#9C7CFF;
+  --on-bright:#130E31;
+  --display:"Unbounded","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",-apple-system,"Segoe UI",system-ui,sans-serif;
+  --r-lg:28px; --r-md:18px; --r-sm:12px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--ink);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(40% 30% at 15% 10%, color-mix(in srgb,var(--violet) 45%,transparent), transparent 70%),
+    radial-gradient(35% 28% at 90% 20%, color-mix(in srgb,var(--pink) 30%,transparent), transparent 70%),
+    radial-gradient(45% 35% at 70% 95%, color-mix(in srgb,var(--sky) 28%,transparent), transparent 70%);
+  animation:drift 24s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate3d(3%,-4%,0) rotate(6deg)}}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--sun);outline-offset:3px;border-radius:10px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+.app{position:relative;z-index:1;max-width:560px;margin:0 auto;min-height:100%;padding:16px 16px calc(110px + env(safe-area-inset-bottom,0px))}
+.app.full{padding-bottom:32px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* Cabecera */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:6px 4px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px}
+.brand svg{width:34px;height:34px}
+.pills{display:flex;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--ink-2);border:1px solid var(--line);font-weight:700;font-size:15px}
+.pill .dot{width:10px;height:10px;border-radius:50%}
+.flame{color:var(--sun)}
+
+/* Nivel */
+.level{padding:14px 16px;border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line)}
+.bar{height:12px;border-radius:999px;background:var(--ink-3);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--mint),var(--sky));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+
+/* Héroe de misión: el único bloque estridente */
+.hero{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:22px 20px 20px;color:var(--on-bright);
+  background:linear-gradient(135deg,var(--sun) 0%,var(--coral) 45%,var(--pink) 75%,var(--violet) 100%);box-shadow:0 20px 50px -18px color-mix(in srgb,var(--coral) 70%,transparent)}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.45),transparent 65%)}
+.hero h2{font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.hero .big{font-family:var(--display);font-weight:800;font-size:64px;line-height:1;margin-top:8px}
+.hero .sub{font-weight:700;font-size:17px;margin-top:6px;max-width:30ch}
+.hero .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hero .chip{background:rgba(19,14,49,.14);border-radius:999px;padding:5px 11px;font-weight:700;font-size:14px}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;margin-top:18px;border-radius:999px;
+  background:var(--ink);color:var(--fg);font-family:var(--display);font-weight:700;font-size:18px;transition:transform .12s}
+.cta:active{transform:scale(.97)}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 20px;border-radius:999px;font-weight:800;font-size:17px;transition:transform .12s, background .2s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--fg);color:var(--on-bright)}
+.btn.ghost{background:var(--ink-2);border:1px solid var(--line)}
+.btn.wide{width:100%}
+.btn.mint{background:var(--mint);color:var(--on-bright)}
+.btn.coral{background:var(--coral);color:var(--on-bright)}
+.btn.sky{background:var(--sky);color:var(--on-bright)}
+.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--ink-2);border:1px solid var(--line);font-size:20px;flex:none}
+
+/* Tarjetas genéricas */
+.panel{border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line);padding:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{border-radius:var(--r-md);padding:14px;background:var(--ink-2);border:1px solid var(--line);min-width:0}
+.tile .v{font-family:var(--display);font-weight:800;font-size:28px}
+.quick{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:14px 16px;border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line)}
+.quick .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;font-family:var(--display);font-weight:800;color:var(--on-bright)}
+.quick b{display:block;font-size:17px}
+
+/* Ley del día */
+.law{border-radius:var(--r-md);padding:16px;background:linear-gradient(160deg,var(--ink-3),var(--ink-2));border:1px solid var(--line)}
+.k{display:inline-block;font-family:var(--display);font-weight:800;font-size:13px;padding:4px 10px;border-radius:999px;color:var(--on-bright)}
+.law h3{font-size:20px;margin-top:10px}
+.law .tt{display:grid;gap:8px;margin-top:12px}
+.law .tt div{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04)}
+.law .tt b{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+
+/* Mazos */
+.deck{display:flex;gap:14px;align-items:center;width:100%;text-align:left;padding:14px;border-radius:var(--r-md);
+  background:color-mix(in srgb,var(--c) 14%,var(--ink-2));border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
+.mono{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:var(--c);color:var(--on-bright);font-family:var(--display);font-weight:800;font-size:22px;flex:none}
+.deck .info{min-width:0;flex:1}
+.deck .name{font-weight:800;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seg{display:flex;height:8px;border-radius:999px;overflow:hidden;background:var(--ink-3);margin-top:8px}
+.seg i{display:block;height:100%}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--d);margin-right:6px}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:800;background:var(--ink-3)}
+.tag.warn{background:color-mix(in srgb,var(--sun) 25%,var(--ink-3));color:var(--sun)}
+.tag.bad{background:color-mix(in srgb,var(--coral) 25%,var(--ink-3));color:var(--coral)}
+.tag.good{background:color-mix(in srgb,var(--mint) 22%,var(--ink-3));color:var(--mint)}
+
+/* Formularios */
+label.f{display:grid;gap:6px;font-weight:700;font-size:15px}
+input[type=text],input[type=date],textarea{width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:var(--ink);font-size:17px;line-height:1.4}
+textarea{min-height:110px;resize:vertical}
+input:focus,textarea:focus{outline:none;border-color:var(--sky)}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{width:40px;height:40px;border-radius:50%;background:var(--c);border:3px solid transparent}
+.swatch[aria-pressed=true]{border-color:var(--fg)}
+.check{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;background:var(--ink-2);border:1.5px solid var(--line);text-align:left;width:100%;font-weight:700}
+.check .box{width:28px;height:28px;border-radius:9px;border:2px solid var(--muted);display:grid;place-items:center;flex:none;font-weight:800}
+.check[aria-pressed=true]{border-color:var(--mint);background:color-mix(in srgb,var(--mint) 12%,var(--ink-2))}
+.check[aria-pressed=true] .box{background:var(--mint);border-color:var(--mint);color:var(--on-bright)}
+.chiprow{display:flex;gap:8px;flex-wrap:wrap}
+.chipbtn{padding:10px 16px;border-radius:999px;background:var(--ink-2);border:1.5px solid var(--line);font-weight:800}
+.chipbtn[aria-pressed=true]{background:var(--fg);color:var(--on-bright);border-color:var(--fg)}
+
+/* Pantalla de misión */
+.mtop{display:flex;align-items:center;gap:12px}
+.mtop .bar{flex:1}
+.stage{margin-top:18px;animation:in .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes in{from{transform:translateY(14px) scale(.98);opacity:.2}}
+.qcard{border-radius:var(--r-lg);padding:22px 20px;background:var(--ink-2);border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);
+  box-shadow:0 24px 60px -30px color-mix(in srgb,var(--c) 80%,transparent)}
+.qcard .q{font-size:24px;font-weight:800;line-height:1.3;margin-top:12px}
+.answer{border-radius:var(--r-md);padding:16px;background:color-mix(in srgb,var(--mint) 10%,var(--ink-2));border:1.5px solid color-mix(in srgb,var(--mint) 40%,transparent);animation:in .3s ease}
+.answer .a{font-size:19px;font-weight:700;margin-top:6px;white-space:pre-wrap}
+.mine{border-radius:var(--r-md);padding:14px;background:var(--ink-2);border:1px dashed var(--line);white-space:pre-wrap}
+.hint{border-radius:var(--r-md);padding:12px 14px;background:color-mix(in srgb,var(--sun) 12%,var(--ink-2));border:1px solid color-mix(in srgb,var(--sun) 40%,transparent)}
+.grades{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grade{min-height:84px;border-radius:20px;font-weight:800;font-size:16px;color:var(--on-bright);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .12s}
+.grade:active{transform:scale(.95)}
+.grade small{font-weight:700;font-size:12px;opacity:.75}
+.grade.ok{background:var(--mint)}.grade.mid{background:var(--sun)}.grade.no{background:var(--coral)}
+.ai{border-radius:var(--r-md);padding:14px;background:color-mix(in srgb,var(--sky) 12%,var(--ink-2));border:1px solid color-mix(in srgb,var(--sky) 40%,transparent)}
+.ritual h1,.done h1{font-size:30px;line-height:1.15}
+
+/* Temporizador de foco */
+.ring{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:8px auto 0;max-width:100%}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .t{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .t b{font-family:var(--display);font-weight:800;font-size:56px;line-height:1}
+
+/* Mapa de calor */
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:4px;overflow-x:auto;padding-bottom:4px}
+.heat i{width:16px;height:16px;border-radius:5px;background:var(--ink-3)}
+
+/* Ruedita del objetivo diario */
+.goal{display:flex;align-items:center;gap:16px}
+.goal svg{width:72px;height:72px;transform:rotate(-90deg);flex:none}
+
+/* Lista de tarjetas */
+.cardrow{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:14px;background:var(--ink-2);border:1px solid var(--line);width:100%;text-align:left}
+.cardrow .txt{min-width:0;flex:1}
+.cardrow .txt b{display:block;overflow-wrap:anywhere}
+.cardrow .txt span{display:block;color:var(--muted);font-size:15px;overflow-wrap:anywhere}
+.dots{display:flex;gap:4px;flex:none;margin-top:4px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--ink-3);border:1.5px solid var(--muted)}
+.dots i.on{background:var(--mint);border-color:var(--mint)}
+
+details.lawd{border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line);padding:4px 16px}
+details.lawd summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;padding:12px 0;font-weight:800;font-size:17px}
+details.lawd summary::-webkit-details-marker{display:none}
+details.lawd .body{display:grid;gap:10px;padding-bottom:14px}
+
+/* Barra de pestañas */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(to top,var(--ink) 60%,transparent)}
+.tabs nav{max-width:528px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px;border-radius:24px;background:color-mix(in srgb,var(--ink-2) 92%,transparent);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-radius:18px;font-size:12px;font-weight:800;color:var(--muted)}
+.tab svg{width:24px;height:24px}
+.tab[aria-current=page]{background:var(--fg);color:var(--on-bright)}
+
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:20;padding:12px 18px;border-radius:999px;background:var(--fg);color:var(--on-bright);font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:pop .3s cubic-bezier(.2,1.4,.4,1);max-width:calc(100% - 32px);text-align:center}
+@keyframes pop{from{transform:translate(-50%,-20px) scale(.8);opacity:0}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
+.empty{text-align:center;padding:28px 16px;border-radius:var(--r-md);border:1.5px dashed var(--line)}
+.onb{min-height:calc(100vh - 80px);display:flex;flex-direction:column;justify-content:center;gap:20px}
+.onb .art{font-family:var(--display);font-weight:800;font-size:96px;line-height:1;background:linear-gradient(135deg,var(--sun),var(--coral),var(--pink),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.onb h1{font-size:30px;line-height:1.15}
+.onb .dotsnav{display:flex;gap:8px}.onb .dotsnav i{width:28px;height:6px;border-radius:9px;background:var(--ink-3)}.onb .dotsnav i.on{background:var(--fg)}
+.sync{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+@media (max-width:380px){.hero .big{font-size:52px}.grade{font-size:14px}.qcard .q{font-size:21px}}
+</style>
+
+<div class="app" id="app"></div>
+<div class="tabs" id="tabs"></div>
+<canvas id="confetti" hidden></canvas>
+
+<script>
+(() => {
+"use strict";
+/* ============ Utilidades ============ */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const dayOf = (d = new Date()) => Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 864e5);
+const today = () => dayOf();
+const dateToDay = (v) => { if (!v) return null; const [y, m, d] = v.split("-").map(Number); return Math.floor(Date.UTC(y, m - 1, d) / 864e5); };
+const dayToDate = (n) => new Date(n * 864e5).toISOString().slice(0, 10);
+const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const plural = (n, s, p) => n === 1 ? s : (p || s + "s");
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const COLORS = ["#FF6A55", "#FFC83D", "#2EE0A4", "#53A9FF", "#FF5DA9", "#9C7CFF"];
+const INTERVALS = [0, 2, 4]; // días hasta la siguiente evocación tras 1 y 2 aciertos (mínimo un día entre evocaciones)
+const MAINTAIN = 14;          // repaso de mantenimiento cuando ya está dominada
+const LEVELS = ["Neurona", "Dendrita", "Axón", "Sinapsis", "Red neuronal", "Hipocampo", "Corteza", "Mente en llamas", "Cerebro galáctico"];
+
+/* ============ Las seis leyes (Aprender a aprender, Héctor Ruiz Martín) ============ */
+const LAWS = [
+  { k: "Relaciona", c: "#53A9FF", t: "Tu cerebro solo guarda lo que puede enganchar a algo que ya sabe.",
+    truqui: "Busca a qué te recuerda: una palabra parecida, un ejemplo, una imagen, una historia absurda.",
+    anti: "Repetir y repetir sin entender: se esfuma enseguida.",
+    app: "Cada tarjeta tiene un campo «Relaciónalo». Al aprender algo nuevo, primero lo enganchas." },
+  { k: "Recuerda", c: "#2EE0A4", t: "Aprendes cuando sacas la información de tu memoria, no cuando la vuelves a leer.",
+    truqui: "Evoca: intenta recordar sin mirar. Cuanto más te cuesta, mejor se queda.",
+    anti: "Releer, copiar, pasar a limpio, «primero le doy una miradita».",
+    app: "Siempre respondes antes de ver la solución. Escribir o decirlo en voz alta cuenta." },
+  { k: "Olvida", c: "#FFC83D", t: "Deja que se te olvide un poco y vuelve a evocar otro día: así se fija.",
+    truqui: "Tres evocaciones correctas en tres días distintos = lo tienes.",
+    anti: "Sobreestudiar un punto antes de pasar al siguiente. El atracón de la noche antes.",
+    app: "Sinapsis te programa cada tarjeta: 1/3, 2/3, 3/3 con al menos un día entre medias y mezcla asignaturas." },
+  { k: "Céntrate", c: "#FF5DA9", t: "Tu memoria de trabajo es un portapapeles pequeño. No lo llenes de ruido.",
+    truqui: "Móvil fuera, sin música, una sola tarea, pausas de verdad. Escribe los pasos y dibuja.",
+    anti: "Estudiar con música o contestando WhatsApp. Sesiones eternas sin parar.",
+    app: "Ritual de foco antes de cada misión y temporizador de bloques cortos con descansos." },
+  { k: "Confía", c: "#FF6A55", t: "Que algo te cueste al principio no significa que se te dé mal.",
+    truqui: "Persevera, pide ayuda y trata el error como información para mejorar.",
+    anti: "Pensar que la capacidad es innata: «yo es que no valgo para esto».",
+    app: "Fallar también da experiencia: el esfuerzo de recordar ya está entrenando tu cerebro." },
+  { k: "Colabora", c: "#9C7CFF", t: "Explicar a otra persona es una de las mejores formas de aprender.",
+    truqui: "Pregúntaos unos a otros, explica lo que sabes, debate sin pelearte.",
+    anti: "Pelearte por tener ideas distintas: es la disonancia cognitiva y el sesgo de confirmación.",
+    app: "El «Reto en equipo» crea una lista de preguntas para que alguien te examine." },
+];
+
+const EXAMPLE = () => ({
+  id: uid(), name: "Aprender a aprender", color: "#9C7CFF", exam: null, order: 0, example: true,
+  cards: [
+    ["¿Qué es evocar?", "Recuperar de la memoria lo aprendido sin mirar. Al evocar, el recuerdo se fija con más fuerza.", "Evocar = sacar un libro de la estantería de tu cerebro."],
+    ["¿Por qué releer engaña?", "Da sensación de dominio (lo reconoces) pero no entrena el recuerdo: dura un rato, no al día siguiente.", "Reconocer una cara no es saber su nombre."],
+    ["¿Cuándo puedo decir que me sé algo?", "Cuando lo he evocado bien tres veces en tres momentos distintos, dejando al menos un día entre medias.", "3 en 3: tres aciertos, tres días."],
+    ["¿Qué es la práctica espaciada?", "Repartir el estudio en varias sesiones separadas en el tiempo, dejando que empiece a olvidarse antes de repasar.", "Como regar una planta: poco y varios días, no un cubo de golpe."],
+    ["¿Qué es la práctica entrelazada?", "Mezclar asignaturas o tipos de problema en una sesión: estudio A, B, C y luego evoco A, B, C.", "Una lista de reproducción en aleatorio."],
+    ["¿Qué es la memoria de trabajo?", "El «portapapeles» del cerebro donde manipulas la información para aprender. Es limitada.", "Un portapapeles pequeño: si lo llenas de ruido no cabe lo importante."],
+    ["Carga cognitiva relevante vs. superflua", "Relevante: lo nuevo más lo que ya sabes para crear asociaciones. Superflua: ruido, móvil, pensamientos que distraen.", "Relevante = ingredientes. Superflua = basura en la encimera."],
+    ["¿Se puede estudiar con música?", "No: dificulta el aprendizaje aunque te guste. Tampoco ayuda hacer dos cosas a la vez.", "¿Puedes hacer una división mientras lees esto?"],
+    ["¿Para qué sirve dormir al estudiar?", "Durante el sueño el cerebro consolida lo aprendido. Duerme sin el móvil en el cuarto.", "El sueño es el «guardar cambios» del cerebro."],
+    ["Mentalidad fija vs. de crecimiento", "Fija: creer que las capacidades son innatas. Crecimiento: los errores son oportunidades para mejorar.", "Que te cueste al principio ≠ que se te dé mal."],
+    ["¿Cómo se repasa un problema de mates?", "Rehaciéndolo sin mirar la resolución y luego corrigiendo. Mejor en orden aleatorio.", "Rehacer, no releer."],
+    ["¿Por qué explicar a otra persona ayuda?", "Te obliga a evocar y a reorganizar la información de distintas maneras; además detectas huecos.", "Si se lo puedes explicar a tu abuela, lo sabes."],
+    ["¿Qué es el sesgo de confirmación?", "Tendencia a buscar razones que confirman lo que ya pienso y descartar lo que no encaja.", "Gafas que solo dejan ver lo que te da la razón."],
+    ["Mnemotecnia para las bases del ADN", "Adenina–Timina y Guanina–Citosina.", "«Accidente de Tráfico / Guardia Civil»."],
+  ].map(([q, a, hook]) => ({ id: uid(), q, a, hook, seen: false, ok: 0, last: null, due: null, learned: null, lapses: 0, created: Date.now() })),
+});
+
+function fresh() {
+  return { v: 1, profile: { xp: 0, days: {}, goal: 10, focus: 15, sound: true, onboarded: false, updated: 0, reflections: [] }, decks: [EXAMPLE()] };
+}
+
+/* ============ Persistencia: navegador + nube (db de Claude) ============ */
+const LS = "sinapsis.v1";
+let S;
+try { S = JSON.parse(localStorage.getItem(LS)); } catch { S = null; }
+if (!S || !S.profile || !Array.isArray(S.decks)) S = fresh();
+
+let cloud = null, syncLabel = "Guardado en este dispositivo";
+const dirty = new Set(), deleted = new Set();
+let flushing = false, flushTimer = null;
+
+function saveLocal() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch {} }
+function touch(deckId) {
+  S.profile.updated = Date.now();
+  dirty.add("profile"); if (deckId) dirty.add(deckId);
+  saveLocal();
+  clearTimeout(flushTimer); flushTimer = setTimeout(flush, 1200);
+}
+async function flush() {
+  if (!cloud || flushing) return;
+  flushing = true;
+  try {
+    while (dirty.size || deleted.size) {
+      const dels = [...deleted]; deleted.clear();
+      const ids = [...dirty]; dirty.clear();
+      for (const id of dels) await cloud.col.doc("deck-" + id).delete();
+      for (const id of ids) {
+        if (id === "profile") await cloud.col.doc("profile").set(clone(S.profile));
+        else { const d = S.decks.find(x => x.id === id); if (d) await cloud.col.doc("deck-" + id).set(clone(d)); }
+      }
+    }
+    setSync("Sincronizado con tu cuenta de Claude");
+  } catch (e) {
+    dirty.add("profile"); S.decks.forEach(d => dirty.add(d.id));
+    setSync(e && e.code === "quota_exceeded" ? "Espacio en la nube lleno: borra mazos que no uses" : "Sin conexión: guardado en este dispositivo");
+  } finally { flushing = false; }
+}
+function setSync(t) { syncLabel = t; const el = $("#sync"); if (el) el.textContent = t; }
+
+async function initCloud() {
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  try {
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db || !user) return;
+    const id = await user.id();
+    if (!id) return;
+    const col = db.collection("data/users/" + id);
+    const snap = await col.get();
+    const docs = {};
+    snap.docs.forEach(d => { if (d.exists) docs[d.id] = d.data(); });
+    cloud = { col };
+    let synced = false; try { synced = localStorage.getItem(LS + ".synced") === "1"; } catch {}
+    const markSynced = () => { try { localStorage.setItem(LS + ".synced", "1"); } catch {} };
+    // En un dispositivo que nunca ha sincronizado manda la nube; si ya sincronizó, gana lo más reciente.
+    if (docs.profile && (!synced || (docs.profile.updated || 0) >= (S.profile.updated || 0))) {
+      markSynced();
+      if (M) M = null;
+      const decks = Object.keys(docs).filter(k => k.startsWith("deck-")).map(k => clone(docs[k])).sort((a, b) => (a.order || 0) - (b.order || 0));
+      S = { v: 1, profile: clone(docs.profile), decks };
+      saveLocal(); render();
+      setSync("Sincronizado con tu cuenta de Claude");
+    } else {
+      Object.keys(docs).filter(k => k.startsWith("deck-")).forEach(k => { const id = k.slice(5); if (!S.decks.some(d => d.id === id)) deleted.add(id); });
+      dirty.add("profile"); S.decks.forEach(d => dirty.add(d.id));
+      markSynced(); flush();
+    }
+  } catch { setSync("Guardado en este dispositivo"); }
+}
+
+/* ============ Claude (IA) opcional ============ */
+let sample = null, sampleImages = false;
+(async () => {
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  try {
+    sample = await window.claude.use("sample");
+    if (sample) { const l = await sample.limits().catch(() => null); sampleImages = !!(l && l.images); render(); }
+  } catch { sample = null; }
+})();
+function aiError(e) {
+  const c = e && e.code;
+  if (c === "not_granted" || c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled" || c === "capability_removed") { sample = null; return "La IA no está disponible aquí. Puedes seguir sin ella."; }
+  if (c === "rate_limited") return "Demasiadas peticiones seguidas. Espera un minuto y vuelve a probar.";
+  if (c === "invalid_json") return "La respuesta llegó mal formada. Pulsa de nuevo para reintentar.";
+  if (c === "prompt_too_large") return "El texto es demasiado largo. Pega una parte más corta.";
+  if (c === "cancelled") return "";
+  return "No se pudo completar. Inténtalo otra vez.";
+}
+
+/* ============ Lógica de aprendizaje ============ */
+function deckById(id) { return S.decks.find(d => d.id === id); }
+function cardState(c) {
+  if (!c.seen) return "new";
+  if (c.ok >= 3) return "done";
+  return "way";
+}
+function isDue(c, t = today()) { return c.seen && c.due != null && c.due <= t; }
+function deckStats(d) {
+  const s = { new: 0, way: 0, done: 0, due: 0, total: d.cards.length };
+  d.cards.forEach(c => { s[cardState(c)]++; if (isDue(c)) s.due++; });
+  return s;
+}
+function allStats() {
+  const s = { new: 0, way: 0, done: 0, due: 0, total: 0 };
+  S.decks.forEach(d => { const x = deckStats(d); for (const k in s) s[k] += x[k]; });
+  return s;
+}
+function clampToExam(d, due) {
+  if (d.exam == null) return due;
+  const t = today();
+  if (d.exam - 1 > t && due > d.exam - 1) return d.exam - 1;
+  return due;
+}
+/* r: "ok" | "mid" | "no". counts=false para evocaciones del mismo día (no suman al 3/3). Devuelve si contó. */
+function grade(deck, card, r, counts = true) {
+  const t = today();
+  let counted = false;
+  if (r === "ok") {
+    const eligible = counts && card.last !== t && card.learned !== t;
+    if (eligible) {
+      card.ok = Math.min(3, card.ok + 1); card.last = t; counted = true;
+      card.due = card.ok >= 3 ? t + MAINTAIN : t + Math.max(1, INTERVALS[card.ok]);
+    } else if (card.due == null || card.due <= t) card.due = t + 1;
+    card.restudy = false;
+  } else if (r === "mid") {
+    card.due = t + 1;
+  } else {
+    if (counts) { card.ok = 0; card.lapses = (card.lapses || 0) + 1; }
+    card.due = t + 1; card.restudy = true;
+  }
+  card.due = clampToExam(deck, card.due);
+  return counted;
+}
+function logDay(field, n = 1) {
+  const t = today();
+  const d = S.profile.days[t] || (S.profile.days[t] = { ev: 0, ok: 0, fo: 0, xp: 0 });
+  d[field] = (d[field] || 0) + n;
+  const keys = Object.keys(S.profile.days).map(Number).sort((a, b) => a - b);
+  while (keys.length > 200) delete S.profile.days[keys.shift()];
+}
+function addXP(n) { S.profile.xp += n; logDay("xp", n); }
+function levelInfo(xp) {
+  let l = 1, need = 100, rest = xp;
+  while (rest >= need) { rest -= need; l++; need = Math.round(need * 1.25); }
+  return { level: l, name: LEVELS[Math.min(l - 1, LEVELS.length - 1)], rest, need };
+}
+function streak() {
+  const d = S.profile.days; let t = today(), n = 0;
+  if (!(d[t] && d[t].ev)) t -= 1;
+  while (d[t] && (d[t].ev || d[t].fo)) { n++; t--; }
+  return n;
+}
+function interleave(items) {
+  const groups = {};
+  shuffle(items).forEach(it => (groups[it.deckId] = groups[it.deckId] || []).push(it));
+  const lists = shuffle(Object.values(groups)); const out = [];
+  while (lists.some(l => l.length)) lists.forEach(l => { if (l.length) out.push(l.shift()); });
+  return out;
+}
+function dueItems(deckId) {
+  const out = [];
+  S.decks.forEach(d => { if (deckId && d.id !== deckId) return; d.cards.forEach(c => { if (isDue(c)) out.push({ deckId: d.id, cardId: c.id }); }); });
+  // primero los que vuelven de un fallo, luego los más atrasados
+  out.sort((a, b) => { const A = getCard(a), B = getCard(b); return (B.restudy ? 1 : 0) - (A.restudy ? 1 : 0) || A.due - B.due; });
+  return out;
+}
+function newItems(deckId) {
+  const out = [];
+  S.decks.forEach(d => { if (deckId && d.id !== deckId) return; d.cards.forEach(c => { if (!c.seen) out.push({ deckId: d.id, cardId: c.id }); }); });
+  return out;
+}
+function getCard(it) { const d = deckById(it.deckId); return d && d.cards.find(c => c.id === it.cardId); }
+
+/* ============ Sonido y celebración ============ */
+let AC = null, noise = null;
+function audio() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); return AC; } catch { return null; } }
+function tone(notes) {
+  if (!S.profile.sound) return; const ac = audio(); if (!ac) return;
+  notes.forEach(([f, t, d]) => {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = "triangle"; o.frequency.value = f;
+    const s = ac.currentTime + t; g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.18, s + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, s + d);
+    o.connect(g); g.connect(ac.destination); o.start(s); o.stop(s + d + 0.05);
+  });
+}
+const SND = {
+  ok: () => tone([[523, 0, .14], [659, .08, .14], [784, .16, .24]]),
+  mid: () => tone([[523, 0, .14], [587, .1, .2]]),
+  no: () => tone([[392, 0, .18], [440, .12, .22]]),
+  win: () => tone([[523, 0, .12], [659, .1, .12], [784, .2, .12], [1047, .3, .4]]),
+  tick: () => tone([[880, 0, .06]]),
+};
+function toggleNoise(on) {
+  const ac = audio(); if (!ac) return false;
+  if (!on) { if (noise) { noise.src.stop(); noise = null; } return false; }
+  if (noise) return true;
+  const len = ac.sampleRate * 4, buf = ac.createBuffer(1, len, ac.sampleRate), ch = buf.getChannelData(0); let last = 0;
+  for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; ch[i] = last * 3.2; }
+  const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; src.loop = true; g.gain.value = 0.35;
+  src.connect(g); g.connect(ac.destination); src.start(); noise = { src }; return true;
+}
+function confetti() {
+  if (reduced) return;
+  const cv = $("#confetti"); cv.hidden = false; const ctx = cv.getContext("2d");
+  const W = cv.width = innerWidth * devicePixelRatio, H = cv.height = innerHeight * devicePixelRatio;
+  cv.style.width = innerWidth + "px"; cv.style.height = innerHeight + "px";
+  const P = Array.from({ length: 140 }, () => ({ x: W / 2, y: H * .35, vx: (Math.random() - .5) * 26 * devicePixelRatio, vy: (Math.random() * -18 - 6) * devicePixelRatio, s: (6 + Math.random() * 8) * devicePixelRatio, r: Math.random() * 6, c: COLORS[Math.floor(Math.random() * COLORS.length)] }));
+  const t0 = performance.now();
+  (function f(now) {
+    ctx.clearRect(0, 0, W, H);
+    P.forEach(p => { p.vy += .55 * devicePixelRatio; p.x += p.vx; p.y += p.vy; p.vx *= .99; p.r += .2; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); });
+    if (now - t0 < 2200) requestAnimationFrame(f); else { ctx.clearRect(0, 0, W, H); cv.hidden = true; }
+  })(t0);
+}
+let toastTimer;
+function toast(msg) {
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status"); el.textContent = msg;
+  document.body.appendChild(el); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.remove(), 1900);
+}
+
+/* ============ Estado de la interfaz ============ */
+const ui = { tab: "hoy", screen: null, deckId: null, onb: 0, editCard: null, form: {}, confirm: null };
+let M = null;      // misión en curso
+let F = { mode: "focus", total: 0, left: 0, endAt: 0, running: false, noise: false, checks: {} }; // foco
+let B = null;      // hoja en blanco
+let G = null;      // generación con IA
+
+/* ============ Iconos ============ */
+const I = {
+  logo: `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#FFC83D"/><stop offset=".5" stop-color="#FF5DA9"/><stop offset="1" stop-color="#9C7CFF"/></linearGradient></defs><circle cx="10" cy="12" r="6" fill="url(#lg)"/><circle cx="30" cy="28" r="6" fill="url(#lg)"/><path d="M15 15 L20 19 L18 22 L25 25" stroke="#F6F3FF" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  hoy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>`,
+  mazos: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="3"/><path d="M7 3h11a3 3 0 0 1 3 3v11"/></svg>`,
+  foco: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>`,
+  yo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 2 .8 3.2 1.8 4.3.6.7 1.2 1.7 1.2 2.7v1h6v-1c0-1 .6-2 1.2-2.7C17.2 12.2 18 11 18 9a6 6 0 0 0-6-6zM10 21h4"/></svg>`,
+};
+
+/* ============ Render principal ============ */
+function render() {
+  const app = $("#app"), tabs = $("#tabs");
+  const full = !S.profile.onboarded || ["mission", "blank", "gen", "deck", "add", "newdeck", "team", "deckset"].includes(ui.screen);
+  app.classList.toggle("full", full);
+  tabs.hidden = full;
+  let html;
+  if (!S.profile.onboarded) html = vOnboard();
+  else if (ui.screen === "mission") html = vMission();
+  else if (ui.screen === "blank") html = vBlank();
+  else if (ui.screen === "gen") html = vGen();
+  else if (ui.screen === "deck") html = vDeck();
+  else if (ui.screen === "add") html = vAdd();
+  else if (ui.screen === "newdeck") html = vNewDeck();
+  else if (ui.screen === "team") html = vTeam();
+  else if (ui.screen === "deckset") html = vDeckSet();
+  else html = ({ hoy: vHoy, mazos: vMazos, foco: vFoco, yo: vYo })[ui.tab]();
+  app.innerHTML = html;
+  if (!full) tabs.innerHTML = `<nav aria-label="Secciones">${[["hoy", "Hoy"], ["mazos", "Mazos"], ["foco", "Foco"], ["yo", "Yo"]].map(([k, l]) => `<button class="tab" data-act="tab" data-v="${k}" ${ui.tab === k ? 'aria-current="page"' : ""}>${I[k]}${l}</button>`).join("")}</nav>`;
+  const af = app.querySelector("[data-autofocus]"); if (af) af.focus({ preventScroll: true });
+}
+
+function header() {
+  const st = streak(), lv = levelInfo(S.profile.xp);
+  return `<div class="top"><div class="brand">${I.logo}<span>Sinapsis</span></div>
+  <div class="pills"><span class="pill" title="Racha de días"><span class="flame">●</span><span class="num">${st}</span> ${plural(st, "día")}</span><span class="pill" title="Nivel"><span class="num">Nv ${lv.level}</span></span></div></div>`;
+}
+
+/* ---------- Bienvenida ---------- */
+function vOnboard() {
+  const P = [
+    { art: "3×3", h: "Tu cerebro aprende cuando recuerda, no cuando relee.", p: "Aquí siempre intentas responder sin mirar. Cuesta un poco más, y por eso funciona." },
+    { art: "1/3", h: "Tres aciertos en tres días distintos y ya lo tienes.", p: "Sinapsis decide qué toca cada día, deja que se te olvide un poco y mezcla asignaturas." },
+    { art: "15′", h: "Misiones cortas. Cero distracciones.", p: "Bloques de 15 minutos, una sola cosa en pantalla y premio inmediato. Fallar también suma: el esfuerzo entrena." },
+  ];
+  const s = P[ui.onb];
+  return `<section class="onb"><div class="art">${s.art}</div><h1>${esc(s.h)}</h1><p class="muted" style="font-size:19px">${esc(s.p)}</p>
+  <div class="dotsnav">${P.map((_, i) => `<i class="${i === ui.onb ? "on" : ""}"></i>`).join("")}</div>
+  <button class="btn primary wide" data-act="onbNext" data-autofocus>${ui.onb < P.length - 1 ? "Siguiente" : "Empezar"}</button>
+  ${ui.onb < P.length - 1 ? `<button class="btn ghost wide" data-act="onbSkip">Saltar</button>` : ""}</section>`;
+}
+
+/* ---------- Hoy ---------- */
+function vHoy() {
+  const st = allStats(), lv = levelInfo(S.profile.xp), t = today();
+  const nNew = Math.min(5, st.new), nDue = Math.min(S.profile.goal, st.due);
+  const mins = Math.max(3, Math.round(nDue * 0.8 + nNew * 1.5));
+  const dd = S.profile.days[t] || { ev: 0 }, done = dd.ev || 0, goal = S.profile.goal;
+  const pct = Math.min(1, done / goal), C = 2 * Math.PI * 30;
+  const law = LAWS[t % LAWS.length];
+  const exams = S.decks.filter(d => d.exam != null && d.exam >= t).sort((a, b) => a.exam - b.exam);
+  let heroBig, heroSub;
+  if (nDue + nNew === 0 && st.total === 0) { heroBig = "0"; heroSub = "Crea tu primer mazo para empezar."; }
+  else if (nDue + nNew === 0) { heroBig = "✓"; heroSub = "Hoy no te toca nada. Puedes hacer un reto rápido o añadir tarjetas."; }
+  else { heroBig = String(nDue + nNew); heroSub = nDue ? `${nDue} para evocar${nNew ? ` y ${nNew} nuevas` : ""}. Unos ${mins} minutos.` : `${nNew} nuevas para aprender. Unos ${mins} minutos.`; }
+  return `${header()}
+  <div class="stack" style="margin-top:12px">
+    <section class="hero" aria-label="Misión de hoy">
+      <h2>Misión de hoy</h2>
+      <div class="big num">${heroBig}</div>
+      <p class="sub">${esc(heroSub)}</p>
+      <div class="chips"><span class="chip">Evoca</span><span class="chip">Mezcla</span><span class="chip">Sin mirar</span></div>
+      <button class="cta" data-act="mission" ${nDue + nNew === 0 && st.total === 0 ? 'data-v="nodeck"' : ""}>${nDue + nNew === 0 && st.total ? "Reto libre de 3 tarjetas" : "Empezar misión"}</button>
+    </section>
+    <div class="level"><div class="row between"><b>${esc(lv.name)} · nivel ${lv.level}</b><span class="muted small num">${lv.rest} / ${lv.need} XP</span></div><div class="bar" style="margin-top:8px"><i style="width:${(lv.rest / lv.need) * 100}%"></i></div></div>
+    <div class="panel goal">
+      <svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" stroke="var(--ink-3)" stroke-width="10" fill="none"/><circle cx="36" cy="36" r="30" stroke="var(--mint)" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg>
+      <div><b class="num">${done} / ${goal} evocaciones hoy</b><p class="muted small">${done >= goal ? "Objetivo cumplido. Tu cerebro lo consolidará mientras duermes." : "Cada intento cuenta, aciertes o no."}</p></div>
+    </div>
+    <button class="quick" data-act="quick"><span class="ic" style="background:var(--sun)">2′</span><span><b>Arranque en 2 minutos</b><span class="muted small">Tres tarjetas y listo. Para cuando cuesta empezar.</span></span></button>
+    <button class="quick" data-act="tab" data-v="foco"><span class="ic" style="background:var(--pink)">${S.profile.focus}′</span><span><b>Bloque de foco</b><span class="muted small">Temporizador con descanso y ruido marrón opcional.</span></span></button>
+    ${exams.length ? `<div class="stack"><p class="eyebrow">Exámenes</p>${exams.slice(0, 3).map(examRow).join("")}</div>` : ""}
+    <article class="law"><span class="k" style="background:${law.c}">Ley del día · ${esc(law.k)}</span><h3>${esc(law.t)}</h3>
+      <div class="tt"><div><b style="color:var(--mint)">Truqui</b><p>${esc(law.truqui)}</p></div><div><b style="color:var(--coral)">Antitruqui</b><p>${esc(law.anti)}</p></div></div></article>
+    <p class="sync" id="sync">${esc(syncLabel)}</p>
+  </div>`;
+}
+function examRow(d) {
+  const t = today(), left = d.exam - t, s = deckStats(d), pending = s.total - s.done;
+  let tag, tip;
+  if (pending === 0) { tag = `<span class="tag good">Todo 3/3</span>`; tip = "Solo mantenimiento: una evocación ligera la víspera."; }
+  else if (left >= 5) { tag = `<span class="tag good">A tiempo</span>`; tip = `Quedan ${pending} sin dominar. Evoca un poco cada día.`; }
+  else if (left >= 2) { tag = `<span class="tag warn">Justo</span>`; tip = "Evoca hoy y mañana; mezcla con otras asignaturas."; }
+  else { tag = `<span class="tag bad">Te pilla el toro</span>`; tip = "Evoca esta tarde y otra vez por la noche, con tiempo entre medias. Y duerme."; }
+  return `<button class="deck" style="--c:${d.color}" data-act="openDeck" data-v="${d.id}"><span class="mono">${esc(d.name.trim().charAt(0).toUpperCase() || "?")}</span><span class="info"><span class="row between"><span class="name">${esc(d.name)}</span>${tag}</span><span class="muted small">${left === 0 ? "Hoy" : left === 1 ? "Mañana" : `En ${left} días`} · ${esc(tip)}</span></span></button>`;
+}
+
+/* ---------- Mazos ---------- */
+function vMazos() {
+  return `${header()}<div class="stack" style="margin-top:12px">
+  <div class="row between"><h1 style="font-size:26px">Tus mazos</h1><button class="btn primary" data-act="newDeck">+ Nuevo</button></div>
+  <div class="legend"><span style="--d:var(--ink-3)">Nuevas</span><span style="--d:var(--sun)">En camino</span><span style="--d:var(--mint)">Dominadas 3/3</span></div>
+  ${S.decks.length ? S.decks.map(deckTile).join("") : `<div class="empty"><b>Aún no tienes mazos</b><p class="muted small">Un mazo es una asignatura o un tema. Crea uno y añade tarjetas de pregunta y respuesta.</p></div>`}
+  </div>`;
+}
+function deckTile(d) {
+  const s = deckStats(d), T = Math.max(1, s.total);
+  return `<button class="deck" style="--c:${d.color}" data-act="openDeck" data-v="${d.id}"><span class="mono">${esc(d.name.trim().charAt(0).toUpperCase() || "?")}</span>
+  <span class="info"><span class="row between"><span class="name">${esc(d.name)}</span>${s.due ? `<span class="tag warn num">${s.due} hoy</span>` : ""}</span>
+  <span class="muted small num">${s.total} ${plural(s.total, "tarjeta")}${d.example ? " · ejemplo" : ""}${d.exam != null ? ` · examen ${fmtDay(d.exam)}` : ""}</span>
+  <span class="seg"><i style="width:${s.done / T * 100}%;background:var(--mint)"></i><i style="width:${s.way / T * 100}%;background:var(--sun)"></i></span></span></button>`;
+}
+function fmtDay(n) { return new Date(n * 864e5).toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "UTC" }); }
+
+function vDeck() {
+  const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
+  const s = deckStats(d), T = Math.max(1, s.total);
+  return `<div class="stack">
+  <div class="row between"><button class="iconbtn" data-act="back" aria-label="Volver">←</button><button class="btn ghost" data-act="deckSet">Ajustes</button></div>
+  <div class="row" style="gap:14px"><span class="mono" style="--c:${d.color};background:${d.color}">${esc(d.name.trim().charAt(0).toUpperCase() || "?")}</span><div style="min-width:0"><h1 style="font-size:24px;overflow-wrap:anywhere">${esc(d.name)}</h1><p class="muted small">${d.exam != null ? `Examen: ${fmtDay(d.exam)}` : "Sin fecha de examen"}</p></div></div>
+  <div class="grid2"><div class="tile"><div class="v num">${s.due}</div><div class="muted small">para evocar hoy</div></div><div class="tile"><div class="v num">${s.done}/${s.total}</div><div class="muted small">dominadas 3/3</div></div></div>
+  <div class="seg" style="height:12px"><i style="width:${s.done / T * 100}%;background:var(--mint)"></i><i style="width:${s.way / T * 100}%;background:var(--sun)"></i></div>
+  <button class="btn primary wide" data-act="missionDeck" ${s.total ? "" : "disabled"}>Evocar este mazo</button>
+  <div class="grid2">
+    <button class="btn ghost" data-act="blank" ${s.total ? "" : "disabled"}>Hoja en blanco</button>
+    <button class="btn ghost" data-act="add">Añadir tarjetas</button>
+    <button class="btn ghost" data-act="gen" ${sample ? "" : "hidden"}>Crear con IA</button>
+    <button class="btn ghost" data-act="team" ${s.total ? "" : "disabled"}>Reto en equipo</button>
+  </div>
+  <p class="eyebrow" style="margin-top:6px">Tarjetas</p>
+  ${d.cards.length ? d.cards.map(c => cardRow(d, c)).join("") : `<div class="empty"><b>Mazo vacío</b><p class="muted small">Añade preguntas que te obliguen a recordar: «¿Qué es…?», «¿Por qué…?», «Explica…».</p></div>`}
+  </div>`;
+}
+function cardRow(d, c) {
+  if (ui.editCard === c.id) {
+    return `<div class="panel stack"><label class="f">Pregunta<textarea id="e-q" rows="2">${esc(c.q)}</textarea></label><label class="f">Respuesta<textarea id="e-a" rows="3">${esc(c.a)}</textarea></label><label class="f">Relaciónalo (a qué te recuerda)<input type="text" id="e-h" value="${esc(c.hook || "")}"></label>
+    <div class="row"><button class="btn primary" data-act="saveCard" data-v="${c.id}">Guardar</button><button class="btn ghost" data-act="cancelEdit">Cancelar</button>
+    ${ui.confirm === c.id ? `<button class="btn coral" data-act="delCard" data-v="${c.id}">Sí, borrar</button>` : `<button class="btn ghost" data-act="askDel" data-v="${c.id}">Borrar</button>`}</div></div>`;
+  }
+  const st = cardState(c);
+  return `<button class="cardrow" data-act="editCard" data-v="${c.id}"><span class="txt"><b>${esc(c.q)}</b><span>${st === "new" ? "Nueva" : st === "done" ? "Dominada" : c.restudy ? "Reestudiar: relaciónala con algo" : "En camino"}${isDue(c) ? " · toca hoy" : ""}</span></span><span class="dots" aria-label="${c.ok} de 3">${[0, 1, 2].map(i => `<i class="${i < c.ok ? "on" : ""}"></i>`).join("")}</span></button>`;
+}
+
+function vNewDeck() {
+  const f = ui.form;
+  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="back" aria-label="Volver">←</button><h1 style="font-size:24px">Nuevo mazo</h1></div>
+  <label class="f">Asignatura o tema<input type="text" id="nd-name" placeholder="Ej.: Lengua · Sintaxis" value="${esc(f.name || "")}" data-autofocus></label>
+  <div class="f"><b class="small">Color</b><div class="swatches">${COLORS.map(c => `<button class="swatch" style="--c:${c}" data-act="pickColor" data-v="${c}" aria-label="Color" aria-pressed="${(f.color || COLORS[0]) === c}"></button>`).join("")}</div></div>
+  <label class="f">Fecha de examen (opcional)<input type="date" id="nd-exam" value="${esc(f.exam || "")}"></label>
+  <p class="muted small">Con fecha, Sinapsis ajusta los repasos para que la tercera evocación llegue antes del examen.</p>
+  <button class="btn primary wide" data-act="createDeck">Crear mazo</button></div>`;
+}
+function vDeckSet() {
+  const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
+  const f = ui.form;
+  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Ajustes del mazo</h1></div>
+  <label class="f">Nombre<input type="text" id="ds-name" value="${esc(d.name)}"></label>
+  <div class="f"><b class="small">Color</b><div class="swatches">${COLORS.map(c => `<button class="swatch" style="--c:${c}" data-act="pickColor" data-v="${c}" aria-label="Color" aria-pressed="${(f.color || d.color) === c}"></button>`).join("")}</div></div>
+  <label class="f">Fecha de examen<input type="date" id="ds-exam" value="${d.exam != null ? dayToDate(d.exam) : ""}"></label>
+  <button class="btn primary wide" data-act="saveDeck">Guardar</button>
+  <button class="btn ghost wide" data-act="resetDeck">Reiniciar progreso de este mazo</button>
+  ${ui.confirm === "deck" ? `<button class="btn coral wide" data-act="delDeck">Confirmar: borrar «${esc(d.name)}» y sus ${d.cards.length} tarjetas</button>` : `<button class="btn ghost wide" data-act="askDelDeck">Borrar mazo</button>`}</div>`;
+}
+
+function vAdd() {
+  const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
+  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Añadir tarjetas</h1></div>
+  <div class="panel stack"><label class="f">Pregunta<textarea id="a-q" rows="2" placeholder="¿Qué es la memoria de trabajo?" data-autofocus></textarea></label>
+  <label class="f">Respuesta<textarea id="a-a" rows="3" placeholder="Para ideas, escríbela con tus palabras. Para datos, tal cual."></textarea></label>
+  <label class="f">Relaciónalo (opcional)<input type="text" id="a-h" placeholder="¿A qué te recuerda? Ejemplo, imagen o regla"></label>
+  <button class="btn primary wide" data-act="addOne">Añadir y seguir</button></div>
+  <div class="panel stack"><b>Pegar varias de golpe</b><p class="muted small">Una por línea: <code>pregunta :: respuesta :: relación</code>. La relación es opcional. También vale <code>pregunta | respuesta</code>.</p>
+  <textarea id="a-bulk" rows="6" placeholder="Capital de Australia :: Canberra :: «Can-berra»: un can con boina&#10;¿Qué es la fotosíntesis? :: Proceso por el que las plantas fabrican su alimento con luz"></textarea>
+  <button class="btn ghost wide" data-act="addBulk">Importar</button></div></div>`;
+}
+
+function vTeam() {
+  const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
+  const qs = shuffle(d.cards).slice(0, 15);
+  const txt = `Reto «${d.name}»: pregúntame esto sin enseñarme las respuestas.\n\n` + qs.map((c, i) => `${i + 1}. ${c.q}`).join("\n") + `\n\nRespuestas:\n` + qs.map((c, i) => `${i + 1}. ${c.a}`).join("\n");
+  ui.teamText = txt;
+  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Reto en equipo</h1></div>
+  <p class="muted">Explicar y que te pregunten es de lo que más fija. Copia esto, envíalo a alguien de tu clase o de casa y que te examine. Luego cambiad los papeles.</p>
+  <textarea id="team-text" rows="12" readonly>${esc(txt)}</textarea>
+  <button class="btn primary wide" data-act="copyTeam">Copiar reto</button>
+  <div class="law"><span class="k" style="background:var(--violet)">Colabora</span><p style="margin-top:10px">Si no estáis de acuerdo, es normal: se llama disonancia cognitiva. Buscad datos que os quiten la razón, no solo los que os la dan.</p></div></div>`;
+}
+
+/* ---------- Generar con IA ---------- */
+function vGen() {
+  const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
+  G = G || { notes: "", busy: false, out: null, sel: {}, err: "" };
+  let res = "";
+  if (G.busy) res = `<div class="panel"><b>Claude está leyendo tus apuntes…</b><p class="muted small">Suele tardar entre 10 y 40 segundos.</p><button class="btn ghost" data-act="genStop" style="margin-top:10px">Parar</button></div>`;
+  else if (G.err) res = `<div class="hint">${esc(G.err)}</div>`;
+  if (G.out) res += `<p class="eyebrow">${G.out.length} tarjetas propuestas · toca para quitar</p>` + G.out.map((c, i) => `<button class="check" data-act="genSel" data-v="${i}" aria-pressed="${G.sel[i] !== false}"><span class="box">${G.sel[i] !== false ? "✓" : ""}</span><span style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(c.q)}</b><span class="muted small" style="overflow-wrap:anywhere">${esc(c.a)}</span></span></button>`).join("") + `<button class="btn mint wide" data-act="genAdd">Añadir las seleccionadas</button>`;
+  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Crear con IA</h1></div>
+  <p class="muted">Pega tus apuntes${sampleImages ? " o sube una foto" : ""}. Claude propone preguntas de evocación con su gancho para relacionar. Tú decides cuáles se quedan.</p>
+  <label class="f">Apuntes<textarea id="g-notes" rows="8" placeholder="Pega aquí el tema…">${esc(G.notes)}</textarea></label>
+  ${sampleImages ? `<label class="f">Foto de apuntes (opcional)<input type="file" id="g-img" accept="image/*"></label>` : ""}
+  <button class="btn primary wide" data-act="genGo" ${G.busy ? "disabled" : ""}>Crear tarjetas</button>
+  ${res}</div>`;
+}
+let genCtl = null;
+async function genGo() {
+  const notes = ($("#g-notes").value || "").trim(); G.notes = notes;
+  const img = $("#g-img") && $("#g-img").files[0];
+  if (!notes && !img) { G.err = "Pega algo de texto o elige una foto."; render(); return; }
+  G.busy = true; G.err = ""; G.out = null; render();
+  genCtl = new AbortController();
+  const prompt = `Eres especialista en ciencia del aprendizaje (práctica de evocación, Héctor Ruiz Martín). A partir de los apuntes${img ? " de la imagen adjunta" : ""}, crea entre 8 y 20 tarjetas de evocación en español para un estudiante.
+Reglas: una idea por tarjeta; preguntas que obliguen a recordar sin mirar (no de sí/no); para datos, pide el dato exacto; para ideas y procesos, pide explicarlo con sus palabras; respuestas breves (máx. 220 caracteres); "hook" es un gancho para relacionar con algo conocido: ejemplo cotidiano, analogía, imagen o regla mnemotécnica (máx. 110 caracteres). No inventes nada que no esté en los apuntes.
+Responde SOLO con un array JSON: [{"q":"...","a":"...","hook":"..."}]
+
+Apuntes:
+${notes.slice(0, 12000)}`;
+  try {
+    const opts = { signal: genCtl.signal, cache: false }; if (img) opts.images = [img];
+    const out = await sample.json(prompt, opts);
+    const list = (Array.isArray(out) ? out : []).filter(c => c && c.q && c.a).map(c => ({ q: String(c.q).slice(0, 400), a: String(c.a).slice(0, 800), hook: c.hook ? String(c.hook).slice(0, 200) : "" }));
+    G.out = list; G.sel = {}; if (!list.length) G.err = "No salieron tarjetas. Prueba con un texto más concreto.";
+  } catch (e) { G.err = aiError(e); }
+  G.busy = false; render();
+}
+
+/* ---------- Misión ---------- */
+function startMission(opts = {}) {
+  const t = today();
+  let due = dueItems(opts.deckId), news = newItems(opts.deckId);
+  let queue, learn;
+  if (opts.quick) {
+    queue = interleave(due).slice(0, 3);
+    if (queue.length < 3) {
+      const seen = []; S.decks.forEach(d => d.cards.forEach(c => { if (c.seen && !queue.some(q => q.cardId === c.id) && c.last !== t) seen.push({ deckId: d.id, cardId: c.id }); }));
+      queue = queue.concat(shuffle(seen).slice(0, 3 - queue.length).map(x => ({ ...x, free: true })));
+    }
+    learn = queue.length ? [] : interleave(news).slice(0, 2);
+  } else {
+    queue = interleave(due).slice(0, opts.deckId ? 30 : S.profile.goal);
+    learn = interleave(news).slice(0, 5);
+    if (!queue.length && !learn.length) {
+      const seen = []; S.decks.forEach(d => { if (opts.deckId && d.id !== opts.deckId) return; d.cards.forEach(c => { if (c.seen) seen.push({ deckId: d.id, cardId: c.id, free: true }); }); });
+      queue = interleave(seen).slice(0, opts.deckId ? 10 : 3);
+    }
+  }
+  M = { from: ui.screen === "deck" ? "deck" : null, step: opts.quick ? null : "ritual", queue: queue.map(x => ({ ...x, phase: "ev" })), i: 0, learn, li: 0, checks: [], ci: 0,
+    res: { ok: 0, mid: 0, no: 0, counted: 0 }, xp: 0, t0: Date.now(), revealed: false, typed: "", hint: false, ai: null, ritual: {}, again: new Set() };
+  if (!M.step) M.step = nextStep(null);
+  ui.screen = "mission"; render(); scrollTo(0, 0);
+}
+function nextStep(cur) {
+  const order = ["ritual", "ev", "learn", "checkIntro", "check", "done"];
+  let i = cur ? order.indexOf(cur) + 1 : 1;
+  for (; i < order.length; i++) {
+    const s = order[i];
+    if (s === "ev" && !M.queue.length) continue;
+    if (s === "learn" && !M.learn.length) continue;
+    if ((s === "checkIntro" || s === "check") && !M.checks.length) continue;
+    return s;
+  }
+  return "done";
+}
+function vMission() {
+  if (!M) { ui.screen = null; return vHoy(); }
+  const total = M.queue.length + M.learn.length + M.checks.length;
+  const doneN = M.i + M.li + M.ci;
+  const top = `<div class="mtop"><button class="iconbtn" data-act="quitMission" aria-label="Salir de la misión">✕</button><div class="bar"><i style="width:${total ? doneN / total * 100 : 0}%"></i></div><span class="pill num">+${M.xp} XP</span></div>`;
+  if (M.step === "ritual") {
+    const items = [["phone", "Móvil fuera de la mesa o en modo avión"], ["music", "Sin música ni vídeos de fondo"], ["water", "Agua a mano (y algo de comer si hay hambre)"], ["one", "Solo esta tarea abierta"]];
+    const all = items.every(([k]) => M.ritual[k]);
+    return `${top}<section class="stage ritual stack"><p class="eyebrow">Ritual de foco · 30 segundos</p><h1>Prepara tu portapapeles mental</h1>
+    <p class="muted">Tu memoria de trabajo es pequeña: cada distracción le quita sitio a lo que quieres aprender.</p>
+    ${items.map(([k, l]) => `<button class="check" data-act="ritual" data-v="${k}" aria-pressed="${!!M.ritual[k]}"><span class="box">${M.ritual[k] ? "✓" : ""}</span>${esc(l)}</button>`).join("")}
+    <button class="btn ${all ? "mint" : "primary"} wide" data-act="ritualGo" data-autofocus>${all ? "Listo, a por ello" : "Empezar igualmente"}</button></section>`;
+  }
+  if (M.step === "ev" || M.step === "check") return top + vEvoke();
+  if (M.step === "learn") return top + vLearn();
+  if (M.step === "checkIntro") {
+    return `${top}<section class="stage stack"><p class="eyebrow">Comprobación</p><h1 style="font-size:30px">Ahora, sin mirar</h1><p class="muted" style="font-size:19px">Intenta recordar lo que acabas de ver. Hoy no suma al 3/3 (hace falta que pase al menos un día), pero te dice qué necesita más relación.</p><button class="btn primary wide" data-act="checkGo" data-autofocus>Vamos</button></section>`;
+  }
+  return top + vDone();
+}
+function curItem() { return M.step === "check" ? M.checks[M.ci] : M.queue[M.i]; }
+function vEvoke() {
+  const it = curItem(), d = deckById(it.deckId), c = getCard(it);
+  if (!c) { advance(); return ""; }
+  const label = M.step === "check" ? "Comprobación" : it.phase === "again" ? "Segunda oportunidad" : it.free ? "Reto libre" : "Evocación";
+  const pos = M.step === "check" ? `${M.ci + 1}/${M.checks.length}` : `${M.i + 1}/${M.queue.length}`;
+  let body;
+  if (!M.revealed) {
+    body = `<label class="f" for="ev-in" style="margin-top:4px">Escribe lo que recuerdes, o dilo en voz alta</label>
+    <textarea id="ev-in" rows="4" placeholder="Sin mirar. Si no sale, escribe lo que sí recuerdes." data-autofocus>${esc(M.typed)}</textarea>
+    ${M.hint && c.hook ? `<div class="hint"><b class="small">Pista</b><p>${esc(c.hook)}</p></div>` : ""}
+    <div class="row">${c.hook && !M.hint ? `<button class="btn ghost" data-act="hint">Pista</button>` : ""}<button class="btn primary" style="flex:1" data-act="reveal">Comprobar</button></div>
+    <p class="muted small">Esfuérzate unos segundos más antes de mirar: cuanto más te cuesta recordar, mejor se queda.</p>`;
+  } else {
+    body = `${M.typed.trim() ? `<div class="mine"><span class="eyebrow">Tu respuesta</span><p style="margin-top:4px">${esc(M.typed)}</p></div>` : ""}
+    <div class="answer"><span class="eyebrow" style="color:var(--mint)">Respuesta</span><p class="a">${esc(c.a)}</p>${c.hook ? `<p class="muted small" style="margin-top:8px">Relación: ${esc(c.hook)}</p>` : ""}</div>
+    ${sample && M.typed.trim() ? (M.ai ? `<div class="ai">${M.ai.busy ? "Claude está comparando…" : esc(M.ai.text)}</div>` : `<button class="btn sky" data-act="aiCheck">Que Claude revise mi respuesta</button>`) : ""}
+    <p class="eyebrow" style="margin-top:4px">¿Cómo te ha salido?</p>
+    <div class="grades"><button class="grade ok" data-act="grade" data-v="ok">Lo saqué<small>${M.hint ? "con pista" : "sin mirar"}</small></button><button class="grade mid" data-act="grade" data-v="mid">A medias<small>falta algo</small></button><button class="grade no" data-act="grade" data-v="no">No salió<small>y sirve igual</small></button></div>`;
+  }
+  return `<section class="stage stack"><div class="qcard" style="--c:${d.color}"><div class="row between"><span class="tag" style="background:${d.color};color:var(--on-bright)">${esc(d.name)}</span><span class="muted small num">${label} · ${pos}</span></div>
+  <p class="q">${esc(c.q)}</p><div class="row" style="margin-top:12px"><span class="dots">${[0, 1, 2].map(i => `<i class="${i < c.ok ? "on" : ""}"></i>`).join("")}</span><span class="muted small">${c.ok}/3 evocaciones en días distintos</span></div></div>${body}</section>`;
+}
+function vLearn() {
+  const it = M.learn[M.li], d = deckById(it.deckId), c = getCard(it);
+  if (!c) { M.li++; if (M.li >= M.learn.length) M.step = nextStep("learn"); return vMission(); }
+  return `<section class="stage stack"><div class="qcard" style="--c:${d.color}"><div class="row between"><span class="tag" style="background:${d.color};color:var(--on-bright)">${esc(d.name)}</span><span class="muted small num">Nuevo · ${M.li + 1}/${M.learn.length}</span></div>
+  <p class="q">${esc(c.q)}</p></div>
+  <div class="answer"><span class="eyebrow" style="color:var(--mint)">Respuesta</span><p class="a">${esc(c.a)}</p></div>
+  <label class="f" for="ln-hook">Relaciónalo: ¿a qué te recuerda? <span class="muted small">(ejemplo, imagen, palabra parecida, regla)</span></label>
+  <input type="text" id="ln-hook" value="${esc(c.hook || "")}" placeholder="Engánchalo a algo que ya sabes">
+  <button class="check" data-act="explained" aria-pressed="${!!M.explained}"><span class="box">${M.explained ? "✓" : ""}</span>Me lo he explicado con mis palabras, en voz alta o mentalmente</button>
+  <button class="btn primary wide" data-act="learnNext">Lo tengo, siguiente</button></section>`;
+}
+function vDone() {
+  const r = M.res, n = r.ok + r.mid + r.no, mins = Math.max(1, Math.round((Date.now() - M.t0) / 60000));
+  const pct = n ? r.ok / n : 1;
+  const msg = !n ? "Has preparado el terreno: mañana empiezas a evocar esto." : pct >= .8 ? "Muy sólido. Recuerda: lo que hoy sale fácil, mañana se olvida un poco. Por eso volverá." : pct >= .5 ? "Buen trabajo. Lo que ha salido a medias es justo lo que tu cerebro está consolidando." : "Ha costado, y eso es entrenamiento real. Las que fallaron vuelven mañana: relaciónalas con algo que ya sepas.";
+  const tomorrow = (() => { const t = today() + 1; let k = 0; S.decks.forEach(d => d.cards.forEach(c => { if (c.seen && c.due != null && c.due <= t) k++; })); return k; })();
+  const refl = [["evoco", "Evoqué sin mirar"], ["distr", "Me distraje"], ["relac", "Necesito relacionar más"], ["sueno", "Me falta sueño"]];
+  return `<section class="stage done stack"><p class="eyebrow">Misión cumplida</p><h1>Tu cerebro acaba de cablear nuevas conexiones</h1><p style="font-size:19px">${esc(msg)}</p>
+  <div class="grid2"><div class="tile"><div class="v num" style="color:var(--mint)">${r.ok}</div><div class="muted small">lo saqué</div></div><div class="tile"><div class="v num" style="color:var(--sun)">${r.mid}</div><div class="muted small">a medias</div></div><div class="tile"><div class="v num" style="color:var(--coral)">${r.no}</div><div class="muted small">no salió</div></div><div class="tile"><div class="v num">+${M.xp}</div><div class="muted small">XP en ${mins} min</div></div></div>
+  <div class="panel"><b>Mañana te esperan ${tomorrow} ${plural(tomorrow, "tarjeta")}.</b><p class="muted small">Duerme sin el móvil en el cuarto: mientras duermes, tu cerebro guarda los cambios.</p></div>
+  <p class="eyebrow">¿A qué se debe tu resultado de hoy?</p>
+  <div class="chiprow">${refl.map(([k, l]) => `<button class="chipbtn" data-act="refl" data-v="${k}" aria-pressed="${M.refl === k}">${esc(l)}</button>`).join("")}</div>
+  ${M.refl ? `<div class="hint">${esc({ evoco: "Eso es lo que funciona. Sigue así y espacia.", distr: "Prueba el ritual completo y un bloque de foco de 10 minutos la próxima vez.", relac: "Abre el mazo y escribe un gancho en las que fallaste: ejemplo, imagen o regla.", sueno: "El sueño es parte del estudio. Hoy, móvil fuera del cuarto." }[M.refl])}</div>` : ""}
+  <button class="btn primary wide" data-act="finish" data-autofocus>Terminar</button></section>`;
+}
+function advance() {
+  M.revealed = false; M.typed = ""; M.hint = false; M.ai = null;
+  if (M.step === "check") { M.ci++; if (M.ci >= M.checks.length) M.step = nextStep("check"); }
+  else { M.i++; if (M.i >= M.queue.length) M.step = nextStep("ev"); }
+  if (M.step === "done") onDone();
+}
+function onDone() {
+  const n = M.res.ok + M.res.mid + M.res.no;
+  if (n || M.learn.length) { addXP(15); M.xp += 15; }
+  touch(); SND.win(); setTimeout(confetti, 150);
+}
+function doGrade(r) {
+  const it = curItem(), d = deckById(it.deckId), c = getCard(it); if (!c) return advance();
+  const counts = M.step === "ev" && it.phase === "ev" && !it.free;
+  const effective = (r === "ok" && M.hint) ? "mid" : r; // con pista cuenta como «a medias»
+  const counted = M.step === "check" ? false : grade(d, c, effective, counts);
+  if (M.step === "check" && r !== "ok") { c.restudy = true; }
+  M.res[r]++; if (counted) M.res.counted++;
+  logDay("ev"); if (r === "ok") logDay("ok");
+  const xp = r === "ok" ? 10 : r === "mid" ? 6 : 4; addXP(xp); M.xp += xp;
+  if (r === "no" && M.step === "ev" && !M.again.has(c.id)) { // vuelve más tarde, nunca en la siguiente
+    M.again.add(c.id); const pos = Math.min(M.queue.length, M.i + 4);
+    M.queue.splice(pos, 0, { deckId: it.deckId, cardId: c.id, phase: "again" });
+  }
+  touch(d.id);
+  SND[r]();
+  const msgs = { ok: counted ? (c.ok >= 3 ? "¡Dominada! 3/3" : `+${xp} XP · ${c.ok}/3`) : `+${xp} XP`, mid: `+${xp} XP · vuelve mañana`, no: `+${xp} XP · el esfuerzo también entrena` };
+  toast(msgs[r]); if (counted && c.ok >= 3) setTimeout(confetti, 50);
+  advance(); render(); scrollTo(0, 0);
+}
+async function aiCheck() {
+  const it = curItem(), c = getCard(it); if (!sample || !c) return;
+  M.ai = { busy: true }; render();
+  try {
+    const out = await sample(`Compara la respuesta de un estudiante con la respuesta correcta. Contesta en español, en 2 frases como máximo, en tono cercano y sin juzgar la capacidad: di qué ha acertado y qué le falta. Termina con uno de estos veredictos entre corchetes: [Lo saqué], [A medias] o [No salió].\n\nPregunta: ${c.q}\nRespuesta correcta: ${c.a}\nRespuesta del estudiante: ${M.typed.slice(0, 2000)}`, { modelTier: "quick" });
+    if (M && M.ai) M.ai = { text: out.text };
+  } catch (e) { if (M) M.ai = { text: aiError(e) || "Revisión cancelada." }; }
+  if (M && M.step) render();
+}
+
+/* ---------- Hoja en blanco ---------- */
+function vBlank() {
+  const d = deckById(ui.deckId); if (!d || !B) { ui.screen = null; return vMazos(); }
+  if (B.phase === "write") {
+    const m = Math.floor(B.left / 60), s = B.left % 60;
+    return `<div class="stack"><div class="mtop"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Salir">✕</button><div class="bar"><i style="width:${(1 - B.left / B.total) * 100}%"></i></div><span class="pill num" id="blank-t">${m}:${String(s).padStart(2, "0")}</span></div>
+    <section class="stage stack"><p class="eyebrow">Hoja en blanco · ${esc(d.name)}</p><h1 style="font-size:28px">Escribe todo lo que recuerdes del tema</h1><p class="muted">Sin mirar nada. Frases sueltas, palabras, esquemas: todo vale. Después compararás.</p>
+    <textarea id="blank-in" rows="12" data-autofocus>${esc(B.text)}</textarea><button class="btn primary wide" data-act="blankDone">He terminado, comparar</button></section></div>`;
+  }
+  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Salir">✕</button><h1 style="font-size:24px">Compara</h1></div>
+  <p class="muted">Marca las ideas que sí incluiste. Las que no, entran en la misión de hoy.</p>
+  ${B.text.trim() ? `<details class="lawd"><summary>Ver lo que escribiste</summary><div class="body mine">${esc(B.text)}</div></details>` : ""}
+  ${d.cards.map(c => `<button class="check" data-act="blankTick" data-v="${c.id}" aria-pressed="${!!B.got[c.id]}"><span class="box">${B.got[c.id] ? "✓" : ""}</span><span style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(c.a)}</b><span class="muted small" style="overflow-wrap:anywhere">${esc(c.q)}</span></span></button>`).join("")}
+  <button class="btn mint wide" data-act="blankSave">Guardar resultado</button></div>`;
+}
+let blankTimer = null;
+function startBlank() {
+  B = { phase: "write", text: "", total: 180, left: 180, got: {} }; ui.screen = "blank"; render();
+  clearInterval(blankTimer); const end = Date.now() + 180000;
+  blankTimer = setInterval(() => {
+    if (!B || B.phase !== "write") return clearInterval(blankTimer);
+    B.left = Math.max(0, Math.round((end - Date.now()) / 1000));
+    const el = $("#blank-t"); if (el) el.textContent = `${Math.floor(B.left / 60)}:${String(B.left % 60).padStart(2, "0")}`;
+    const bar = $(".mtop .bar i"); if (bar) bar.style.width = `${(1 - B.left / B.total) * 100}%`;
+    if (!B.left) { clearInterval(blankTimer); SND.tick(); toast("Tiempo. Termina la frase y compara."); }
+  }, 500);
+}
+
+/* ---------- Foco ---------- */
+let focusTimer = null;
+function vFoco() {
+  const mins = S.profile.focus;
+  const total = F.total || mins * 60, left = F.total ? F.left : mins * 60;
+  const C = 2 * Math.PI * 130, pct = total ? 1 - left / total : 0, isBreak = F.mode === "break";
+  const breaks = ["Levántate y estira los brazos 10 veces", "Bebe un vaso de agua", "Mira por la ventana a lo lejos 20 segundos", "Baila una canción entera", "Respira: 4 segundos dentro, 6 fuera, cinco veces", "Camina hasta otra habitación y vuelve"];
+  const items = [["phone", "Móvil fuera"], ["music", "Sin música"], ["goal", "Objetivo claro"]];
+  return `${header()}<div class="stack" style="margin-top:12px">
+  <h1 style="font-size:26px">${isBreak ? "Descanso de verdad" : "Bloque de foco"}</h1>
+  <p class="muted">${isBreak ? esc(breaks[(today() + (F.breakIdx || 0)) % breaks.length]) + ". Sin pantallas: el cerebro también consolida en las pausas." : "Bloques cortos, una sola tarea. Al terminar, descanso de 5 minutos."}</p>
+  <div class="ring"><svg viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="130" stroke="var(--ink-3)" stroke-width="22" fill="none"/><circle id="ring-p" cx="150" cy="150" r="130" stroke="${isBreak ? "var(--mint)" : "var(--pink)"}" stroke-width="22" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg>
+  <div class="t"><div><b class="num" id="ring-t">${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}</b><p class="muted small">${isBreak ? "descanso" : F.running ? "en foco" : "listo"}</p></div></div></div>
+  <div class="row" style="justify-content:center">
+    ${F.running ? `<button class="btn ghost" data-act="fPause">Pausa</button>` : `<button class="btn primary" data-act="fStart">${F.total && F.left < F.total ? "Seguir" : isBreak ? "Empezar descanso" : "Empezar"}</button>`}
+    ${F.total ? `<button class="btn ghost" data-act="fReset">Reiniciar</button>` : ""}
+  </div>
+  ${!F.total && !isBreak ? `<p class="eyebrow">Duración</p><div class="chiprow">${[10, 15, 20, 25].map(m => `<button class="chipbtn" data-act="fMins" data-v="${m}" aria-pressed="${mins === m}">${m} min</button>`).join("")}</div>` : ""}
+  <p class="eyebrow">Antes de empezar</p>
+  <div class="chiprow">${items.map(([k, l]) => `<button class="chipbtn" data-act="fCheck" data-v="${k}" aria-pressed="${!!F.checks[k]}">${F.checks[k] ? "✓ " : ""}${esc(l)}</button>`).join("")}</div>
+  <button class="check" data-act="fNoise" aria-pressed="${F.noise}"><span class="box">${F.noise ? "✓" : ""}</span><span>Ruido marrón de fondo<span class="muted small" style="display:block">No es música. A algunas personas con TDA les ayuda a aislarse; si a ti no, déjalo apagado.</span></span></button>
+  <div class="panel small muted">Si te viene un pensamiento que no toca («tengo que contestar a…»), apúntalo en un papel y vuelve. Lo atiendes en el descanso.</div>
+  </div>`;
+}
+function fTick() {
+  if (!F.running) return;
+  F.left = Math.max(0, Math.round((F.endAt - Date.now()) / 1000));
+  const el = $("#ring-t"), p = $("#ring-p");
+  if (el) el.textContent = `${Math.floor(F.left / 60)}:${String(F.left % 60).padStart(2, "0")}`;
+  if (p) { const C = 2 * Math.PI * 130; p.setAttribute("stroke-dashoffset", C * (F.left / F.total)); }
+  if (!F.left) {
+    clearInterval(focusTimer); F.running = false; releaseWake();
+    if (F.mode === "focus") { addXP(20); logDay("fo"); touch(); SND.win(); confetti(); toast("+20 XP · bloque completado"); F.mode = "break"; F.total = 300; F.left = 300; F.breakIdx = (F.breakIdx || 0) + 1; }
+    else { SND.tick(); toast("Descanso terminado. ¿Otro bloque?"); F.mode = "focus"; F.total = 0; F.left = 0; }
+    if (ui.tab === "foco" && !ui.screen) render();
+  }
+}
+let wake = null;
+async function requestWake() { try { wake = await navigator.wakeLock.request("screen"); } catch { wake = null; } }
+function releaseWake() { try { wake && wake.release(); } catch {} wake = null; }
+
+/* ---------- Yo ---------- */
+function vYo() {
+  const lv = levelInfo(S.profile.xp), st = allStats(), t = today(), s = streak();
+  const totalEv = Object.values(S.profile.days).reduce((a, d) => a + (d.ev || 0), 0);
+  const totalFo = Object.values(S.profile.days).reduce((a, d) => a + (d.fo || 0), 0);
+  const start = t - 7 * 12 + 1;
+  const cells = []; for (let k = start; k <= t; k++) { const d = S.profile.days[k]; const v = d ? (d.ev || 0) + (d.fo || 0) * 3 : 0; const a = v === 0 ? 0 : v < 5 ? .35 : v < 12 ? .65 : 1; cells.push(`<i title="${fmtDay(k)}: ${v}" style="${a ? `background:color-mix(in srgb,var(--mint) ${a * 100}%,var(--ink-3))` : ""}"></i>`); }
+  return `${header()}<div class="stack" style="margin-top:12px">
+  <div class="level"><p class="eyebrow">Tu cerebro</p><h1 style="font-size:28px;margin-top:4px">${esc(lv.name)}</h1><p class="muted small num">Nivel ${lv.level} · ${S.profile.xp} XP en total</p><div class="bar" style="margin-top:10px"><i style="width:${lv.rest / lv.need * 100}%"></i></div></div>
+  <div class="grid2"><div class="tile"><div class="v num">${s}</div><div class="muted small">${plural(s, "día")} de racha</div></div><div class="tile"><div class="v num">${totalEv}</div><div class="muted small">evocaciones</div></div><div class="tile"><div class="v num" style="color:var(--mint)">${st.done}</div><div class="muted small">dominadas 3/3</div></div><div class="tile"><div class="v num">${totalFo}</div><div class="muted small">bloques de foco</div></div></div>
+  <div class="panel stack"><b>Últimas 12 semanas</b><div class="heat" aria-label="Actividad diaria">${cells.join("")}</div></div>
+  <p class="eyebrow">Las 6 leyes de tu cerebro</p>
+  ${LAWS.map(l => `<details class="lawd"><summary><span class="k" style="background:${l.c};flex:none">${esc(l.k)}</span><span>${esc(l.t)}</span></summary><div class="body"><p><b style="color:var(--mint)">Truqui:</b> ${esc(l.truqui)}</p><p><b style="color:var(--coral)">Antitruqui:</b> ${esc(l.anti)}</p><p class="muted"><b>En Sinapsis:</b> ${esc(l.app)}</p></div></details>`).join("")}
+  <p class="small muted">Basado en <i>Aprender a aprender</i>, de Héctor Ruiz Martín.</p>
+  <p class="eyebrow">Ajustes</p>
+  <div class="panel stack"><b>Evocaciones por misión</b><div class="chiprow">${[5, 10, 15, 20].map(n => `<button class="chipbtn" data-act="setGoal" data-v="${n}" aria-pressed="${S.profile.goal === n}">${n}</button>`).join("")}</div>
+  <button class="check" data-act="sound" aria-pressed="${!!S.profile.sound}"><span class="box">${S.profile.sound ? "✓" : ""}</span>Sonidos de recompensa</button></div>
+  <div class="panel stack"><b>Copia de seguridad</b><p class="muted small">Copia tus datos para guardarlos en Notas o pasarlos a otro dispositivo.</p>
+  <div class="row"><button class="btn ghost" data-act="exportData">Copiar mis datos</button><button class="btn ghost" data-act="showImport">Restaurar</button></div>
+  ${ui.importing ? `<textarea id="imp" rows="4" placeholder="Pega aquí la copia"></textarea><button class="btn primary" data-act="importData">Restaurar desde la copia</button>` : ""}
+  <textarea id="exp" rows="3" readonly hidden></textarea></div>
+  <p class="sync" id="sync">${esc(syncLabel)}</p></div>`;
+}
+
+/* ============ Acciones ============ */
+const A = {
+  tab(v) { ui.tab = v; ui.screen = null; render(); scrollTo(0, 0); },
+  onbNext() { if (ui.onb < 2) { ui.onb++; render(); } else { S.profile.onboarded = true; touch(); render(); } },
+  onbSkip() { S.profile.onboarded = true; touch(); render(); },
+  mission(v) { if (v === "nodeck") { ui.form = {}; ui.screen = "newdeck"; render(); return; } startMission(); },
+  quick() { if (!allStats().total) { toast("Primero crea un mazo con tarjetas"); return; } startMission({ quick: true }); },
+  missionDeck() { startMission({ deckId: ui.deckId }); },
+  ritual(v) { M.ritual[v] = !M.ritual[v]; render(); },
+  ritualGo() { M.step = nextStep("ritual"); if (M.step === "done") onDone(); render(); },
+  reveal() { M.typed = ($("#ev-in") || {}).value || ""; M.revealed = true; render(); },
+  hint() { M.typed = ($("#ev-in") || {}).value || ""; M.hint = true; render(); },
+  grade(v) { doGrade(v); },
+  aiCheck() { aiCheck(); },
+  explained() { M.explained = !M.explained; render(); },
+  learnNext() {
+    const it = M.learn[M.li], c = getCard(it), d = deckById(it.deckId);
+    const hook = ($("#ln-hook").value || "").trim();
+    let xp = 5; if (hook && hook !== (c.hook || "")) xp += 5; if (M.explained) xp += 3;
+    c.hook = hook; c.seen = true; c.learned = today(); c.due = today() + 1; c.ok = 0;
+    addXP(xp); M.xp += xp; touch(d.id);
+    M.checks.push({ deckId: it.deckId, cardId: c.id }); M.explained = false;
+    M.li++; if (M.li >= M.learn.length) { M.checks = interleave(M.checks); M.step = nextStep("learn"); if (M.step === "done") onDone(); }
+    toast(`+${xp} XP`); render(); scrollTo(0, 0);
+  },
+  checkGo() { M.step = "check"; render(); },
+  refl(v) { M.refl = v; S.profile.reflections = [...(S.profile.reflections || []), { d: today(), r: v }].slice(-60); touch(); render(); },
+  finish() { const from = M && M.from; M = null; ui.screen = from; render(); scrollTo(0, 0); },
+  quitMission() { const from = M && M.from; M = null; ui.screen = from; render(); scrollTo(0, 0); },
+  newDeck() { ui.form = { color: COLORS[S.decks.length % COLORS.length] }; ui.screen = "newdeck"; render(); },
+  pickColor(v) { ui.form.name = ($("#nd-name") || {}).value ?? ui.form.name; ui.form.exam = ($("#nd-exam") || {}).value ?? ui.form.exam; ui.form.color = v; const keepName = $("#ds-name") && $("#ds-name").value; const keepExam = $("#ds-exam") && $("#ds-exam").value; render(); if (keepName != null && $("#ds-name")) { $("#ds-name").value = keepName; $("#ds-exam").value = keepExam; } },
+  createDeck() {
+    const name = ($("#nd-name").value || "").trim(); if (!name) { toast("Ponle un nombre al mazo"); return; }
+    const d = { id: uid(), name: name.slice(0, 60), color: ui.form.color || COLORS[0], exam: dateToDay($("#nd-exam").value), order: Date.now(), cards: [] };
+    S.decks.push(d); touch(d.id); ui.deckId = d.id; ui.screen = "add"; ui.prev = "deck"; render();
+  },
+  openDeck(v) { ui.deckId = v; ui.screen = "deck"; ui.prev = "deck"; ui.editCard = null; ui.confirm = null; ui.form = {}; G = null; B = null; render(); scrollTo(0, 0); },
+  back() { ui.screen = null; ui.tab = ui.tab || "mazos"; render(); },
+  deckSet() { ui.form = {}; ui.confirm = null; ui.screen = "deckset"; render(); },
+  saveDeck() {
+    const d = deckById(ui.deckId), name = ($("#ds-name").value || "").trim(); if (!name) { toast("El nombre no puede quedar vacío"); return; }
+    d.name = name.slice(0, 60); d.color = ui.form.color || d.color; d.exam = dateToDay($("#ds-exam").value);
+    d.cards.forEach(c => { if (c.due != null) c.due = clampToExam(d, c.due); });
+    touch(d.id); toast("Guardado"); A.openDeck(d.id);
+  },
+  resetDeck() { const d = deckById(ui.deckId); d.cards.forEach(c => Object.assign(c, { seen: false, ok: 0, last: null, due: null, learned: null, lapses: 0, restudy: false })); touch(d.id); toast("Progreso reiniciado"); A.openDeck(d.id); },
+  askDelDeck() { ui.confirm = "deck"; render(); },
+  delDeck() { const id = ui.deckId; S.decks = S.decks.filter(d => d.id !== id); deleted.add(id); dirty.delete(id); touch(); ui.screen = null; ui.tab = "mazos"; ui.confirm = null; toast("Mazo borrado"); render(); },
+  add() { ui.screen = "add"; render(); },
+  addOne() {
+    const q = $("#a-q").value.trim(), a = $("#a-a").value.trim(), hook = $("#a-h").value.trim();
+    if (!q || !a) { toast("Escribe pregunta y respuesta"); return; }
+    const d = deckById(ui.deckId); d.cards.push(newCard(q, a, hook)); touch(d.id); toast(`Añadida · ${d.cards.length} en el mazo`);
+    $("#a-q").value = ""; $("#a-a").value = ""; $("#a-h").value = ""; $("#a-q").focus();
+  },
+  addBulk() {
+    const d = deckById(ui.deckId), lines = $("#a-bulk").value.split("\n"); let n = 0;
+    lines.forEach(l => { const p = l.includes("::") ? l.split("::") : l.split("|"); if (p.length >= 2 && p[0].trim() && p[1].trim()) { d.cards.push(newCard(p[0].trim(), p[1].trim(), (p[2] || "").trim())); n++; } });
+    if (!n) { toast("No encontré líneas con el formato pregunta :: respuesta"); return; }
+    touch(d.id); toast(`${n} ${plural(n, "tarjeta añadida", "tarjetas añadidas")}`); A.openDeck(d.id);
+  },
+  editCard(v) { ui.editCard = v; ui.confirm = null; render(); },
+  cancelEdit() { ui.editCard = null; render(); },
+  saveCard(v) { const d = deckById(ui.deckId), c = d.cards.find(x => x.id === v); const q = $("#e-q").value.trim(), a = $("#e-a").value.trim(); if (!q || !a) { toast("Pregunta y respuesta no pueden quedar vacías"); return; } c.q = q; c.a = a; c.hook = $("#e-h").value.trim(); touch(d.id); ui.editCard = null; render(); },
+  askDel(v) { ui.confirm = v; render(); },
+  delCard(v) { const d = deckById(ui.deckId); d.cards = d.cards.filter(c => c.id !== v); touch(d.id); ui.editCard = null; ui.confirm = null; render(); },
+  team() { ui.screen = "team"; render(); },
+  copyTeam() { copy(ui.teamText, $("#team-text")); },
+  gen() { G = null; ui.screen = "gen"; render(); },
+  genGo() { genGo(); },
+  genStop() { genCtl && genCtl.abort(); },
+  genSel(v) { G.notes = ($("#g-notes") || {}).value ?? G.notes; G.sel[v] = G.sel[v] === false; render(); },
+  genAdd() { const d = deckById(ui.deckId); let n = 0; G.out.forEach((c, i) => { if (G.sel[i] !== false) { d.cards.push(newCard(c.q, c.a, c.hook)); n++; } }); touch(d.id); G = null; toast(`${n} ${plural(n, "tarjeta añadida", "tarjetas añadidas")}`); A.openDeck(d.id); },
+  blank() { startBlank(); },
+  blankDone() { B.text = $("#blank-in").value; B.phase = "compare"; clearInterval(blankTimer); render(); scrollTo(0, 0); },
+  blankTick(v) { B.got[v] = !B.got[v]; render(); },
+  blankSave() {
+    const d = deckById(ui.deckId), t = today(); let got = 0;
+    d.cards.forEach(c => {
+      if (B.got[c.id]) { got++; if (!c.seen) { c.seen = true; c.learned = t; c.due = t + 1; } else grade(d, c, "ok", true); }
+      else if (c.seen) { c.due = t; c.restudy = true; }
+      else { c.seen = true; c.learned = t; c.due = t + 1; }
+    });
+    logDay("ev", d.cards.length); logDay("ok", got); const xp = 3 * d.cards.length + 10; addXP(xp); touch(d.id);
+    SND.win(); confetti(); toast(`+${xp} XP · ${got}/${d.cards.length} recordadas`); B = null; A.openDeck(d.id);
+  },
+  fMins(v) { S.profile.focus = Number(v); touch(); render(); },
+  fCheck(v) { F.checks[v] = !F.checks[v]; render(); },
+  fStart() {
+    if (!F.total) { F.total = F.mode === "break" ? 300 : S.profile.focus * 60; F.left = F.total; }
+    F.endAt = Date.now() + F.left * 1000; F.running = true; audio(); requestWake();
+    clearInterval(focusTimer); focusTimer = setInterval(fTick, 250); render();
+  },
+  fPause() { F.running = false; clearInterval(focusTimer); F.left = Math.max(0, Math.round((F.endAt - Date.now()) / 1000)); releaseWake(); render(); },
+  fReset() { F.running = false; clearInterval(focusTimer); F.total = 0; F.left = 0; F.mode = "focus"; releaseWake(); render(); },
+  fNoise() { F.noise = toggleNoise(!F.noise); render(); },
+  setGoal(v) { S.profile.goal = Number(v); touch(); render(); },
+  sound() { S.profile.sound = !S.profile.sound; touch(); render(); },
+  exportData() { const ta = $("#exp"); ta.hidden = false; ta.value = JSON.stringify(S); copy(ta.value, ta); },
+  showImport() { ui.importing = true; render(); },
+  importData() {
+    try { const x = JSON.parse($("#imp").value); if (!x || !x.profile || !Array.isArray(x.decks)) throw 0;
+      S.decks.forEach(d => { if (!x.decks.some(n => n.id === d.id)) deleted.add(d.id); });
+      S = x; S.decks.forEach(d => dirty.add(d.id)); touch(); ui.importing = false; toast("Datos restaurados"); render();
+    } catch { toast("La copia no es válida. Pega el texto completo."); }
+  },
+};
+function newCard(q, a, hook) { return { id: uid(), q: q.slice(0, 500), a: a.slice(0, 1200), hook: (hook || "").slice(0, 240), seen: false, ok: 0, last: null, due: null, learned: null, lapses: 0, created: Date.now() }; }
+function copy(text, ta) {
+  const done = () => toast("Copiado");
+  try { navigator.clipboard.writeText(text).then(done, () => { if (ta) { ta.hidden = false; ta.focus(); ta.select(); } toast("Selecciona el texto y cópialo"); }); }
+  catch { if (ta) { ta.hidden = false; ta.focus(); ta.select(); } toast("Selecciona el texto y cópialo"); }
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  const fn = A[b.dataset.act]; if (fn) { e.preventDefault(); fn(b.dataset.v); }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "ev-in" && M) M.typed = e.target.value;
+  if (e.target.id === "blank-in" && B) B.text = e.target.value;
+  if (e.target.id === "g-notes" && G) G.notes = e.target.value;
+});
+document.addEventListener("keydown", (e) => {
+  if (ui.screen !== "mission" || !M || !(M.step === "ev" || M.step === "check")) return;
+  if (!M.revealed && e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); A.reveal(); }
+  if (M.revealed && e.target.tagName !== "TEXTAREA") { if (e.key === "1") doGrade("ok"); if (e.key === "2") doGrade("mid"); if (e.key === "3") doGrade("no"); }
+});
+
+render();
+initCloud();
+})();
+</script>
+<script>if("serviceWorker" in navigator&&!window.claude)navigator.serviceWorker.register("sw.js").catch(()=>{});</script></body></html>
