@@ -38,6 +38,7 @@ export const brand = {
     },
     {
       id: 'umbral',
+      layout: 'tr',
       numeral: 'II',
       label: 'El umbral',
       eyebrow: 'Pasaje cubierto · patio de agua',
@@ -47,6 +48,7 @@ export const brand = {
     },
     {
       id: 'estancia',
+      layout: 'tl',
       numeral: 'III',
       label: 'La estancia',
       eyebrow: 'Suite Bosque · interior',
@@ -56,6 +58,7 @@ export const brand = {
     },
     {
       id: 'apertura',
+      layout: 'tc',
       numeral: 'IV',
       label: 'La apertura',
       eyebrow: 'Ventanal corredizo · terraza',
@@ -129,10 +132,10 @@ export const brand = {
     {
       id: 'suite-bosque',
       name: 'Suite Bosque',
-      size: '68 m² · 2 personas',
+      size: '250 m² · 2 personas',
       image: 'renders/estancia.webp',
       alt: 'Interior de la Suite Bosque con cama de lino frente al ventanal y luz de atardecer sobre el suelo de roble',
-      summary: 'La estancia del recorrido: cama orientada al lago, bañera de piedra junto al ventanal y terraza propia.',
+      summary: 'La estancia del recorrido: dormitorio orientado al lago, baño abierto de piedra, sala de lectura y terraza propia.',
       features: ['Ventanal corredizo de 14 m', 'Bañera exenta de piedra', 'Terraza de madera sobre el lago'],
     },
     {

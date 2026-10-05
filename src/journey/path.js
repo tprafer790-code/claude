@@ -11,6 +11,7 @@ export class Journey {
     this.keys = keys;
     this.posCurve = new THREE.CatmullRomCurve3(keys.map((k) => new THREE.Vector3(...k.pos)), false, 'centripetal');
     this.lookCurve = new THREE.CatmullRomCurve3(keys.map((k) => new THREE.Vector3(...k.look)), false, 'centripetal');
+    this.lookCurveP = new THREE.CatmullRomCurve3(keys.map((k) => new THREE.Vector3(...(k.lookP || k.look))), false, 'centripetal');
     // Tabla de tramos en unidades de scroll.
     this.segments = [];
     let u = 0;
@@ -53,7 +54,7 @@ export class Journey {
     const n = this.keys.length - 1;
     const t = (L.k + L.f) / n;
     this.posCurve.getPoint(Math.min(1, t), out.pos);
-    this.lookCurve.getPoint(Math.min(1, t), out.look);
+    (aspect < 1 ? this.lookCurveP : this.lookCurve).getPoint(Math.min(1, t), out.look);
     const k0 = this.keys[L.k], k1 = this.keys[Math.min(n, L.k + 1)];
     out.fov = adaptFov(k0.fov + (k1.fov - k0.fov) * L.f, aspect);
     out.key = L.k; out.f = L.f; out.local = L.local; out.type = L.seg.type;
@@ -63,7 +64,7 @@ export class Journey {
   // Pose fija de una clave (versión de movimiento reducido).
   keyPose(i, aspect) {
     const k = this.keys[i];
-    return { pos: new THREE.Vector3(...k.pos), look: new THREE.Vector3(...k.look), fov: adaptFov(k.fov, aspect), key: i, f: 0 };
+    return { pos: new THREE.Vector3(...k.pos), look: new THREE.Vector3(...(aspect < 1 && k.lookP ? k.lookP : k.look)), fov: adaptFov(k.fov, aspect), key: i, f: 0 };
   }
 }
 

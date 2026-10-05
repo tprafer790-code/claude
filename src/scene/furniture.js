@@ -12,6 +12,14 @@ function lathe(points, mat, segs = 40) {
   return m;
 }
 
+// Perfil de torneado muestreado: r(t) con t ∈ [0,1] a lo largo de la altura h.
+function profile(r, h, n = 24, y0 = 0) {
+  const pts = [[0.001, y0]];
+  for (let i = 0; i <= n; i++) { const t = i / n; pts.push([Math.max(0.001, r(t)), y0 + t * h]); }
+  pts.push([0.001, y0 + h]);
+  return pts;
+}
+
 function cushion(mat, w, h, d, amount, uvScale = 0.6, seed = 1) {
   const g = new THREE.BoxGeometry(w, h, d, 16, 6, 12);
   const r = rng(seed);
@@ -76,7 +84,7 @@ export function buildFurniture(M, scene, quality) {
   for (const x of [3.2, 6.3]) {
     const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 3.45 - 1.55, 4), M.blackSteel);
     cord.position.set(x, (3.45 + 1.55) / 2, -9.15);
-    const shade = lathe([[0.001, -0.16], [0.11, -0.14], [0.17, -0.06], [0.18, 0.02], [0.14, 0.12], [0.03, 0.17], [0.001, 0.17]], M.paperLamp, 32);
+    const shade = lathe(profile((t) => 0.185 * Math.pow(Math.sin(Math.PI * t), 0.75) + 0.001, 0.34, 28, -0.16), M.paperLamp, 48);
     shade.position.set(x, 1.38, -9.15); shade.castShadow = false;
     const cap = lathe([[0.001, 0.17], [0.035, 0.17], [0.035, 0.22], [0.001, 0.22]], M.brass, 16); cap.position.copy(shade.position).setY(1.38);
     group.add(cord, shade, cap);
@@ -157,6 +165,38 @@ export function buildFurniture(M, scene, quality) {
     c.position.set((x0 + x1) / 2, F + 1.62, -19.5);
     c.renderOrder = 3;
     group.add(c);
+  }
+
+  // Tabique-armario de roble exento: ordena la planta (dormitorio / sala de lectura)
+  // y da escala. No llega al techo: la luz y los listones continúan por encima.
+  B.box(M.oak, [-3.85, -3.25], [F, 2.6], [-15.0, -9.8], W);
+  for (let z = -14.9; z < -9.85; z += 0.62) B.box(M.blackSteel, [-3.25, -3.23], [1.2, 1.5], [z + 0.29, z + 0.31], { r: 0, solid: false });
+  // Alfombra de lana bajo la cama
+  B.box(M.rug, [2.4, 7.1], [F, F + 0.02], [-12.6, -8.5], { uvScale: 0.5, r: 0.01, solid: false });
+  // Jarrón de suelo con ramas secas junto al ventanal
+  {
+    const vase = lathe(profile((t) => 0.16 + 0.1 * Math.sin(t * Math.PI) - 0.07 * t, 0.85, 26), M.ceramicIron, 40);
+    vase.position.set(7.0, F, -18.6); group.add(vase);
+    const r = rng(5);
+    for (let i = 0; i < 6; i++) {
+      const len = 1.1 + r() * 0.7;
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.012, len, 5), M.bark);
+      b.geometry.translate(0, len / 2, 0);
+      b.position.set(7.0, F + 0.8, -18.6); b.rotation.set((r() - 0.5) * 0.7, r() * 6, (r() - 0.5) * 0.7);
+      group.add(b);
+    }
+  }
+  // Cerámica en la mesilla y libro abierto en el banco
+  { const v = lathe(profile((t) => 0.05 + 0.035 * Math.sin(t * Math.PI * 0.9), 0.22, 20), M.ceramicCeladon, 32); v.position.set(6.35, 0.56, -9.05); group.add(v); }
+  { const b = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 0.24), M.book3); b.position.set(4.3, 0.555, -11.55); b.rotation.y = 0.2; group.add(b); }
+  // Butaca baja junto a la cama, orientada al lago
+  {
+    const seat = cushion(M.wool, 0.7, 0.16, 0.7, 0.35, 0.4, 31); seat.position.set(1.9, F + 0.32, -12.9);
+    const back = cushion(M.wool, 0.7, 0.14, 0.5, 0.3, 0.4, 32); back.rotation.x = -1.3; back.position.set(1.9, F + 0.6, -12.6);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.22, 0.74), M.oak); base.position.set(1.9, F + 0.12, -12.9); base.castShadow = true;
+    const ch = new THREE.Group(); ch.add(seat, back, base); ch.rotation.y = 0.4;
+    group.add(ch);
+    B.solids.push({ min: [1.5, 0, -13.3], max: [2.3, 0.9, -12.5] });
   }
 
   // ---------- Terraza ----------

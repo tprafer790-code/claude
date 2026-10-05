@@ -240,6 +240,7 @@ function loop(now) {
   state.uTarget = uFromScroll();
   updateChapter(state.uTarget);
   animateText(raw);
+  dtUI = raw;
   if (!engine) { requestAnimationFrame(loop); return; }
 
   if (state.mode === 'live') {
@@ -263,6 +264,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+let dtUI = 0.016;
 function placeMarkers(live) {
   const k = engine.journey.locate(live ? state.uCur : journey.keyCenter(state.stillKey));
   const near = KEYS[k.k]?.hotspots && (k.seg.type === 'hold' || k.f < 0.15) && state.blend < 0.3;
@@ -274,7 +276,9 @@ function placeMarkers(live) {
       m.style.transform = `translate3d(${tmp.x}px, ${tmp.y}px, 0)`;
       vis = tmp.visible;
     }
-    markerOpacity[i] = live && !reduced ? markerOpacity[i] + ((vis ? 1 : 0) - markerOpacity[i]) * 0.25 : (vis ? 1 : 0);
+    // Fundido por tiempo al aparecer; desaparición inmediata (sin restos al cambiar de plano).
+    markerOpacity[i] = vis ? (live && !reduced ? markerOpacity[i] + (1 - markerOpacity[i]) * (1 - Math.exp(-dtUI * 10)) : 1) : 0;
+    m.style.visibility = vis ? 'visible' : 'hidden';
     m.style.opacity = markerOpacity[i].toFixed(3);
     m.classList.toggle('is-visible', vis);
     m.tabIndex = vis ? 0 : -1;

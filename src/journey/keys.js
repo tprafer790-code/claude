@@ -2,6 +2,7 @@
 // hold: permanencia (en pantallas de scroll) sin desplazamiento en la clave.
 // move: longitud de scroll del tramo hacia la clave siguiente.
 // ch: índice de capítulo al que pertenece la clave.
+// lookP: mirada alternativa para pantallas verticales (encuadre propio en móvil).
 // Ver docs/estudio/proyecto/planta.md.
 export const KEYS = [
   // I · El descubrimiento — emerger del bosque y revelar el refugio
@@ -15,7 +16,7 @@ export const KEYS = [
   { ch: 1, pos: [-1.6, 1.68, -1.5], look: [-1.6, 1.6, -10], fov: 46, hold: 0, move: 0.9 },
   // III · La estancia — interior de la suite
   { ch: 2, pos: [-1.6, 1.8, -6.3], look: [-0.6, 1.5, -12], fov: 50, hold: 0, move: 1.0 },
-  { ch: 2, pos: [-1.9, 1.7, -8.4], look: [4.2, 0.9, -13.2], fov: 52, hold: 1.6, move: 1.2, still: true, hotspots: true },
+  { ch: 2, pos: [-2.2, 1.68, -7.4], look: [2.7, 1.25, -13.2], lookP: [3.2, 1.0, -11.6], fov: 48, hold: 1.6, move: 1.2, still: true, hotspots: true },
   { ch: 2, pos: [0.2, 1.72, -13.8], look: [1.6, 1.2, -24], fov: 52, hold: 0.8, move: 1.0, hotspots: true },
   // IV · La apertura — el ventanal se desliza, salimos a la terraza
   { ch: 3, pos: [0.0, 1.72, -18.2], look: [0.0, 1.6, -40], fov: 50, hold: 1.0, move: 1.1, still: true, slide: true },

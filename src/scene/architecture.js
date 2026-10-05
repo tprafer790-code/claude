@@ -71,7 +71,7 @@ export function buildArchitecture(M, scene, opts = {}) {
   B.box(M.bronze, [-0.8, -0.72], [0, 2.85], [-6.55, -5.95], { r: 0.01, solid: false });
   // hoja pivotante abierta (roble)
   const door = new THREE.Mesh(new THREE.BoxGeometry(0.07, 2.6, 1.5), M.oak);
-  door.position.set(-0.95, 1.45, -7.3); door.rotation.y = 0.12; door.castShadow = true;
+  door.position.set(-0.02, 1.45, -6.56); door.rotation.y = Math.PI / 2; door.castShadow = true; // abierta contra el muro
   group.add(door);
   // muros este y oeste
   for (const sx of [-1, 1]) {

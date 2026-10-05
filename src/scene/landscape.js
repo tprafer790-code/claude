@@ -107,13 +107,30 @@ function leafTexture(kind) {
       }
     }
   }
-  const t = new THREE.CanvasTexture(c);
+  // Dilatación: los texels transparentes toman el color de su vecino opaco más
+  // cercano. Así el filtrado bilineal y los mipmaps no crean halos claros/oscuros.
+  const img = x.getImageData(0, 0, 256, 256), d = img.data, N = 256;
+  for (let pass = 0; pass < 6; pass++) {
+    const src = new Uint8ClampedArray(d);
+    for (let yy = 0; yy < N; yy++) for (let xx = 0; xx < N; xx++) {
+      const i = (yy * N + xx) * 4; if (src[i + 3] > 0 || src[i] + src[i + 1] + src[i + 2] > 0) continue;
+      let r = 0, g = 0, b = 0, n = 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const X = (xx + dx + N) % N, Y = (yy + dy + N) % N, j = (Y * N + X) * 4;
+        if (src[j + 3] > 0 || src[j] + src[j + 1] + src[j + 2] > 0) { r += src[j]; g += src[j + 1]; b += src[j + 2]; n++; }
+      }
+      if (n) { d[i] = r / n; d[i + 1] = g / n; d[i + 2] = b / n; }
+    }
+  }
+  const t = new THREE.DataTexture(new Uint8Array(d.buffer.slice(0)), N, N, THREE.RGBAFormat);
+  t.flipY = true; t.needsUpdate = true; t.generateMipmaps = true;
+  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   return t;
 }
 
 function windMaterial(params, amp = 0.06) {
-  const m = new THREE.MeshStandardMaterial({ alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85, ...params });
+  const m = new THREE.MeshStandardMaterial({ alphaTest: 0.5, alphaToCoverage: true, side: THREE.DoubleSide, roughness: 0.85, ...params });
   m.onBeforeCompile = (s) => {
     s.uniforms.uWind = wind;
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;')
@@ -274,9 +291,9 @@ export function buildLandscape(M, scene, q, sunDir) {
 
   // ---------- Montañas (tres planos de profundidad) ----------
   const ridges = [
-    { z: -260, h: 55, w: 1400, col: 0x1c2620, top: 0x3a4236, seed: 1.3 },
-    { z: -380, h: 120, w: 1900, col: 0x26302c, top: 0x6a6660, seed: 4.7 },
-    { z: -560, h: 220, w: 2600, col: 0x3c4246, top: 0x9a948c, seed: 9.1 },
+    { z: -260, h: 55, w: 1400, col: 0x16201a, top: 0x27321f, seed: 1.3, forest: true },
+    { z: -380, h: 120, w: 1900, col: 0x1e2a24, top: 0x6d6862, seed: 4.7, forest: true },
+    { z: -560, h: 220, w: 2600, col: 0x3a4045, top: 0x8f8a84, seed: 9.1, snow: 0.78 },
   ];
   for (const R of ridges) {
     // Cada columna sube desde el agua hasta la cresta r(x); las filas inclinan la
@@ -287,12 +304,16 @@ export function buildLandscape(M, scene, q, sunDir) {
     const colsArr = new Float32Array(p.count * 3), base = new THREE.Color(R.col), top = new THREE.Color(R.top), cc = new THREE.Color();
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), f = p.getY(i) + 0.5; // 0 = pie, 1 = cresta
-      const ridge = Math.max(0.08, fbm(x * 0.004 + R.seed, R.seed * 3.1, 7) * 1.5 - 0.25) * R.h;
+      let ridge = Math.max(0.08, fbm(x * 0.004 + R.seed, R.seed * 3.1, 7) * 1.5 - 0.25) * R.h;
+      // copas de árboles dentando la silueta de las cordilleras boscosas
+      if (R.forest) ridge += (hash(Math.floor(x * 0.6), R.seed) * 0.6 + 0.4) * 2.2 * (1 - ridge / (R.h * 1.4));
       const shoulder = Math.pow(f, 0.7);
       const yv = ridge * shoulder - 3;
       p.setXYZ(i, x, yv, -(1 - f) * 0 - f * R.h * 0.9);
       const nn = fbm(x * 0.05, f * 9 + R.seed, 3);
       cc.copy(base).lerp(top, Math.min(1, Math.max(0, f * 1.2 - 0.35 + (nn - 0.5) * 0.4)));
+      // canchales y nieve en las cumbres altas
+      if (R.snow) { const sn = Math.min(1, Math.max(0, (f * (ridge / R.h) - R.snow * 0.9 + (nn - 0.5) * 0.25) * 6)); cc.lerp(new THREE.Color(0xe9e2da), sn); }
       colsArr.set([cc.r, cc.g, cc.b], i * 3);
     }
     g.computeVertexNormals();
@@ -371,11 +392,11 @@ export function buildLandscape(M, scene, q, sunDir) {
   const rockGeo = new THREE.IcosahedronGeometry(1, 3);
   {
     const p = rockGeo.attributes.position, v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = fbm(v.x * 1.5 + 3, v.z * 1.5 + v.y, 4); v.multiplyScalar(0.65 + n * 0.7); v.y *= 0.75; p.setXYZ(i, v.x, v.y, v.z); }
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = fbm(v.x * 1.5 + 3, v.z * 1.5 + v.y, 4); v.multiplyScalar(0.65 + n * 0.7); v.y = v.y * 0.55 - 0.25; p.setXYZ(i, v.x, v.y, v.z); }
     rockGeo.computeVertexNormals();
     const uv = rockGeo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, p.getX(i) * 0.5, p.getY(i) * 0.5 + p.getZ(i) * 0.3);
   }
-  group.add(scatterInstanced(rockGeo, M.boulder, rockPts, { scale: [0.3, 1.6], tint: (c, rr) => c.setHSL(0.08, 0.1, 0.24 + rr() * 0.14) }));
+  group.add(scatterInstanced(rockGeo, M.boulder, rockPts, { scale: [0.3, 1.6], tint: (c, rr) => c.setHSL(0.08 + rr() * 0.03, 0.08, 0.32 + rr() * 0.12) }));
 
   scene.add(group);
   return { group, water };

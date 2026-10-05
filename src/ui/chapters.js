@@ -6,7 +6,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 export function renderChapters(root) {
   const last = brand.chapters.length - 1;
   root.innerHTML = brand.chapters.map((c, i) => `
-    <section class="chapter" id="${c.id}" data-index="${i}" aria-labelledby="t-${c.id}">
+    <section class="chapter" id="${c.id}" data-index="${i}" data-layout="${c.layout || 'bl'}" aria-labelledby="t-${c.id}">
       <div class="chapter__stick">
         <div class="chapter__panel">
           <div class="chapter__meta">
@@ -19,7 +19,7 @@ export function renderChapters(root) {
           </${i === 0 ? 'h1' : 'h2'}>
           <p class="chapter__body" data-r="4">${esc(c.body)}</p>
           ${c.id === 'estancia' ? `<ul class="details-list" data-r="5" aria-label="Detalles de la suite">${brand.hotspots.map((h) => `<li><button type="button" data-hotspot="${h.id}" aria-expanded="false" aria-controls="detail">${esc(h.label)}</button></li>`).join('')}</ul>` : ''}
-          ${i === last ? `<div class="final-cta" data-r="5"><a class="btn" href="#estancias">Explorar las estancias</a><a class="btn btn--ghost" href="#contacto">Solicitar información</a></div>` : ''}
+          ${i === last ? `<div class="final-cta" data-r="5"><a class="btn" href="#estancias">Explorar las estancias</a><a class="link final-cta__alt" href="#contacto">o solicitar información</a></div>` : ''}
           <p class="chapter__note" data-r="5">${esc(c.note)}</p>
         </div>
         ${i === 0 ? '<p class="scroll-cue" aria-hidden="true"><i></i>Desliza para recorrer</p>' : ''}

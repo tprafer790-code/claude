@@ -178,7 +178,13 @@ export async function createEngine(canvas, q, onProgress = () => {}) {
     const uu = opts.keyPose !== undefined ? journey.keyCenter(opts.keyPose) : u;
     const ch = journey.chapterAt(uu);
     const cs = journey.chapterStart;
-    atmo.update(ch + Math.min(1, (uu - cs[ch]) / (cs[ch + 1] - cs[ch])));
+    const chf = ch + Math.min(1, (uu - cs[ch]) / (cs[ch + 1] - cs[ch]));
+    atmo.update(chf);
+    // Exposición por capítulo: el interior (III) se abre ~+0,4 EV, como haría una cámara.
+    const EXPO = [1, 1.05, 1.32, 1.12, 1];
+    const e0 = EXPO[Math.min(4, Math.floor(chf))], e1 = EXPO[Math.min(4, Math.floor(chf) + 1)];
+    const fr = THREE.MathUtils.smoothstep(chf - Math.floor(chf), 0.55, 1);
+    renderer.toneMappingExposure = 0.78 * (e0 + (e1 - e0) * fr);
     const open = THREE.MathUtils.smoothstep(uu, slideA + slideH * 0.1, slideA + slideH * 0.75);
     arch.slider.position.x = arch.slider.userData.openX * open;
 
@@ -200,7 +206,8 @@ export async function createEngine(canvas, q, onProgress = () => {}) {
     tmp.project(camera);
     out.x = (tmp.x * 0.5 + 0.5) * innerWidth;
     out.y = (-tmp.y * 0.5 + 0.5) * innerHeight;
-    out.visible = tmp.z < 1 && Math.abs(tmp.x) < 0.92 && Math.abs(tmp.y) < 0.85 && dist < 10;
+    // margen lateral mayor en vertical: el raíl de capítulos ocupa el borde derecho
+    out.visible = tmp.z < 1 && Math.abs(tmp.x) < (innerWidth < innerHeight ? 0.78 : 0.92) && Math.abs(tmp.y) < 0.85 && dist < 10;
     return out;
   }
 
