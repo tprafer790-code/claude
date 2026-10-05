@@ -62,6 +62,8 @@ function updateChapter(u) {
   chapters.forEach((el, i) => el.classList.toggle('is-active', i === c && !afterJourney));
   if (c !== state.chapter) {
     state.chapter = c; setCurrent(c);
+    $('ci-n').textContent = brand.chapters[c].numeral;
+    document.body.classList.toggle('at-end', c === chapters.length - 1);
     ambience.setMix(Math.min(1, c / 4));
     if (state.mode === 'reduced') cutTo(() => { state.stillKey = stillKey[c]; state.dirty = true; });
     if (state.mode === 'static') showStill(c);
@@ -99,6 +101,7 @@ const menu = $('menu'), menuBtn = $('menu-btn');
 function openMenu() { menu.hidden = false; menuBtn.setAttribute('aria-expanded', 'true'); menu.querySelector('button').focus(); }
 function closeMenu() { if (menu.hidden) return; menu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); menuBtn.focus({ preventScroll: true }); }
 menuBtn.addEventListener('click', openMenu);
+$('chapter-indicator').addEventListener('click', openMenu);
 menu.addEventListener('click', (e) => { if (e.target === menu || e.target.closest('[data-close-menu]')) closeMenu(); });
 menu.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeMenu();
@@ -274,7 +277,8 @@ function placeMarkers(live) {
     if (near) {
       engine.project(h.position, tmp);
       m.style.transform = `translate3d(${tmp.x}px, ${tmp.y}px, 0)`;
-      vis = tmp.visible;
+      // en vertical, sin puntos bajo el panel de texto (mitad inferior)
+      vis = tmp.visible && (innerWidth > innerHeight || tmp.y < innerHeight * 0.48);
     }
     // Fundido por tiempo al aparecer; desaparición inmediata (sin restos al cambiar de plano).
     markerOpacity[i] = vis ? (live && !reduced ? markerOpacity[i] + (1 - markerOpacity[i]) * (1 - Math.exp(-dtUI * 10)) : 1) : 0;

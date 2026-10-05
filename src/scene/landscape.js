@@ -292,7 +292,7 @@ export function buildLandscape(M, scene, q, sunDir) {
   // ---------- Montañas (tres planos de profundidad) ----------
   const ridges = [
     { z: -260, h: 55, w: 1400, col: 0x16201a, top: 0x27321f, seed: 1.3, forest: true },
-    { z: -380, h: 120, w: 1900, col: 0x1e2a24, top: 0x6d6862, seed: 4.7, forest: true },
+    { z: -380, h: 120, w: 1900, col: 0x1e2a24, top: 0x6d6862, seed: 4.7, forest: true, snow: 0.62 },
     { z: -560, h: 220, w: 2600, col: 0x3a4045, top: 0x8f8a84, seed: 9.1, snow: 0.78 },
   ];
   for (const R of ridges) {

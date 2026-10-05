@@ -9,7 +9,9 @@
 - [x] Verificación: QA 30/30, axe 0 incumplimientos, capturas 390/768/1440
 - [x] Crítica independiente 1 → 59,75/100 (`revisiones/critica-2026-10-05.md`)
 - [x] Iteración 1 (ver tabla)
-- [ ] Crítica independiente 2 tras iteración 1
+- [x] Crítica independiente 2 → 62,75/100 (`revisiones/critica-2-2026-10-05.md`)
+- [x] Iteración 2 (ver tabla)
+- [ ] Crítica independiente 3 (última del presupuesto)
 - [ ] Entrega
 
 ## Iteración 1 — respuesta a la crítica
@@ -26,7 +28,19 @@
 | D2 · halos en follaje | Dilatación de color bajo alfa 0 + `alphaToCoverage` con MSAA |
 | D2 · montañas planas | Silueta dentada de bosque en cordilleras cercanas, canchales y nieve en la lejana |
 
+## Iteración 2 — respuesta a la segunda crítica
+| Defecto | Corrección aplicada |
+|---|---|
+| N1 · «250 m²» no creíble para una suite | La unidad pasa a ser **Casa Bosque** (casa de 250 m² con dormitorio, baño abierto y sala de lectura), coherente con la geometría modelada |
+| N1 · plano con exceso de techo/suelo, cama cortada | Cámara a 1,5 m, FOV 40, mirada centrada en cama-bañera-ventanal |
+| N1 · alfombra roja saturada, roble «cebra», bañera flotando | Alfombra bouclé cruda, roble con menos contraste y relieve, plataforma de piedra bajo la bañera |
+| N2 · montañas lisas, destello junto a la torre | Nieve y canchales también en la cordillera intermedia; emisivo de la torre atenuado |
+| N2 · MSAA fijo | 4 muestras en calidad alta, 2 en media |
+| N3 · móvil con plantilla única y caja de velo | Raíl sustituido por indicador «III / V» en la cabecera; II y IV con texto arriba sobre el cielo; velo a sangre sin bordes; sin puntos de detalle bajo el panel |
+| N3 · dos CTA ámbar en V | El CTA de cabecera pasa a contorno en el capítulo final |
+
 ## Pendiente conocido
 - Interiores propios de «Suite Agua» y «Estudio Piedra»: sus tarjetas usan planos del muelle y del patio (entorno), no interiores modelados.
-- Profundidad de campo en el capítulo I (propuesta de la crítica): no aplicada por coste de render.
+- Profundidad de campo en el capítulo I (propuesta en ambas críticas): no aplicada; coste alto en móviles y no verificable sin GPU.
+- Follaje y hierba de tarjetas: mejorados pero siguen leyéndose como vegetación en tiempo real, no fotorrealista. Para un cliente real: árboles glTF con LOD o fotogrametría con licencia.
 - Medición de fluidez en hardware con GPU.

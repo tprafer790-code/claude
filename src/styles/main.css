@@ -105,6 +105,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: linear-gradient(rgba(16, 13, 10, 0.6), rgba(16, 13, 10, 0));
 }
 .wordmark { font: 400 1.7rem/1 var(--f-display); letter-spacing: 0.16em; text-decoration: none; }
+.chapter-indicator { display: none; white-space: nowrap; }
+.top .btn--small { white-space: nowrap; }
+body.at-end .top .btn--small { background: transparent; color: var(--bone); box-shadow: inset 0 0 0 1px var(--line); }
+.rail button { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
 .top__nav { display: flex; align-items: center; gap: 0.6rem; }
 .top__nav > a:not(.btn) { text-decoration: none; padding: 0.6rem 0.8rem; font-size: 0.92rem; }
 .top__nav > a:not(.btn):hover { text-decoration: underline; text-underline-offset: 4px; }
@@ -303,11 +307,14 @@ body.is-static .hotspots { display: none; }
   .top__nav > a:not(.btn) { display: none; }
   .top__nav .btn--small { padding: 0.5rem 0.75rem; font-size: 0.82rem; }
   .rail { left: auto; right: 0.6rem; top: 50%; }
-  .rail .lbl, .rail .tick { display: none; }
-  .rail .n { display: block; width: auto; font-size: 0.66rem; text-align: right; }
-  .rail button { min-height: 32px; min-width: 44px; justify-content: flex-end; background: rgba(20, 17, 14, 0.45); }
-  .rail button[aria-current='step'] { color: var(--ember-strong); }
-  .chapter .chapter__stick { align-items: flex-end !important; justify-content: flex-start !important; }
+  .rail { display: none; }
+  .hide-sm { display: none; }
+  .cap-sm { text-transform: capitalize; }
+  .top__nav { gap: 0.4rem; }
+  .wordmark { font-size: 1.45rem; }
+  .chapter-indicator { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.6rem; margin-right: auto; margin-left: 0.8rem; background: none; border: 0; color: var(--bone-dim); font: var(--t-mono)/1 var(--f-mono); letter-spacing: 0.12em; cursor: pointer; }
+  .chapter-indicator span { color: var(--ember-strong); margin-right: 0.3em; }
+  .chapter .chapter__stick { align-items: flex-end; justify-content: flex-start !important; }
   .chapter[data-layout] .chapter__panel { margin: 0 var(--gut) calc(1.4rem + env(safe-area-inset-bottom)); max-width: none; text-align: left; padding: 1.4rem 0 0; }
   .chapter[data-layout='tc'] .chapter__meta, .chapter[data-layout='tc'] .chapter__note { justify-content: flex-start; }
   .chapter[data-layout] .chapter__title .line:nth-child(2) { padding-left: 0.6em; }
@@ -315,7 +322,12 @@ body.is-static .hotspots { display: none; }
   .details-list button { min-width: 0; white-space: nowrap; padding: 0.4rem 0; font-size: 0.84rem; }
   .chapter[data-layout='tl'] .chapter__body { font-size: 0.96rem; }
   .chapter__panel { margin: 0 var(--gut) calc(1.4rem + env(safe-area-inset-bottom)); max-width: none; padding: 1.4rem 0 0; }
-  .chapter[data-layout] .chapter__panel::before { inset: -35% calc(-1 * var(--gut)) calc(-1.4rem - env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(14, 11, 8, 0.9) 45%, rgba(14, 11, 8, 0.62) 75%, rgba(14, 11, 8, 0)); }
+  .chapter[data-layout] .chapter__panel::before { inset: -45% -100vw calc(-1.4rem - env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(14, 11, 8, 0.9) 40%, rgba(14, 11, 8, 0.55) 72%, rgba(14, 11, 8, 0)); }
+  .chapter[data-layout='tl'] .chapter__stick { align-items: flex-end; }
+  /* II y IV: texto arriba, sobre el cielo */
+  .chapter[data-layout='tr'] .chapter__stick, .chapter[data-layout='tc'] .chapter__stick { align-items: flex-start !important; }
+  .chapter[data-layout='tr'] .chapter__panel, .chapter[data-layout='tc'] .chapter__panel { margin: calc(4.6rem + env(safe-area-inset-top)) var(--gut) 0; padding: 0 0 1.2rem; }
+  .chapter[data-layout='tr'] .chapter__panel::before, .chapter[data-layout='tc'] .chapter__panel::before { inset: calc(-4.6rem - env(safe-area-inset-top)) -100vw -45%; background: linear-gradient(to bottom, rgba(14, 11, 8, 0.88) 40%, rgba(14, 11, 8, 0.5) 72%, rgba(14, 11, 8, 0)); }
   .chapter__body { font-size: 1.02rem; }
   .scroll-cue { display: none; }
   .form { grid-template-columns: 1fr; }

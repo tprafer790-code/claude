@@ -16,7 +16,7 @@ export const KEYS = [
   { ch: 1, pos: [-1.6, 1.68, -1.5], look: [-1.6, 1.6, -10], fov: 46, hold: 0, move: 0.9 },
   // III · La estancia — interior de la suite
   { ch: 2, pos: [-1.6, 1.8, -6.3], look: [-0.6, 1.5, -12], fov: 50, hold: 0, move: 1.0 },
-  { ch: 2, pos: [-2.2, 1.68, -7.4], look: [2.7, 1.25, -13.2], lookP: [3.2, 1.0, -11.6], fov: 48, hold: 1.6, move: 1.2, still: true, hotspots: true },
+  { ch: 2, pos: [-2.4, 1.5, -7.4], look: [3.7, 1.0, -13.2], lookP: [3.4, 0.95, -11.4], fov: 40, hold: 1.6, move: 1.2, still: true, hotspots: true },
   { ch: 2, pos: [0.2, 1.72, -13.8], look: [1.6, 1.2, -24], fov: 52, hold: 0.8, move: 1.0, hotspots: true },
   // IV · La apertura — el ventanal se desliza, salimos a la terraza
   { ch: 3, pos: [0.0, 1.72, -18.2], look: [0.0, 1.6, -40], fov: 50, hold: 1.0, move: 1.1, still: true, slide: true },

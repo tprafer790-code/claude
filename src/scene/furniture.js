@@ -106,7 +106,10 @@ export function buildFurniture(M, scene, quality) {
     spout.position.set(6.55, F + 0.5, -16.5);
     const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.28, 10), M.brass);
     arm.rotation.z = Math.PI / 2; arm.position.set(6.42, F + 0.98, -16.5);
-    group.add(outer, rim, water, spout, arm);
+    // plataforma de piedra: la bañera se asienta, no flota
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.08, 1.7), M.coping); plinth.position.set(5.5, F + 0.04, -16.5); plinth.receiveShadow = true;
+    outer.position.y += 0.08; rim.position.y += 0.08; water.position.y += 0.08;
+    group.add(plinth, outer, rim, water, spout, arm);
     B.solids.push({ min: [4.55, 0, -17.0], max: [6.45, 0.8, -16.0] });
   }
 

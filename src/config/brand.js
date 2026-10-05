@@ -51,7 +51,7 @@ export const brand = {
       layout: 'tl',
       numeral: 'III',
       label: 'La estancia',
-      eyebrow: 'Suite Bosque · interior',
+      eyebrow: 'Casa Bosque · interior',
       title: ['Roble, lino', 'y piedra caliza'],
       body: 'Materiales que envejecen bien y piden ser tocados. Selecciona los puntos señalados para conocer cada pieza.',
       note: 'Toca o enfoca los puntos para ver el detalle',
@@ -131,10 +131,10 @@ export const brand = {
   rooms: [
     {
       id: 'suite-bosque',
-      name: 'Suite Bosque',
-      size: '250 m² · 2 personas',
+      name: 'Casa Bosque',
+      size: '250 m² · casa para 2',
       image: 'renders/estancia.webp',
-      alt: 'Interior de la Suite Bosque con cama de lino frente al ventanal y luz de atardecer sobre el suelo de roble',
+      alt: 'Interior de la Casa Bosque con cama de lino frente al ventanal y luz de atardecer sobre el suelo de roble',
       summary: 'La estancia del recorrido: dormitorio orientado al lago, baño abierto de piedra, sala de lectura y terraza propia.',
       features: ['Ventanal corredizo de 14 m', 'Bañera exenta de piedra', 'Terraza de madera sobre el lago'],
     },

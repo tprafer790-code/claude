@@ -181,7 +181,7 @@ const G = {
       const pores = N.fbm(u, v * 0.2 + t, 128, 2);
       const edge = Math.min(ly, 1 - ly, lx * w * 6, (1 - lx) * w * 6);
       if (gap && edge < 0.03) { o.r = base[0] * 0.25; o.g = base[1] * 0.25; o.b = base[2] * 0.25; o.h = 0; o.ro = 1; return; }
-      const tone = 0.8 + (t - 0.5) * 0.3 + grain * 0.1 + pores * 0.06;
+      const tone = 0.82 + (t - 0.5) * 0.2 + grain * 0.06 + pores * 0.05;
       o.r = base[0] * tone; o.g = base[1] * tone; o.b = base[2] * tone;
       o.h = 0.5 + grain * 0.05 + pores * 0.06; o.ro = 0.55 + grain * 0.15 + pores * 0.15;
     }, { normalStrength: 0.7 });

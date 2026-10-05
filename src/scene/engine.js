@@ -98,7 +98,7 @@ export async function createEngine(canvas, q, onProgress = () => {}) {
   // ---------- Postprocesado ----------
   let composer = null, grade = null, bloom = null;
   if (q.bloom) {
-    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: q.tier === 'high' ? 4 : 2 });
     composer = new EffectComposer(renderer, rt);
     composer.addPass(new RenderPass(scene, camera));
     bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.32, 0.55, 0.88);
