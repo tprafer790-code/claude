@@ -56,3 +56,8 @@ OK   Consola sin errores (en vivo)
 | Renders estáticos (10 webp, solo versión estática y estancias) | 1828 KB | — |
 
 El motor 3D (`engine-*.js`) se carga de forma diferida tras pintar el HTML. Las texturas no se descargan: se generan en el navegador.
+
+## Accesibilidad automática — `node scripts/a11y.mjs` (observado)
+axe-core 4.13.0, reglas WCAG 2.1 A/AA, versión estática, 390 y 1440 px, con menú y diálogo abiertos: **0 incumplimientos** en las 6 pasadas.
+Límite: axe no evalúa el contraste del texto sobre la escena 3D/imagen (lo marca como *incompleto*). Por eso el texto lleva siempre un velo oscuro (rgba(14,11,8,0.78) en el centro del panel; degradado de 0.9 en móvil). Comprobación visual en las capturas de `capturas/`.
+Revisión manual (observado en QA): orden de foco, salto de contenido, trampa de foco en el menú, Esc en menú/detalle/diálogo, devolución del foco, errores de formulario con `aria-invalid` y `aria-describedby`, `aria-current` en capítulos, `aria-pressed` en sonido.
