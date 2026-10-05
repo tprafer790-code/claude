@@ -1,208 +1,226 @@
 <title>Sinapsis</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&display=swap">
 <style>
-/* Layout: app móvil de una columna (máx. 560px), barra de pestañas fija abajo; en misión, pantalla completa con una sola tarea a la vista. */
+/* Layout: app iOS de una columna (máx. 560px): título grande, listas agrupadas, barra de pestañas translúcida abajo; en misión, pantalla completa con una sola tarea. */
 :root{
-  --ink:#130E31;        /* fondo nocturno */
-  --ink-2:#1D1748;      /* superficie */
-  --ink-3:#2A2263;      /* superficie elevada */
-  --line:rgba(226,218,255,.12);
-  --fg:#F6F3FF;
-  --muted:#B4ACDD;
-  --coral:#FF6A55;
-  --sun:#FFC83D;
-  --mint:#2EE0A4;
-  --sky:#53A9FF;
-  --pink:#FF5DA9;
-  --violet:#9C7CFF;
-  --on-bright:#130E31;
-  --display:"Unbounded","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
-  --body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",-apple-system,"Segoe UI",system-ui,sans-serif;
-  --r-lg:28px; --r-md:18px; --r-sm:12px;
-  color-scheme:dark;
+  --bg:#F2F2F7; --card:#FFFFFF; --fill:#E3E3E8; --label:#000000; --secondary:#6C6C70; --sep:#C6C6C8; --chev:#C4C4C7;
+  --tint:#5856D6; --tint-strong:#3634A3; --tint-soft:#E5E5FA; --on-white-tint:#3634A3;
+  --green:#34C759; --green-text:#1E7A34; --green-soft:#E3F5E8;
+  --orange:#FF9500; --orange-text:#A33000; --orange-soft:#FFEBD1;
+  --red:#FF3B30; --red-text:#C0000F; --red-soft:#FFE5E7;
+  --pink:#FF2D55; --pink-text:#D30F45; --pink-soft:#FFD3DC;
+  --teal:#30B0C7; --teal-text:#0071A4; --teal-soft:#CDEEF3;
+  --yellow:#FFCC00;
+  --bar:rgba(249,249,249,.94); --shadow:0 8px 28px rgba(88,86,214,.14);
+  --font:-apple-system,"SF Pro Text","SF Pro Display",BlinkMacSystemFont,"Helvetica Neue",system-ui,sans-serif;
 }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#000000; --card:#1C1C1E; --fill:#2C2C2E; --label:#FFFFFF; --secondary:#98989F; --sep:#38383A; --chev:#5A5A5E;
+  --tint:#5E5CE6; --tint-strong:#A5A3FF; --tint-soft:#24234A;
+  --green-text:#30D158; --green-soft:#0F2E17; --orange-text:#FFB340; --orange-soft:#3D2A10;
+  --red-text:#FF6961; --red-soft:#3E1414; --pink-text:#FF6482; --pink-soft:#40121D; --teal-text:#5ED8EE; --teal-soft:#0F3238;
+  --bar:rgba(22,22,24,.92); --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --card:#1C1C1E; --fill:#2C2C2E; --label:#FFFFFF; --secondary:#98989F; --sep:#38383A; --chev:#5A5A5E;
+  --tint:#5E5CE6; --tint-strong:#A5A3FF; --tint-soft:#24234A;
+  --green-text:#30D158; --green-soft:#0F2E17; --orange-text:#FFB340; --orange-soft:#3D2A10;
+  --red-text:#FF6961; --red-soft:#3E1414; --pink-text:#FF6482; --pink-soft:#40121D; --teal-text:#5ED8EE; --teal-soft:#0F3238;
+  --bar:rgba(22,22,24,.92); --shadow:none; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
-body{background:var(--ink);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
-body::before{content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(40% 30% at 15% 10%, color-mix(in srgb,var(--violet) 45%,transparent), transparent 70%),
-    radial-gradient(35% 28% at 90% 20%, color-mix(in srgb,var(--pink) 30%,transparent), transparent 70%),
-    radial-gradient(45% 35% at 70% 95%, color-mix(in srgb,var(--sky) 28%,transparent), transparent 70%);
-  animation:drift 24s ease-in-out infinite alternate}
-@keyframes drift{to{transform:translate3d(3%,-4%,0) rotate(6deg)}}
+body{background:var(--bg);color:var(--label);font-family:var(--font);font-size:17px;line-height:1.3;-webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none}
-:focus-visible{outline:3px solid var(--sun);outline-offset:3px;border-radius:10px}
-h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+:focus-visible{outline:3px solid var(--tint);outline-offset:2px;border-radius:10px}
+h1,h2,h3{margin:0;text-wrap:balance}
 p{margin:0}
-.app{position:relative;z-index:1;max-width:560px;margin:0 auto;min-height:100%;padding:16px 16px calc(110px + env(safe-area-inset-bottom,0px))}
+code{font-size:15px;background:var(--fill);padding:1px 5px;border-radius:5px}
+.app{position:relative;max-width:560px;margin:0 auto;min-height:100%;padding:12px 16px calc(100px + env(safe-area-inset-bottom,0px))}
 .app.full{padding-bottom:32px}
-.stack{display:flex;flex-direction:column;gap:14px}
+.stack{display:flex;flex-direction:column;gap:16px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .between{justify-content:space-between}
-.muted{color:var(--muted)}
-.small{font-size:14px}
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--secondary)}
+.small{font-size:13px}
+.eyebrow{font-size:13px;text-transform:uppercase;color:var(--secondary);padding-left:16px}
 .num{font-variant-numeric:tabular-nums}
 
-/* Cabecera */
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:6px 4px}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px}
-.brand svg{width:34px;height:34px}
-.pills{display:flex;gap:8px}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--ink-2);border:1px solid var(--line);font-weight:700;font-size:15px}
-.pill .dot{width:10px;height:10px;border-radius:50%}
-.flame{color:var(--sun)}
+/* Título grande */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:8px}
+.top .date{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;color:var(--secondary)}
+.top h1,.large{font-size:34px;line-height:41px;font-weight:700;letter-spacing:.01em}
+.pills{display:flex;gap:8px;padding-bottom:6px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:999px;background:var(--card);font-weight:600;font-size:15px}
+.flame{width:16px;height:16px;flex:none}
 
 /* Nivel */
-.level{padding:14px 16px;border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line)}
-.bar{height:12px;border-radius:999px;background:var(--ink-3);overflow:hidden}
-.bar>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--mint),var(--sky));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.level{padding:14px 16px;border-radius:16px;background:var(--card)}
+.bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:inherit;background:var(--tint);transition:width .5s cubic-bezier(.2,.8,.2,1)}
 
-/* Héroe de misión: el único bloque estridente */
-.hero{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:22px 20px 20px;color:var(--on-bright);
-  background:linear-gradient(135deg,var(--sun) 0%,var(--coral) 45%,var(--pink) 75%,var(--violet) 100%);box-shadow:0 20px 50px -18px color-mix(in srgb,var(--coral) 70%,transparent)}
-.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,255,255,.45),transparent 65%)}
-.hero h2{font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
-.hero .big{font-family:var(--display);font-weight:800;font-size:64px;line-height:1;margin-top:8px}
-.hero .sub{font-weight:700;font-size:17px;margin-top:6px;max-width:30ch}
-.hero .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.hero .chip{background:rgba(19,14,49,.14);border-radius:999px;padding:5px 11px;font-weight:700;font-size:14px}
-.cta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;margin-top:18px;border-radius:999px;
-  background:var(--ink);color:var(--fg);font-family:var(--display);font-weight:700;font-size:18px;transition:transform .12s}
-.cta:active{transform:scale(.97)}
+/* Widget de misión */
+.hero{border-radius:22px;padding:20px;color:#FFFFFF;background:var(--tint);display:flex;flex-direction:column;gap:6px}
+.hero h2{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;opacity:.85}
+.hero .bigrow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hero .big{font-size:64px;line-height:64px;font-weight:800;letter-spacing:-.02em}
+.hero .unit{font-size:17px;font-weight:600}
+.hero .sub{font-size:15px;opacity:.92}
+.cta{display:flex;align-items:center;justify-content:center;width:100%;height:50px;margin-top:12px;border-radius:14px;background:#FFFFFF;color:var(--on-white-tint);font-size:17px;font-weight:600;transition:transform .12s,opacity .12s}
+.cta:active{transform:scale(.98);opacity:.85}
+
+/* Anillos */
+.rings{border-radius:16px;padding:16px;background:var(--card);display:flex;align-items:center;gap:18px}
+.rings svg{width:104px;height:104px;flex:none;transform:rotate(-90deg)}
+.rings .lbl{display:flex;flex-direction:column;gap:8px;min-width:0}
+.rings .lbl span{display:block;font-size:15px;font-weight:600}
+.rings .lbl b{display:block;font-size:20px;font-weight:700}
 
 /* Botones */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 20px;border-radius:999px;font-weight:800;font-size:17px;transition:transform .12s, background .2s}
-.btn:active{transform:scale(.97)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.primary{background:var(--fg);color:var(--on-bright)}
-.btn.ghost{background:var(--ink-2);border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border-radius:14px;font-weight:600;font-size:17px;transition:transform .12s,opacity .12s}
+.btn:active{transform:scale(.98);opacity:.8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--tint);color:#FFFFFF}
+.btn.ghost{background:var(--fill);color:var(--label)}
+.btn.tinted,.btn.sky{background:var(--tint-soft);color:var(--tint-strong)}
 .btn.wide{width:100%}
-.btn.mint{background:var(--mint);color:var(--on-bright)}
-.btn.coral{background:var(--coral);color:var(--on-bright)}
-.btn.sky{background:var(--sky);color:var(--on-bright)}
-.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--ink-2);border:1px solid var(--line);font-size:20px;flex:none}
+.btn.mint{background:var(--green);color:#FFFFFF}
+.btn.coral{background:var(--red);color:#FFFFFF}
+.textbtn{color:var(--tint);font-size:17px;min-height:44px;display:inline-flex;align-items:center}
+.iconbtn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--tint-soft);color:var(--tint-strong);flex:none}
+.iconbtn svg{width:18px;height:18px}
 
-/* Tarjetas genéricas */
-.panel{border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line);padding:16px}
+/* Listas agrupadas */
+.group{border-radius:12px;background:var(--card);overflow:hidden}
+.group>*{position:relative}
+.group>*+*::before{content:"";position:absolute;top:0;right:0;left:var(--inset,16px);height:.5px;background:var(--sep)}
+.cell{display:flex;align-items:center;gap:12px;width:100%;padding:11px 16px;text-align:left;min-height:44px;color:inherit;background:var(--card)}
+.cell:active{background:var(--fill)}
+.cell .ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;color:#FFFFFF;font-weight:700;font-size:15px}
+.cell .ic svg{width:18px;height:18px}
+.cell .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.cell .tx b{font-weight:400;font-size:17px}
+.cell .tx span{font-size:13px;color:var(--secondary)}
+.chev{width:8px;height:14px;flex:none;color:var(--chev)}
+.panel{border-radius:12px;background:var(--card);padding:14px 16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.tile{border-radius:var(--r-md);padding:14px;background:var(--ink-2);border:1px solid var(--line);min-width:0}
-.tile .v{font-family:var(--display);font-weight:800;font-size:28px}
-.quick{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:14px 16px;border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line)}
-.quick .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;font-family:var(--display);font-weight:800;color:var(--on-bright)}
-.quick b{display:block;font-size:17px}
+.tile{border-radius:16px;padding:14px;background:var(--card);min-width:0;display:flex;flex-direction:column;gap:2px}
+.tile .v{font-size:32px;font-weight:700}
+.tile .k{font-size:13px;font-weight:600}
 
 /* Ley del día */
-.law{border-radius:var(--r-md);padding:16px;background:linear-gradient(160deg,var(--ink-3),var(--ink-2));border:1px solid var(--line)}
-.k{display:inline-block;font-family:var(--display);font-weight:800;font-size:13px;padding:4px 10px;border-radius:999px;color:var(--on-bright)}
-.law h3{font-size:20px;margin-top:10px}
+.law{border-radius:16px;padding:16px;background:var(--card)}
+.k{display:inline-block;font-weight:600;font-size:13px;padding:4px 10px;border-radius:999px;color:#FFFFFF}
+.law h3{font-size:20px;line-height:25px;font-weight:700;margin-top:10px}
 .law .tt{display:grid;gap:8px;margin-top:12px}
-.law .tt div{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04)}
-.law .tt b{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.law .tt div{padding:10px 12px;border-radius:10px;background:var(--bg)}
+.law .tt b{font-size:13px;font-weight:600;text-transform:uppercase}
 
 /* Mazos */
-.deck{display:flex;gap:14px;align-items:center;width:100%;text-align:left;padding:14px;border-radius:var(--r-md);
-  background:color-mix(in srgb,var(--c) 14%,var(--ink-2));border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
-.mono{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:var(--c);color:var(--on-bright);font-family:var(--display);font-weight:800;font-size:22px;flex:none}
-.deck .info{min-width:0;flex:1}
-.deck .name{font-weight:800;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.seg{display:flex;height:8px;border-radius:999px;overflow:hidden;background:var(--ink-3);margin-top:8px}
+.deck{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px 16px;background:var(--card);color:inherit}
+.deck:active{background:var(--fill)}
+.group .deck{--inset:72px}
+.mono{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;background:var(--c);color:var(--oc,#FFFFFF);font-weight:700;font-size:20px;flex:none}
+.deck .info{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.deck .name{font-weight:600;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seg{display:flex;height:5px;border-radius:3px;overflow:hidden;background:var(--fill);margin-top:3px}
 .seg i{display:block;height:100%}
-.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--d);margin-right:6px}
-.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:800;background:var(--ink-3)}
-.tag.warn{background:color-mix(in srgb,var(--sun) 25%,var(--ink-3));color:var(--sun)}
-.tag.bad{background:color-mix(in srgb,var(--coral) 25%,var(--ink-3));color:var(--coral)}
-.tag.good{background:color-mix(in srgb,var(--mint) 22%,var(--ink-3));color:var(--mint)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--secondary);padding-left:16px}
+.legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--d);margin-right:5px}
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:13px;font-weight:600;background:var(--fill);white-space:nowrap}
+.tag.warn{background:var(--orange-soft);color:var(--orange-text)}
+.tag.bad{background:var(--red-soft);color:var(--red-text)}
+.tag.good{background:var(--green-soft);color:var(--green-text)}
+.tag.count{background:var(--tint);color:#FFFFFF}
 
 /* Formularios */
-label.f{display:grid;gap:6px;font-weight:700;font-size:15px}
-input[type=text],input[type=date],textarea{width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:var(--ink);font-size:17px;line-height:1.4}
-textarea{min-height:110px;resize:vertical}
-input:focus,textarea:focus{outline:none;border-color:var(--sky)}
-.swatches{display:flex;gap:10px;flex-wrap:wrap}
-.swatch{width:40px;height:40px;border-radius:50%;background:var(--c);border:3px solid transparent}
-.swatch[aria-pressed=true]{border-color:var(--fg)}
-.check{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;background:var(--ink-2);border:1.5px solid var(--line);text-align:left;width:100%;font-weight:700}
-.check .box{width:28px;height:28px;border-radius:9px;border:2px solid var(--muted);display:grid;place-items:center;flex:none;font-weight:800}
-.check[aria-pressed=true]{border-color:var(--mint);background:color-mix(in srgb,var(--mint) 12%,var(--ink-2))}
-.check[aria-pressed=true] .box{background:var(--mint);border-color:var(--mint);color:var(--on-bright)}
+label.f{display:grid;gap:6px;font-size:13px;text-transform:uppercase;color:var(--secondary)}
+label.f>input,label.f>textarea{text-transform:none;color:var(--label)}
+input[type=text],input[type=date],textarea{width:100%;padding:12px 16px;border-radius:12px;border:0;background:var(--card);font-size:17px;line-height:1.35;-webkit-appearance:none;appearance:none}
+input[type=file]{font-size:15px;text-transform:none;color:var(--label)}
+textarea{min-height:100px;resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--tint);outline-offset:0}
+.swatches{display:flex;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:12px;background:var(--card)}
+.swatch{width:36px;height:36px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--card),0 0 0 3px transparent}
+.swatch[aria-pressed=true]{box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--c)}
+.check{display:flex;gap:12px;align-items:center;padding:11px 16px;min-height:44px;background:var(--card);text-align:left;width:100%;font-size:17px;color:inherit}
+.check .box{width:24px;height:24px;border-radius:50%;border:2px solid var(--chev);display:grid;place-items:center;flex:none;font-size:14px;font-weight:800;color:#FFFFFF}
+.check[aria-pressed=true] .box{background:var(--tint);border-color:var(--tint)}
+.stack>.check{border-radius:12px}
+.seg-ctl{display:grid;grid-auto-columns:minmax(0,1fr);grid-auto-flow:column;padding:2px;border-radius:9px;background:var(--fill)}
+.seg-ctl button{height:32px;border-radius:7px;font-size:13px;font-weight:500}
+.seg-ctl button[aria-pressed=true]{background:var(--card);font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .chiprow{display:flex;gap:8px;flex-wrap:wrap}
-.chipbtn{padding:10px 16px;border-radius:999px;background:var(--ink-2);border:1.5px solid var(--line);font-weight:800}
-.chipbtn[aria-pressed=true]{background:var(--fg);color:var(--on-bright);border-color:var(--fg)}
+.chipbtn{height:36px;padding:0 14px;border-radius:999px;background:var(--fill);font-size:15px}
+.chipbtn[aria-pressed=true]{background:var(--tint);color:#FFFFFF;font-weight:600}
+.switch{width:51px;height:31px;border-radius:16px;background:var(--fill);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#FFFFFF;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:transform .2s}
+[aria-pressed=true] .switch{background:var(--green)}
+[aria-pressed=true] .switch::after{transform:translateX(20px)}
 
 /* Pantalla de misión */
-.mtop{display:flex;align-items:center;gap:12px}
+.mtop{display:flex;align-items:center;gap:12px;padding-top:6px}
 .mtop .bar{flex:1}
-.stage{margin-top:18px;animation:in .35s cubic-bezier(.2,.8,.2,1)}
-@keyframes in{from{transform:translateY(14px) scale(.98);opacity:.2}}
-.qcard{border-radius:var(--r-lg);padding:22px 20px;background:var(--ink-2);border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);
-  box-shadow:0 24px 60px -30px color-mix(in srgb,var(--c) 80%,transparent)}
-.qcard .q{font-size:24px;font-weight:800;line-height:1.3;margin-top:12px}
-.answer{border-radius:var(--r-md);padding:16px;background:color-mix(in srgb,var(--mint) 10%,var(--ink-2));border:1.5px solid color-mix(in srgb,var(--mint) 40%,transparent);animation:in .3s ease}
-.answer .a{font-size:19px;font-weight:700;margin-top:6px;white-space:pre-wrap}
-.mine{border-radius:var(--r-md);padding:14px;background:var(--ink-2);border:1px dashed var(--line);white-space:pre-wrap}
-.hint{border-radius:var(--r-md);padding:12px 14px;background:color-mix(in srgb,var(--sun) 12%,var(--ink-2));border:1px solid color-mix(in srgb,var(--sun) 40%,transparent)}
+.mtop .xp{font-size:15px;font-weight:600;color:var(--tint-strong)}
+.stage{margin-top:16px;animation:in .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes in{from{transform:translateY(12px);opacity:.2}}
+.qcard{border-radius:22px;padding:20px;background:var(--card);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.qcard .q{font-size:26px;line-height:32px;font-weight:700}
+.answer{border-radius:12px;padding:12px 16px;background:var(--card);animation:in .3s ease;display:flex;flex-direction:column;gap:8px}
+.answer .a{font-size:17px;font-weight:600;white-space:pre-wrap}
+.mine{border-radius:12px;padding:12px 16px;background:var(--card);white-space:pre-wrap}
+.hint{border-radius:12px;padding:12px 16px;background:var(--orange-soft);color:var(--label)}
 .grades{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.grade{min-height:84px;border-radius:20px;font-weight:800;font-size:16px;color:var(--on-bright);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .12s}
+.grade{height:76px;border-radius:16px;font-weight:700;font-size:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .12s}
 .grade:active{transform:scale(.95)}
-.grade small{font-weight:700;font-size:12px;opacity:.75}
-.grade.ok{background:var(--mint)}.grade.mid{background:var(--sun)}.grade.no{background:var(--coral)}
-.ai{border-radius:var(--r-md);padding:14px;background:color-mix(in srgb,var(--sky) 12%,var(--ink-2));border:1px solid color-mix(in srgb,var(--sky) 40%,transparent)}
-.ritual h1,.done h1{font-size:30px;line-height:1.15}
+.grade small{font-weight:500;font-size:12px}
+.grade.ok{background:var(--green-soft);color:var(--green-text)}
+.grade.mid{background:var(--orange-soft);color:var(--orange-text)}
+.grade.no{background:var(--red-soft);color:var(--red-text)}
+.ai{border-radius:12px;padding:12px 16px;background:var(--tint-soft)}
+.ritual h1,.done h1{font-size:28px;line-height:34px;font-weight:700}
+.badge{width:96px;height:96px;border-radius:50%;background:var(--green);display:grid;place-items:center;align-self:center;box-shadow:0 12px 30px rgba(52,199,89,.35)}
+.badge svg{width:52px;height:52px}
 
-/* Temporizador de foco */
-.ring{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:8px auto 0;max-width:100%}
+/* Temporizador */
+.ring{position:relative;width:min(250px,70vw);aspect-ratio:1;margin:4px auto 0;max-width:100%}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring .t{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.ring .t b{font-family:var(--display);font-weight:800;font-size:56px;line-height:1}
+.ring .t b{font-size:56px;font-weight:300;line-height:1;font-variant-numeric:tabular-nums}
 
-/* Mapa de calor */
 .heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:4px;overflow-x:auto;padding-bottom:4px}
-.heat i{width:16px;height:16px;border-radius:5px;background:var(--ink-3)}
+.heat i{width:16px;height:16px;border-radius:4px;background:var(--fill)}
 
-/* Ruedita del objetivo diario */
-.goal{display:flex;align-items:center;gap:16px}
-.goal svg{width:72px;height:72px;transform:rotate(-90deg);flex:none}
-
-/* Lista de tarjetas */
-.cardrow{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:14px;background:var(--ink-2);border:1px solid var(--line);width:100%;text-align:left}
+.cardrow{display:flex;gap:12px;align-items:flex-start;padding:11px 16px;background:var(--card);width:100%;text-align:left;color:inherit}
+.cardrow:active{background:var(--fill)}
 .cardrow .txt{min-width:0;flex:1}
-.cardrow .txt b{display:block;overflow-wrap:anywhere}
-.cardrow .txt span{display:block;color:var(--muted);font-size:15px;overflow-wrap:anywhere}
-.dots{display:flex;gap:4px;flex:none;margin-top:4px}
-.dots i{width:10px;height:10px;border-radius:50%;background:var(--ink-3);border:1.5px solid var(--muted)}
-.dots i.on{background:var(--mint);border-color:var(--mint)}
+.cardrow .txt b{display:block;font-weight:400;overflow-wrap:anywhere}
+.cardrow .txt span{display:block;color:var(--secondary);font-size:13px;overflow-wrap:anywhere}
+.dots{display:flex;gap:4px;flex:none;align-items:center}
+.dots i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--chev)}
+.dots i.on{background:var(--green);border-color:var(--green)}
 
-details.lawd{border-radius:var(--r-md);background:var(--ink-2);border:1px solid var(--line);padding:4px 16px}
-details.lawd summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;padding:12px 0;font-weight:800;font-size:17px}
+details.lawd{border-radius:12px;background:var(--card);padding:0 16px}
+details.lawd summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;padding:12px 0;font-size:17px;min-height:44px}
 details.lawd summary::-webkit-details-marker{display:none}
-details.lawd .body{display:grid;gap:10px;padding-bottom:14px}
+details.lawd .body{display:grid;gap:10px;padding-bottom:14px;font-size:15px;line-height:1.4}
 
 /* Barra de pestañas */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
-  background:linear-gradient(to top,var(--ink) 60%,transparent)}
-.tabs nav{max-width:528px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px;border-radius:24px;background:color-mix(in srgb,var(--ink-2) 92%,transparent);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-radius:18px;font-size:12px;font-weight:800;color:var(--muted)}
-.tab svg{width:24px;height:24px}
-.tab[aria-current=page]{background:var(--fg);color:var(--on-bright)}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--bar);border-top:.5px solid var(--sep);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);padding:6px 8px calc(4px + env(safe-area-inset-bottom,0px))}
+.tabs nav{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 0;font-size:10px;font-weight:500;color:var(--secondary);min-height:44px}
+.tab svg{width:26px;height:26px}
+.tab[aria-current=page]{color:var(--tint)}
 
-.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:20;padding:12px 18px;border-radius:999px;background:var(--fg);color:var(--on-bright);font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:pop .3s cubic-bezier(.2,1.4,.4,1);max-width:calc(100% - 32px);text-align:center}
-@keyframes pop{from{transform:translate(-50%,-20px) scale(.8);opacity:0}}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:20;padding:12px 20px;border-radius:999px;background:var(--card);color:var(--label);font-size:15px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.18);animation:pop .35s cubic-bezier(.2,1.3,.4,1);max-width:calc(100% - 32px);text-align:center}
+@keyframes pop{from{transform:translate(-50%,-30px) scale(.9);opacity:0}}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
-.empty{text-align:center;padding:28px 16px;border-radius:var(--r-md);border:1.5px dashed var(--line)}
-.onb{min-height:calc(100vh - 80px);display:flex;flex-direction:column;justify-content:center;gap:20px}
-.onb .art{font-family:var(--display);font-weight:800;font-size:96px;line-height:1;background:linear-gradient(135deg,var(--sun),var(--coral),var(--pink),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.onb h1{font-size:30px;line-height:1.15}
-.onb .dotsnav{display:flex;gap:8px}.onb .dotsnav i{width:28px;height:6px;border-radius:9px;background:var(--ink-3)}.onb .dotsnav i.on{background:var(--fg)}
-.sync{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
-@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
-@media (max-width:380px){.hero .big{font-size:52px}.grade{font-size:14px}.qcard .q{font-size:21px}}
+.empty{text-align:center;padding:24px 16px;border-radius:12px;background:var(--card);display:flex;flex-direction:column;gap:4px}
+.onb{min-height:calc(100vh - 80px);display:flex;flex-direction:column;justify-content:center;gap:18px}
+.onb .art{width:120px;height:120px;border-radius:28px;display:grid;place-items:center;color:#FFFFFF;font-size:40px;font-weight:800;letter-spacing:-.02em}
+.onb h1{font-size:30px;line-height:36px;font-weight:700}
+.onb .dotsnav{display:flex;gap:8px}.onb .dotsnav i{width:8px;height:8px;border-radius:50%;background:var(--fill)}.onb .dotsnav i.on{background:var(--tint)}
+.sync{font-size:13px;color:var(--secondary);text-align:center;margin-top:8px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (max-width:370px){.hero .big{font-size:52px}.grade{font-size:15px}.qcard .q{font-size:22px;line-height:28px}}
 </style>
 
 <div class="app" id="app"></div>
@@ -225,41 +243,45 @@ const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) {
 const plural = (n, s, p) => n === 1 ? s : (p || s + "s");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const COLORS = ["#FF6A55", "#FFC83D", "#2EE0A4", "#53A9FF", "#FF5DA9", "#9C7CFF"];
+const COLORS = ["#5856D6", "#34C759", "#FF9500", "#007AFF", "#FF2D55", "#AF52DE", "#30B0C7", "#FFCC00"];
+const onColor = (c) => { const h = String(c).replace("#", ""); if (h.length !== 6) return "#FFFFFF"; const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return (0.2126 * r + 0.7152 * g + 0.0722 * b) > 0.4 ? "#1C1C1E" : "#FFFFFF"; };
+const mono = (d, cls = "mono") => `<span class="${cls}" style="--c:${d.color};--oc:${onColor(d.color)}">${esc(d.name.trim().charAt(0).toUpperCase() || "?")}</span>`;
+const CHEV = `<svg class="chev" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m1 1 6 6-6 6"/></svg>`;
+const backBtn = (act, v, label) => `<button class="textbtn" data-act="${act}" ${v ? `data-v="${v}"` : ""}><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:4px"><path d="M10 2 2 10l8 8"/></svg>${esc(label)}</button>`;
 const INTERVALS = [0, 2, 4]; // días hasta la siguiente evocación tras 1 y 2 aciertos (mínimo un día entre evocaciones)
 const MAINTAIN = 14;          // repaso de mantenimiento cuando ya está dominada
 const LEVELS = ["Neurona", "Dendrita", "Axón", "Sinapsis", "Red neuronal", "Hipocampo", "Corteza", "Mente en llamas", "Cerebro galáctico"];
 
 /* ============ Las seis leyes (Aprender a aprender, Héctor Ruiz Martín) ============ */
 const LAWS = [
-  { k: "Relaciona", c: "#53A9FF", t: "Tu cerebro solo guarda lo que puede enganchar a algo que ya sabe.",
+  { k: "Relaciona", c: "#007AFF", t: "Tu cerebro solo guarda lo que puede enganchar a algo que ya sabe.",
     truqui: "Busca a qué te recuerda: una palabra parecida, un ejemplo, una imagen, una historia absurda.",
     anti: "Repetir y repetir sin entender: se esfuma enseguida.",
     app: "Cada tarjeta tiene un campo «Relaciónalo». Al aprender algo nuevo, primero lo enganchas." },
-  { k: "Recuerda", c: "#2EE0A4", t: "Aprendes cuando sacas la información de tu memoria, no cuando la vuelves a leer.",
+  { k: "Recuerda", c: "#248A3D", t: "Aprendes cuando sacas la información de tu memoria, no cuando la vuelves a leer.",
     truqui: "Evoca: intenta recordar sin mirar. Cuanto más te cuesta, mejor se queda.",
     anti: "Releer, copiar, pasar a limpio, «primero le doy una miradita».",
     app: "Siempre respondes antes de ver la solución. Escribir o decirlo en voz alta cuenta." },
-  { k: "Olvida", c: "#FFC83D", t: "Deja que se te olvide un poco y vuelve a evocar otro día: así se fija.",
+  { k: "Olvida", c: "#C93400", t: "Deja que se te olvide un poco y vuelve a evocar otro día: así se fija.",
     truqui: "Tres evocaciones correctas en tres días distintos = lo tienes.",
     anti: "Sobreestudiar un punto antes de pasar al siguiente. El atracón de la noche antes.",
     app: "Sinapsis te programa cada tarjeta: 1/3, 2/3, 3/3 con al menos un día entre medias y mezcla asignaturas." },
-  { k: "Céntrate", c: "#FF5DA9", t: "Tu memoria de trabajo es un portapapeles pequeño. No lo llenes de ruido.",
+  { k: "Céntrate", c: "#D30F45", t: "Tu memoria de trabajo es un portapapeles pequeño. No lo llenes de ruido.",
     truqui: "Móvil fuera, sin música, una sola tarea, pausas de verdad. Escribe los pasos y dibuja.",
     anti: "Estudiar con música o contestando WhatsApp. Sesiones eternas sin parar.",
     app: "Ritual de foco antes de cada misión y temporizador de bloques cortos con descansos." },
-  { k: "Confía", c: "#FF6A55", t: "Que algo te cueste al principio no significa que se te dé mal.",
+  { k: "Confía", c: "#D70015", t: "Que algo te cueste al principio no significa que se te dé mal.",
     truqui: "Persevera, pide ayuda y trata el error como información para mejorar.",
     anti: "Pensar que la capacidad es innata: «yo es que no valgo para esto».",
     app: "Fallar también da experiencia: el esfuerzo de recordar ya está entrenando tu cerebro." },
-  { k: "Colabora", c: "#9C7CFF", t: "Explicar a otra persona es una de las mejores formas de aprender.",
+  { k: "Colabora", c: "#8944AB", t: "Explicar a otra persona es una de las mejores formas de aprender.",
     truqui: "Pregúntaos unos a otros, explica lo que sabes, debate sin pelearte.",
     anti: "Pelearte por tener ideas distintas: es la disonancia cognitiva y el sesgo de confirmación.",
     app: "El «Reto en equipo» crea una lista de preguntas para que alguien te examine." },
 ];
 
 const EXAMPLE = () => ({
-  id: uid(), name: "Aprender a aprender", color: "#9C7CFF", exam: null, order: 0, example: true,
+  id: uid(), name: "Aprender a aprender", color: "#AF52DE", exam: null, order: 0, example: true,
   cards: [
     ["¿Qué es evocar?", "Recuperar de la memoria lo aprendido sin mirar. Al evocar, el recuerdo se fija con más fuerza.", "Evocar = sacar un libro de la estantería de tu cerebro."],
     ["¿Por qué releer engaña?", "Da sensación de dominio (lo reconoces) pero no entrena el recuerdo: dura un rato, no al día siguiente.", "Reconocer una cara no es saber su nombre."],
@@ -538,21 +560,22 @@ function render() {
   const af = app.querySelector("[data-autofocus]"); if (af) af.focus({ preventScroll: true });
 }
 
-function header() {
+function header(title) {
   const st = streak(), lv = levelInfo(S.profile.xp);
-  return `<div class="top"><div class="brand">${I.logo}<span>Sinapsis</span></div>
-  <div class="pills"><span class="pill" title="Racha de días"><span class="flame">●</span><span class="num">${st}</span> ${plural(st, "día")}</span><span class="pill" title="Nivel"><span class="num">Nv ${lv.level}</span></span></div></div>`;
+  const date = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+  return `<div class="top"><div><div class="date">${esc(date)}</div><h1>${esc(title)}</h1></div>
+  <div class="pills"><span class="pill" title="Racha de días"><svg class="flame" viewBox="0 0 24 24" fill="#FF9500" aria-hidden="true"><path d="M12 2c1 4 5 5.5 5 10.5A5 5 0 0 1 7 12.5c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-9z"/></svg><span class="num">${st}</span></span><span class="pill" title="Nivel"><span class="num">Nv ${lv.level}</span></span></div></div>`;
 }
 
 /* ---------- Bienvenida ---------- */
 function vOnboard() {
   const P = [
-    { art: "3×3", h: "Tu cerebro aprende cuando recuerda, no cuando relee.", p: "Aquí siempre intentas responder sin mirar. Cuesta un poco más, y por eso funciona." },
-    { art: "1/3", h: "Tres aciertos en tres días distintos y ya lo tienes.", p: "Sinapsis decide qué toca cada día, deja que se te olvide un poco y mezcla asignaturas." },
-    { art: "15′", h: "Misiones cortas. Cero distracciones.", p: "Bloques de 15 minutos, una sola cosa en pantalla y premio inmediato. Fallar también suma: el esfuerzo entrena." },
+    { art: "3×3", c: "var(--tint)", h: "Tu cerebro aprende cuando recuerda, no cuando relee.", p: "Aquí siempre intentas responder sin mirar. Cuesta un poco más, y por eso funciona." },
+    { art: "1/3", c: "var(--orange)", h: "Tres aciertos en tres días distintos y ya lo tienes.", p: "Sinapsis decide qué toca cada día, deja que se te olvide un poco y mezcla asignaturas." },
+    { art: "15′", c: "var(--pink)", h: "Misiones cortas. Cero distracciones.", p: "Bloques de 15 minutos, una sola cosa en pantalla y premio inmediato. Fallar también suma: el esfuerzo entrena." },
   ];
   const s = P[ui.onb];
-  return `<section class="onb"><div class="art">${s.art}</div><h1>${esc(s.h)}</h1><p class="muted" style="font-size:19px">${esc(s.p)}</p>
+  return `<section class="onb"><div class="art" style="background:${s.c}">${s.art}</div><h1>${esc(s.h)}</h1><p class="muted" style="font-size:17px;line-height:1.4">${esc(s.p)}</p>
   <div class="dotsnav">${P.map((_, i) => `<i class="${i === ui.onb ? "on" : ""}"></i>`).join("")}</div>
   <button class="btn primary wide" data-act="onbNext" data-autofocus>${ui.onb < P.length - 1 ? "Siguiente" : "Empezar"}</button>
   ${ui.onb < P.length - 1 ? `<button class="btn ghost wide" data-act="onbSkip">Saltar</button>` : ""}</section>`;
@@ -564,32 +587,36 @@ function vHoy() {
   const nNew = Math.min(5, st.new), nDue = Math.min(S.profile.goal, st.due);
   const mins = Math.max(3, Math.round(nDue * 0.8 + nNew * 1.5));
   const dd = S.profile.days[t] || { ev: 0 }, done = dd.ev || 0, goal = S.profile.goal;
-  const pct = Math.min(1, done / goal), C = 2 * Math.PI * 30;
   const law = LAWS[t % LAWS.length];
   const exams = S.decks.filter(d => d.exam != null && d.exam >= t).sort((a, b) => a.exam - b.exam);
   let heroBig, heroSub;
   if (nDue + nNew === 0 && st.total === 0) { heroBig = "0"; heroSub = "Crea tu primer mazo para empezar."; }
   else if (nDue + nNew === 0) { heroBig = "✓"; heroSub = "Hoy no te toca nada. Puedes hacer un reto rápido o añadir tarjetas."; }
-  else { heroBig = String(nDue + nNew); heroSub = nDue ? `${nDue} para evocar${nNew ? ` y ${nNew} nuevas` : ""}. Unos ${mins} minutos.` : `${nNew} nuevas para aprender. Unos ${mins} minutos.`; }
-  return `${header()}
-  <div class="stack" style="margin-top:12px">
+  else { heroBig = String(nDue + nNew); heroSub = nDue ? `${nDue} para evocar${nNew ? ` y ${nNew} nuevas` : ""}, mezclando tus mazos.` : `${nNew} nuevas para aprender y relacionar.`; }
+  const ringPct = (v) => Math.max(0, Math.min(1, v));
+  const foDone = dd.fo || 0, st7 = streak();
+  const R = [[44, "var(--orange)", "var(--orange-soft)", ringPct(done / goal)], [29, "var(--teal)", "var(--teal-soft)", ringPct(foDone / 2)], [14, "var(--pink)", "var(--pink-soft)", ringPct(st7 / 7)]];
+  const ringsSvg = R.map(([r, c, bg, p]) => { const L = 2 * Math.PI * r; return `<circle cx="52" cy="52" r="${r}" fill="none" stroke="${bg}" stroke-width="13"/><circle cx="52" cy="52" r="${r}" fill="none" stroke="${c}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${L}" stroke-dashoffset="${L * (1 - p)}"/>`; }).join("");
+  const empty = nDue + nNew === 0;
+  return `${header("Hoy")}
+  <div class="stack" style="margin-top:16px">
     <section class="hero" aria-label="Misión de hoy">
       <h2>Misión de hoy</h2>
-      <div class="big num">${heroBig}</div>
+      <div class="bigrow"><span class="big num">${heroBig}</span>${empty ? "" : `<span class="unit">${plural(nDue + nNew, "tarjeta")} · ${mins} min</span>`}</div>
       <p class="sub">${esc(heroSub)}</p>
-      <div class="chips"><span class="chip">Evoca</span><span class="chip">Mezcla</span><span class="chip">Sin mirar</span></div>
-      <button class="cta" data-act="mission" ${nDue + nNew === 0 && st.total === 0 ? 'data-v="nodeck"' : ""}>${nDue + nNew === 0 && st.total ? "Reto libre de 3 tarjetas" : "Empezar misión"}</button>
+      <button class="cta" data-act="mission" ${empty && st.total === 0 ? 'data-v="nodeck"' : ""}>${empty && st.total ? "Reto libre de 3 tarjetas" : empty ? "Crear mi primer mazo" : "Empezar misión"}</button>
     </section>
-    <div class="level"><div class="row between"><b>${esc(lv.name)} · nivel ${lv.level}</b><span class="muted small num">${lv.rest} / ${lv.need} XP</span></div><div class="bar" style="margin-top:8px"><i style="width:${(lv.rest / lv.need) * 100}%"></i></div></div>
-    <div class="panel goal">
-      <svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" stroke="var(--ink-3)" stroke-width="10" fill="none"/><circle cx="36" cy="36" r="30" stroke="var(--mint)" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg>
-      <div><b class="num">${done} / ${goal} evocaciones hoy</b><p class="muted small">${done >= goal ? "Objetivo cumplido. Tu cerebro lo consolidará mientras duermes." : "Cada intento cuenta, aciertes o no."}</p></div>
-    </div>
-    <button class="quick" data-act="quick"><span class="ic" style="background:var(--sun)">2′</span><span><b>Arranque en 2 minutos</b><span class="muted small">Tres tarjetas y listo. Para cuando cuesta empezar.</span></span></button>
-    <button class="quick" data-act="tab" data-v="foco"><span class="ic" style="background:var(--pink)">${S.profile.focus}′</span><span><b>Bloque de foco</b><span class="muted small">Temporizador con descanso y ruido marrón opcional.</span></span></button>
-    ${exams.length ? `<div class="stack"><p class="eyebrow">Exámenes</p>${exams.slice(0, 3).map(examRow).join("")}</div>` : ""}
+    <div class="rings"><svg viewBox="0 0 104 104" aria-label="Anillos de hoy">${ringsSvg}</svg>
+      <div class="lbl"><div><span style="color:var(--orange-text)">Evocar</span><b class="num">${done}/${goal}</b></div><div><span style="color:var(--teal-text)">Foco</span><b class="num">${foDone}/2 bloques</b></div><div><span style="color:var(--pink-text)">Racha</span><b class="num">${st7} ${plural(st7, "día")}</b></div></div></div>
+    <div class="stack" style="gap:6px"><p class="eyebrow">Atajos</p><div class="group" style="--inset:58px">
+      <button class="cell" data-act="quick"><span class="ic" style="background:var(--yellow);color:#1C1C1E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span class="tx"><b>Arranque en 2 minutos</b><span>Tres tarjetas y listo</span></span>${CHEV}</button>
+      <button class="cell" data-act="tab" data-v="foco"><span class="ic" style="background:var(--pink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span><span class="tx"><b>Bloque de foco</b><span>${S.profile.focus} min con descanso</span></span>${CHEV}</button>
+      <button class="cell" data-act="tab" data-v="mazos"><span class="ic" style="background:var(--teal)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg></span><span class="tx"><b>Hoja en blanco</b><span>Elige un mazo y escribe lo que recuerdes</span></span>${CHEV}</button>
+    </div></div>
+    ${exams.length ? `<div class="stack" style="gap:6px"><p class="eyebrow">Exámenes</p><div class="group" style="--inset:72px">${exams.slice(0, 3).map(examRow).join("")}</div></div>` : ""}
+    <div class="level"><div class="row between"><b>${esc(lv.name)} · nivel ${lv.level}</b><span class="muted small num">${lv.rest} / ${lv.need} XP</span></div><div class="bar" style="margin-top:10px"><i style="width:${(lv.rest / lv.need) * 100}%"></i></div></div>
     <article class="law"><span class="k" style="background:${law.c}">Ley del día · ${esc(law.k)}</span><h3>${esc(law.t)}</h3>
-      <div class="tt"><div><b style="color:var(--mint)">Truqui</b><p>${esc(law.truqui)}</p></div><div><b style="color:var(--coral)">Antitruqui</b><p>${esc(law.anti)}</p></div></div></article>
+      <div class="tt"><div><b style="color:var(--green-text)">Truqui</b><p>${esc(law.truqui)}</p></div><div><b style="color:var(--red-text)">Antitruqui</b><p>${esc(law.anti)}</p></div></div></article>
     <p class="sync" id="sync">${esc(syncLabel)}</p>
   </div>`;
 }
@@ -600,23 +627,24 @@ function examRow(d) {
   else if (left >= 5) { tag = `<span class="tag good">A tiempo</span>`; tip = `Quedan ${pending} sin dominar. Evoca un poco cada día.`; }
   else if (left >= 2) { tag = `<span class="tag warn">Justo</span>`; tip = "Evoca hoy y mañana; mezcla con otras asignaturas."; }
   else { tag = `<span class="tag bad">Te pilla el toro</span>`; tip = "Evoca esta tarde y otra vez por la noche, con tiempo entre medias. Y duerme."; }
-  return `<button class="deck" style="--c:${d.color}" data-act="openDeck" data-v="${d.id}"><span class="mono">${esc(d.name.trim().charAt(0).toUpperCase() || "?")}</span><span class="info"><span class="row between"><span class="name">${esc(d.name)}</span>${tag}</span><span class="muted small">${left === 0 ? "Hoy" : left === 1 ? "Mañana" : `En ${left} días`} · ${esc(tip)}</span></span></button>`;
+  return `<button class="deck" data-act="openDeck" data-v="${d.id}">${mono(d)}<span class="info"><span class="row between" style="flex-wrap:nowrap"><span class="name">${esc(d.name)}</span>${tag}</span><span class="muted small">${left === 0 ? "Hoy" : left === 1 ? "Mañana" : `En ${left} días`} · ${esc(tip)}</span></span></button>`;
 }
 
 /* ---------- Mazos ---------- */
 function vMazos() {
-  return `${header()}<div class="stack" style="margin-top:12px">
-  <div class="row between"><h1 style="font-size:26px">Tus mazos</h1><button class="btn primary" data-act="newDeck">+ Nuevo</button></div>
-  <div class="legend"><span style="--d:var(--ink-3)">Nuevas</span><span style="--d:var(--sun)">En camino</span><span style="--d:var(--mint)">Dominadas 3/3</span></div>
-  ${S.decks.length ? S.decks.map(deckTile).join("") : `<div class="empty"><b>Aún no tienes mazos</b><p class="muted small">Un mazo es una asignatura o un tema. Crea uno y añade tarjetas de pregunta y respuesta.</p></div>`}
+  return `<div class="row" style="justify-content:flex-end;padding-top:8px"><button class="iconbtn" data-act="newDeck" aria-label="Nuevo mazo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <h1 class="large">Mazos</h1><div class="stack" style="margin-top:14px">
+  ${S.decks.length ? `<div class="group">${S.decks.map(deckTile).join("")}</div>` : `<div class="empty"><b>Aún no tienes mazos</b><p class="muted small">Un mazo es una asignatura o un tema. Crea uno y añade tarjetas de pregunta y respuesta.</p></div>`}
+  <div class="legend"><span style="--d:var(--green)">Dominadas 3/3</span><span style="--d:var(--orange)">En camino</span><span style="--d:var(--tint)">Tocan hoy</span></div>
+  <button class="btn primary wide" data-act="newDeck">Nuevo mazo</button>
   </div>`;
 }
 function deckTile(d) {
   const s = deckStats(d), T = Math.max(1, s.total);
-  return `<button class="deck" style="--c:${d.color}" data-act="openDeck" data-v="${d.id}"><span class="mono">${esc(d.name.trim().charAt(0).toUpperCase() || "?")}</span>
-  <span class="info"><span class="row between"><span class="name">${esc(d.name)}</span>${s.due ? `<span class="tag warn num">${s.due} hoy</span>` : ""}</span>
+  return `<button class="deck" data-act="openDeck" data-v="${d.id}">${mono(d)}
+  <span class="info"><span class="row between" style="flex-wrap:nowrap"><span class="name">${esc(d.name)}</span>${s.due ? `<span class="tag count num">${s.due}</span>` : ""}</span>
   <span class="muted small num">${s.total} ${plural(s.total, "tarjeta")}${d.example ? " · ejemplo" : ""}${d.exam != null ? ` · examen ${fmtDay(d.exam)}` : ""}</span>
-  <span class="seg"><i style="width:${s.done / T * 100}%;background:var(--mint)"></i><i style="width:${s.way / T * 100}%;background:var(--sun)"></i></span></span></button>`;
+  <span class="seg"><i style="width:${s.done / T * 100}%;background:var(--green)"></i><i style="width:${s.way / T * 100}%;background:var(--orange)"></i></span></span></button>`;
 }
 function fmtDay(n) { return new Date(n * 864e5).toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "UTC" }); }
 
@@ -624,24 +652,24 @@ function vDeck() {
   const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
   const s = deckStats(d), T = Math.max(1, s.total);
   return `<div class="stack">
-  <div class="row between"><button class="iconbtn" data-act="back" aria-label="Volver">←</button><button class="btn ghost" data-act="deckSet">Ajustes</button></div>
-  <div class="row" style="gap:14px"><span class="mono" style="--c:${d.color};background:${d.color}">${esc(d.name.trim().charAt(0).toUpperCase() || "?")}</span><div style="min-width:0"><h1 style="font-size:24px;overflow-wrap:anywhere">${esc(d.name)}</h1><p class="muted small">${d.exam != null ? `Examen: ${fmtDay(d.exam)}` : "Sin fecha de examen"}</p></div></div>
-  <div class="grid2"><div class="tile"><div class="v num">${s.due}</div><div class="muted small">para evocar hoy</div></div><div class="tile"><div class="v num">${s.done}/${s.total}</div><div class="muted small">dominadas 3/3</div></div></div>
-  <div class="seg" style="height:12px"><i style="width:${s.done / T * 100}%;background:var(--mint)"></i><i style="width:${s.way / T * 100}%;background:var(--sun)"></i></div>
+  <div class="row between">${backBtn("back", "", "Mazos")}<button class="textbtn" data-act="deckSet">Editar</button></div>
+  <div class="row" style="gap:14px;flex-wrap:nowrap">${mono(d)}<div style="min-width:0"><h1 style="font-size:28px;line-height:34px;font-weight:700;overflow-wrap:anywhere">${esc(d.name)}</h1><p class="muted small">${d.exam != null ? `Examen: ${fmtDay(d.exam)}` : "Sin fecha de examen"}</p></div></div>
+  <div class="grid2"><div class="tile"><span class="k" style="padding:0;color:var(--tint-strong)">Para hoy</span><div class="v num">${s.due}</div></div><div class="tile"><span class="k" style="padding:0;color:var(--green-text)">Dominadas</span><div class="v num">${s.done}/${s.total}</div></div></div>
+  <div class="seg" style="height:6px"><i style="width:${s.done / T * 100}%;background:var(--green)"></i><i style="width:${s.way / T * 100}%;background:var(--orange)"></i></div>
   <button class="btn primary wide" data-act="missionDeck" ${s.total ? "" : "disabled"}>Evocar este mazo</button>
   <div class="grid2">
     <button class="btn ghost" data-act="blank" ${s.total ? "" : "disabled"}>Hoja en blanco</button>
     <button class="btn ghost" data-act="add">Añadir tarjetas</button>
-    <button class="btn ghost" data-act="gen" ${sample ? "" : "hidden"}>Crear con IA</button>
+    <button class="btn tinted" data-act="gen" ${sample ? "" : "hidden"}>Crear con IA</button>
     <button class="btn ghost" data-act="team" ${s.total ? "" : "disabled"}>Reto en equipo</button>
   </div>
   <p class="eyebrow" style="margin-top:6px">Tarjetas</p>
-  ${d.cards.length ? d.cards.map(c => cardRow(d, c)).join("") : `<div class="empty"><b>Mazo vacío</b><p class="muted small">Añade preguntas que te obliguen a recordar: «¿Qué es…?», «¿Por qué…?», «Explica…».</p></div>`}
+  ${d.cards.length ? `<div class="group">${d.cards.map(c => cardRow(d, c)).join("")}</div>` : `<div class="empty"><b>Mazo vacío</b><p class="muted small">Añade preguntas que te obliguen a recordar: «¿Qué es…?», «¿Por qué…?», «Explica…».</p></div>`}
   </div>`;
 }
 function cardRow(d, c) {
   if (ui.editCard === c.id) {
-    return `<div class="panel stack"><label class="f">Pregunta<textarea id="e-q" rows="2">${esc(c.q)}</textarea></label><label class="f">Respuesta<textarea id="e-a" rows="3">${esc(c.a)}</textarea></label><label class="f">Relaciónalo (a qué te recuerda)<input type="text" id="e-h" value="${esc(c.hook || "")}"></label>
+    return `<div class="panel stack" style="background:var(--bg);border-radius:0"><label class="f">Pregunta<textarea id="e-q" rows="2">${esc(c.q)}</textarea></label><label class="f">Respuesta<textarea id="e-a" rows="3">${esc(c.a)}</textarea></label><label class="f">Relaciónalo (a qué te recuerda)<input type="text" id="e-h" value="${esc(c.hook || "")}"></label>
     <div class="row"><button class="btn primary" data-act="saveCard" data-v="${c.id}">Guardar</button><button class="btn ghost" data-act="cancelEdit">Cancelar</button>
     ${ui.confirm === c.id ? `<button class="btn coral" data-act="delCard" data-v="${c.id}">Sí, borrar</button>` : `<button class="btn ghost" data-act="askDel" data-v="${c.id}">Borrar</button>`}</div></div>`;
   }
@@ -651,9 +679,9 @@ function cardRow(d, c) {
 
 function vNewDeck() {
   const f = ui.form;
-  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="back" aria-label="Volver">←</button><h1 style="font-size:24px">Nuevo mazo</h1></div>
+  return `<div class="stack"><div class="row between">${backBtn("back", "", "Cancelar")}</div><h1 class="large">Nuevo mazo</h1>
   <label class="f">Asignatura o tema<input type="text" id="nd-name" placeholder="Ej.: Lengua · Sintaxis" value="${esc(f.name || "")}" data-autofocus></label>
-  <div class="f"><b class="small">Color</b><div class="swatches">${COLORS.map(c => `<button class="swatch" style="--c:${c}" data-act="pickColor" data-v="${c}" aria-label="Color" aria-pressed="${(f.color || COLORS[0]) === c}"></button>`).join("")}</div></div>
+  <div class="f"><span class="eyebrow" style="padding-left:16px">Color</span><div class="swatches">${COLORS.map(c => `<button class="swatch" style="--c:${c}" data-act="pickColor" data-v="${c}" aria-label="Color" aria-pressed="${(f.color || COLORS[0]) === c}"></button>`).join("")}</div></div>
   <label class="f">Fecha de examen (opcional)<input type="date" id="nd-exam" value="${esc(f.exam || "")}"></label>
   <p class="muted small">Con fecha, Sinapsis ajusta los repasos para que la tercera evocación llegue antes del examen.</p>
   <button class="btn primary wide" data-act="createDeck">Crear mazo</button></div>`;
@@ -661,9 +689,9 @@ function vNewDeck() {
 function vDeckSet() {
   const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
   const f = ui.form;
-  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Ajustes del mazo</h1></div>
+  return `<div class="stack"><div class="row">${backBtn("openDeck", d.id, d.name)}</div><h1 class="large">Editar mazo</h1>
   <label class="f">Nombre<input type="text" id="ds-name" value="${esc(d.name)}"></label>
-  <div class="f"><b class="small">Color</b><div class="swatches">${COLORS.map(c => `<button class="swatch" style="--c:${c}" data-act="pickColor" data-v="${c}" aria-label="Color" aria-pressed="${(f.color || d.color) === c}"></button>`).join("")}</div></div>
+  <div class="f"><span class="eyebrow" style="padding-left:16px">Color</span><div class="swatches">${COLORS.map(c => `<button class="swatch" style="--c:${c}" data-act="pickColor" data-v="${c}" aria-label="Color" aria-pressed="${(f.color || d.color) === c}"></button>`).join("")}</div></div>
   <label class="f">Fecha de examen<input type="date" id="ds-exam" value="${d.exam != null ? dayToDate(d.exam) : ""}"></label>
   <button class="btn primary wide" data-act="saveDeck">Guardar</button>
   <button class="btn ghost wide" data-act="resetDeck">Reiniciar progreso de este mazo</button>
@@ -672,12 +700,12 @@ function vDeckSet() {
 
 function vAdd() {
   const d = deckById(ui.deckId); if (!d) { ui.screen = null; return vMazos(); }
-  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Añadir tarjetas</h1></div>
+  return `<div class="stack"><div class="row">${backBtn("openDeck", d.id, d.name)}</div><h1 class="large">Añadir</h1>
   <div class="panel stack"><label class="f">Pregunta<textarea id="a-q" rows="2" placeholder="¿Qué es la memoria de trabajo?" data-autofocus></textarea></label>
   <label class="f">Respuesta<textarea id="a-a" rows="3" placeholder="Para ideas, escríbela con tus palabras. Para datos, tal cual."></textarea></label>
   <label class="f">Relaciónalo (opcional)<input type="text" id="a-h" placeholder="¿A qué te recuerda? Ejemplo, imagen o regla"></label>
   <button class="btn primary wide" data-act="addOne">Añadir y seguir</button></div>
-  <div class="panel stack"><b>Pegar varias de golpe</b><p class="muted small">Una por línea: <code>pregunta :: respuesta :: relación</code>. La relación es opcional. También vale <code>pregunta | respuesta</code>.</p>
+  <div class="panel stack"><b style="font-weight:600">Pegar varias de golpe</b><p class="muted small">Una por línea: <code>pregunta :: respuesta :: relación</code>. La relación es opcional. También vale <code>pregunta | respuesta</code>.</p>
   <textarea id="a-bulk" rows="6" placeholder="Capital de Australia :: Canberra :: «Can-berra»: un can con boina&#10;¿Qué es la fotosíntesis? :: Proceso por el que las plantas fabrican su alimento con luz"></textarea>
   <button class="btn ghost wide" data-act="addBulk">Importar</button></div></div>`;
 }
@@ -687,11 +715,11 @@ function vTeam() {
   const qs = shuffle(d.cards).slice(0, 15);
   const txt = `Reto «${d.name}»: pregúntame esto sin enseñarme las respuestas.\n\n` + qs.map((c, i) => `${i + 1}. ${c.q}`).join("\n") + `\n\nRespuestas:\n` + qs.map((c, i) => `${i + 1}. ${c.a}`).join("\n");
   ui.teamText = txt;
-  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Reto en equipo</h1></div>
+  return `<div class="stack"><div class="row">${backBtn("openDeck", d.id, d.name)}</div><h1 class="large">Reto en equipo</h1>
   <p class="muted">Explicar y que te pregunten es de lo que más fija. Copia esto, envíalo a alguien de tu clase o de casa y que te examine. Luego cambiad los papeles.</p>
   <textarea id="team-text" rows="12" readonly>${esc(txt)}</textarea>
   <button class="btn primary wide" data-act="copyTeam">Copiar reto</button>
-  <div class="law"><span class="k" style="background:var(--violet)">Colabora</span><p style="margin-top:10px">Si no estáis de acuerdo, es normal: se llama disonancia cognitiva. Buscad datos que os quiten la razón, no solo los que os la dan.</p></div></div>`;
+  <div class="law"><span class="k" style="background:#8944AB">Colabora</span><p style="margin-top:10px">Si no estáis de acuerdo, es normal: se llama disonancia cognitiva. Buscad datos que os quiten la razón, no solo los que os la dan.</p></div></div>`;
 }
 
 /* ---------- Generar con IA ---------- */
@@ -701,8 +729,8 @@ function vGen() {
   let res = "";
   if (G.busy) res = `<div class="panel"><b>Claude está leyendo tus apuntes…</b><p class="muted small">Suele tardar entre 10 y 40 segundos.</p><button class="btn ghost" data-act="genStop" style="margin-top:10px">Parar</button></div>`;
   else if (G.err) res = `<div class="hint">${esc(G.err)}</div>`;
-  if (G.out) res += `<p class="eyebrow">${G.out.length} tarjetas propuestas · toca para quitar</p>` + G.out.map((c, i) => `<button class="check" data-act="genSel" data-v="${i}" aria-pressed="${G.sel[i] !== false}"><span class="box">${G.sel[i] !== false ? "✓" : ""}</span><span style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(c.q)}</b><span class="muted small" style="overflow-wrap:anywhere">${esc(c.a)}</span></span></button>`).join("") + `<button class="btn mint wide" data-act="genAdd">Añadir las seleccionadas</button>`;
-  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Volver">←</button><h1 style="font-size:24px">Crear con IA</h1></div>
+  if (G.out) res += `<p class="eyebrow">${G.out.length} tarjetas propuestas · toca para quitar</p>` + G.out.map((c, i) => `<button class="check" data-act="genSel" data-v="${i}" aria-pressed="${G.sel[i] !== false}"><span class="box">${G.sel[i] !== false ? "✓" : ""}</span><span style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(c.q)}</b><span class="muted small" style="overflow-wrap:anywhere">${esc(c.a)}</span></span></button>`).join("") + `<button class="btn primary wide" data-act="genAdd">Añadir las seleccionadas</button>`;
+  return `<div class="stack"><div class="row">${backBtn("openDeck", d.id, d.name)}</div><h1 class="large">Crear con IA</h1>
   <p class="muted">Pega tus apuntes${sampleImages ? " o sube una foto" : ""}. Claude propone preguntas de evocación con su gancho para relacionar. Tú decides cuáles se quedan.</p>
   <label class="f">Apuntes<textarea id="g-notes" rows="8" placeholder="Pega aquí el tema…">${esc(G.notes)}</textarea></label>
   ${sampleImages ? `<label class="f">Foto de apuntes (opcional)<input type="file" id="g-img" accept="image/*"></label>` : ""}
@@ -772,19 +800,19 @@ function vMission() {
   if (!M) { ui.screen = null; return vHoy(); }
   const total = M.queue.length + M.learn.length + M.checks.length;
   const doneN = M.i + M.li + M.ci;
-  const top = `<div class="mtop"><button class="iconbtn" data-act="quitMission" aria-label="Salir de la misión">✕</button><div class="bar"><i style="width:${total ? doneN / total * 100 : 0}%"></i></div><span class="pill num">+${M.xp} XP</span></div>`;
+  const top = `<div class="mtop"><button class="textbtn" data-act="quitMission">Cerrar</button><div class="bar"><i style="width:${total ? doneN / total * 100 : 0}%"></i></div><span class="xp num">+${M.xp} XP</span></div>`;
   if (M.step === "ritual") {
     const items = [["phone", "Móvil fuera de la mesa o en modo avión"], ["music", "Sin música ni vídeos de fondo"], ["water", "Agua a mano (y algo de comer si hay hambre)"], ["one", "Solo esta tarea abierta"]];
     const all = items.every(([k]) => M.ritual[k]);
     return `${top}<section class="stage ritual stack"><p class="eyebrow">Ritual de foco · 30 segundos</p><h1>Prepara tu portapapeles mental</h1>
     <p class="muted">Tu memoria de trabajo es pequeña: cada distracción le quita sitio a lo que quieres aprender.</p>
-    ${items.map(([k, l]) => `<button class="check" data-act="ritual" data-v="${k}" aria-pressed="${!!M.ritual[k]}"><span class="box">${M.ritual[k] ? "✓" : ""}</span>${esc(l)}</button>`).join("")}
+    <div class="group" style="--inset:52px">${items.map(([k, l]) => `<button class="check" data-act="ritual" data-v="${k}" aria-pressed="${!!M.ritual[k]}"><span class="box">${M.ritual[k] ? "✓" : ""}</span>${esc(l)}</button>`).join("")}</div>
     <button class="btn ${all ? "mint" : "primary"} wide" data-act="ritualGo" data-autofocus>${all ? "Listo, a por ello" : "Empezar igualmente"}</button></section>`;
   }
   if (M.step === "ev" || M.step === "check") return top + vEvoke();
   if (M.step === "learn") return top + vLearn();
   if (M.step === "checkIntro") {
-    return `${top}<section class="stage stack"><p class="eyebrow">Comprobación</p><h1 style="font-size:30px">Ahora, sin mirar</h1><p class="muted" style="font-size:19px">Intenta recordar lo que acabas de ver. Hoy no suma al 3/3 (hace falta que pase al menos un día), pero te dice qué necesita más relación.</p><button class="btn primary wide" data-act="checkGo" data-autofocus>Vamos</button></section>`;
+    return `${top}<section class="stage stack"><p class="eyebrow">Comprobación</p><h1 style="font-size:28px;line-height:34px;font-weight:700">Ahora, sin mirar</h1><p class="muted">Intenta recordar lo que acabas de ver. Hoy no suma al 3/3 (hace falta que pase al menos un día), pero te dice qué necesita más relación.</p><button class="btn primary wide" data-act="checkGo" data-autofocus>Vamos</button></section>`;
   }
   return top + vDone();
 }
@@ -796,29 +824,29 @@ function vEvoke() {
   const pos = M.step === "check" ? `${M.ci + 1}/${M.checks.length}` : `${M.i + 1}/${M.queue.length}`;
   let body;
   if (!M.revealed) {
-    body = `<label class="f" for="ev-in" style="margin-top:4px">Escribe lo que recuerdes, o dilo en voz alta</label>
+    body = `<label class="f" for="ev-in" style="padding-left:16px">Escribe lo que recuerdes, o dilo en voz alta</label>
     <textarea id="ev-in" rows="4" placeholder="Sin mirar. Si no sale, escribe lo que sí recuerdes." data-autofocus>${esc(M.typed)}</textarea>
-    ${M.hint && c.hook ? `<div class="hint"><b class="small">Pista</b><p>${esc(c.hook)}</p></div>` : ""}
+    ${M.hint && c.hook ? `<div class="hint"><b class="small" style="color:var(--orange-text)">PISTA</b><p>${esc(c.hook)}</p></div>` : ""}
     <div class="row">${c.hook && !M.hint ? `<button class="btn ghost" data-act="hint">Pista</button>` : ""}<button class="btn primary" style="flex:1" data-act="reveal">Comprobar</button></div>
     <p class="muted small">Esfuérzate unos segundos más antes de mirar: cuanto más te cuesta recordar, mejor se queda.</p>`;
   } else {
-    body = `${M.typed.trim() ? `<div class="mine"><span class="eyebrow">Tu respuesta</span><p style="margin-top:4px">${esc(M.typed)}</p></div>` : ""}
-    <div class="answer"><span class="eyebrow" style="color:var(--mint)">Respuesta</span><p class="a">${esc(c.a)}</p>${c.hook ? `<p class="muted small" style="margin-top:8px">Relación: ${esc(c.hook)}</p>` : ""}</div>
-    ${sample && M.typed.trim() ? (M.ai ? `<div class="ai">${M.ai.busy ? "Claude está comparando…" : esc(M.ai.text)}</div>` : `<button class="btn sky" data-act="aiCheck">Que Claude revise mi respuesta</button>`) : ""}
-    <p class="eyebrow" style="margin-top:4px">¿Cómo te ha salido?</p>
+    body = `${M.typed.trim() ? `<div class="mine"><span class="eyebrow" style="padding:0">Tu respuesta</span><p style="margin-top:4px">${esc(M.typed)}</p></div>` : ""}
+    <div class="answer"><span class="eyebrow" style="padding:0;color:var(--green-text)">Respuesta</span><p class="a">${esc(c.a)}</p>${c.hook ? `<p class="muted small" style="margin-top:8px">Relación: ${esc(c.hook)}</p>` : ""}</div>
+    ${sample && M.typed.trim() ? (M.ai ? `<div class="ai">${M.ai.busy ? "Claude está comparando…" : esc(M.ai.text)}</div>` : `<button class="btn tinted wide" data-act="aiCheck">Que Claude revise mi respuesta</button>`) : ""}
+    <p class="eyebrow" style="padding:0;text-align:center;margin-top:4px">¿Cómo te ha salido?</p>
     <div class="grades"><button class="grade ok" data-act="grade" data-v="ok">Lo saqué<small>${M.hint ? "con pista" : "sin mirar"}</small></button><button class="grade mid" data-act="grade" data-v="mid">A medias<small>falta algo</small></button><button class="grade no" data-act="grade" data-v="no">No salió<small>y sirve igual</small></button></div>`;
   }
-  return `<section class="stage stack"><div class="qcard" style="--c:${d.color}"><div class="row between"><span class="tag" style="background:${d.color};color:var(--on-bright)">${esc(d.name)}</span><span class="muted small num">${label} · ${pos}</span></div>
-  <p class="q">${esc(c.q)}</p><div class="row" style="margin-top:12px"><span class="dots">${[0, 1, 2].map(i => `<i class="${i < c.ok ? "on" : ""}"></i>`).join("")}</span><span class="muted small">${c.ok}/3 evocaciones en días distintos</span></div></div>${body}</section>`;
+  return `<section class="stage stack"><div class="qcard"><div class="row between"><span class="tag" style="background:${d.color};color:${onColor(d.color)}">${esc(d.name)}</span><span class="muted small num">${label} · ${pos}</span></div>
+  <p class="q">${esc(c.q)}</p><div class="row"><span class="dots">${[0, 1, 2].map(i => `<i class="${i < c.ok ? "on" : ""}"></i>`).join("")}</span><span class="muted small">${c.ok}/3 evocaciones en días distintos</span></div></div>${body}</section>`;
 }
 function vLearn() {
   const it = M.learn[M.li], d = deckById(it.deckId), c = getCard(it);
   if (!c) { M.li++; if (M.li >= M.learn.length) M.step = nextStep("learn"); return vMission(); }
-  return `<section class="stage stack"><div class="qcard" style="--c:${d.color}"><div class="row between"><span class="tag" style="background:${d.color};color:var(--on-bright)">${esc(d.name)}</span><span class="muted small num">Nuevo · ${M.li + 1}/${M.learn.length}</span></div>
+  return `<section class="stage stack"><div class="qcard"><div class="row between"><span class="tag" style="background:${d.color};color:${onColor(d.color)}">${esc(d.name)}</span><span class="muted small num">Nuevo · ${M.li + 1}/${M.learn.length}</span></div>
   <p class="q">${esc(c.q)}</p></div>
-  <div class="answer"><span class="eyebrow" style="color:var(--mint)">Respuesta</span><p class="a">${esc(c.a)}</p></div>
-  <label class="f" for="ln-hook">Relaciónalo: ¿a qué te recuerda? <span class="muted small">(ejemplo, imagen, palabra parecida, regla)</span></label>
-  <input type="text" id="ln-hook" value="${esc(c.hook || "")}" placeholder="Engánchalo a algo que ya sabes">
+  <div class="answer"><span class="eyebrow" style="padding:0;color:var(--green-text)">Respuesta</span><p class="a">${esc(c.a)}</p></div>
+  <label class="f" for="ln-hook" style="padding-left:16px">Relaciónalo: ¿a qué te recuerda?</label>
+  <input type="text" id="ln-hook" value="${esc(c.hook || "")}" placeholder="Ejemplo, imagen, palabra parecida o regla">
   <button class="check" data-act="explained" aria-pressed="${!!M.explained}"><span class="box">${M.explained ? "✓" : ""}</span>Me lo he explicado con mis palabras, en voz alta o mentalmente</button>
   <button class="btn primary wide" data-act="learnNext">Lo tengo, siguiente</button></section>`;
 }
@@ -828,9 +856,10 @@ function vDone() {
   const msg = !n ? "Has preparado el terreno: mañana empiezas a evocar esto." : pct >= .8 ? "Muy sólido. Recuerda: lo que hoy sale fácil, mañana se olvida un poco. Por eso volverá." : pct >= .5 ? "Buen trabajo. Lo que ha salido a medias es justo lo que tu cerebro está consolidando." : "Ha costado, y eso es entrenamiento real. Las que fallaron vuelven mañana: relaciónalas con algo que ya sepas.";
   const tomorrow = (() => { const t = today() + 1; let k = 0; S.decks.forEach(d => d.cards.forEach(c => { if (c.seen && c.due != null && c.due <= t) k++; })); return k; })();
   const refl = [["evoco", "Evoqué sin mirar"], ["distr", "Me distraje"], ["relac", "Necesito relacionar más"], ["sueno", "Me falta sueño"]];
-  return `<section class="stage done stack"><p class="eyebrow">Misión cumplida</p><h1>Tu cerebro acaba de cablear nuevas conexiones</h1><p style="font-size:19px">${esc(msg)}</p>
-  <div class="grid2"><div class="tile"><div class="v num" style="color:var(--mint)">${r.ok}</div><div class="muted small">lo saqué</div></div><div class="tile"><div class="v num" style="color:var(--sun)">${r.mid}</div><div class="muted small">a medias</div></div><div class="tile"><div class="v num" style="color:var(--coral)">${r.no}</div><div class="muted small">no salió</div></div><div class="tile"><div class="v num">+${M.xp}</div><div class="muted small">XP en ${mins} min</div></div></div>
-  <div class="panel"><b>Mañana te esperan ${tomorrow} ${plural(tomorrow, "tarjeta")}.</b><p class="muted small">Duerme sin el móvil en el cuarto: mientras duermes, tu cerebro guarda los cambios.</p></div>
+  return `<section class="stage done stack"><div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></div>
+  <div style="text-align:center;display:grid;gap:6px"><h1>Misión cumplida</h1><p class="muted">${esc(msg)}</p></div>
+  <div class="grid2"><div class="tile"><span class="k" style="padding:0;color:var(--green-text)">Lo saqué</span><div class="v num">${r.ok}</div></div><div class="tile"><span class="k" style="padding:0;color:var(--orange-text)">A medias</span><div class="v num">${r.mid}</div></div><div class="tile"><span class="k" style="padding:0;color:var(--red-text)">No salió</span><div class="v num">${r.no}</div></div><div class="tile" style="background:var(--tint);color:#FFFFFF"><span class="k" style="padding:0">Experiencia · ${mins} min</span><div class="v num">+${M.xp} XP</div></div></div>
+  <div class="group"><div class="cell"><span class="ic" style="background:var(--tint)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span><span class="tx"><b style="font-weight:600">Mañana: ${tomorrow} ${plural(tomorrow, "tarjeta")}</b><span>Duerme sin el móvil en el cuarto: tu cerebro guarda los cambios</span></span></div></div>
   <p class="eyebrow">¿A qué se debe tu resultado de hoy?</p>
   <div class="chiprow">${refl.map(([k, l]) => `<button class="chipbtn" data-act="refl" data-v="${k}" aria-pressed="${M.refl === k}">${esc(l)}</button>`).join("")}</div>
   ${M.refl ? `<div class="hint">${esc({ evoco: "Eso es lo que funciona. Sigue así y espacia.", distr: "Prueba el ritual completo y un bloque de foco de 10 minutos la próxima vez.", relac: "Abre el mazo y escribe un gancho en las que fallaste: ejemplo, imagen o regla.", sueno: "El sueño es parte del estudio. Hoy, móvil fuera del cuarto." }[M.refl])}</div>` : ""}
@@ -881,15 +910,15 @@ function vBlank() {
   const d = deckById(ui.deckId); if (!d || !B) { ui.screen = null; return vMazos(); }
   if (B.phase === "write") {
     const m = Math.floor(B.left / 60), s = B.left % 60;
-    return `<div class="stack"><div class="mtop"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Salir">✕</button><div class="bar"><i style="width:${(1 - B.left / B.total) * 100}%"></i></div><span class="pill num" id="blank-t">${m}:${String(s).padStart(2, "0")}</span></div>
-    <section class="stage stack"><p class="eyebrow">Hoja en blanco · ${esc(d.name)}</p><h1 style="font-size:28px">Escribe todo lo que recuerdes del tema</h1><p class="muted">Sin mirar nada. Frases sueltas, palabras, esquemas: todo vale. Después compararás.</p>
+    return `<div class="stack"><div class="mtop"><button class="textbtn" data-act="openDeck" data-v="${d.id}">Cerrar</button><div class="bar"><i style="width:${(1 - B.left / B.total) * 100}%"></i></div><span class="xp num" id="blank-t">${m}:${String(s).padStart(2, "0")}</span></div>
+    <section class="stage stack"><p class="eyebrow">Hoja en blanco · ${esc(d.name)}</p><h1 style="font-size:28px;line-height:34px;font-weight:700">Escribe todo lo que recuerdes del tema</h1><p class="muted">Sin mirar nada. Frases sueltas, palabras, esquemas: todo vale. Después compararás.</p>
     <textarea id="blank-in" rows="12" data-autofocus>${esc(B.text)}</textarea><button class="btn primary wide" data-act="blankDone">He terminado, comparar</button></section></div>`;
   }
-  return `<div class="stack"><div class="row"><button class="iconbtn" data-act="openDeck" data-v="${d.id}" aria-label="Salir">✕</button><h1 style="font-size:24px">Compara</h1></div>
+  return `<div class="stack"><div class="row">${backBtn("openDeck", d.id, d.name)}</div><h1 class="large">Compara</h1>
   <p class="muted">Marca las ideas que sí incluiste. Las que no, entran en la misión de hoy.</p>
   ${B.text.trim() ? `<details class="lawd"><summary>Ver lo que escribiste</summary><div class="body mine">${esc(B.text)}</div></details>` : ""}
-  ${d.cards.map(c => `<button class="check" data-act="blankTick" data-v="${c.id}" aria-pressed="${!!B.got[c.id]}"><span class="box">${B.got[c.id] ? "✓" : ""}</span><span style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(c.a)}</b><span class="muted small" style="overflow-wrap:anywhere">${esc(c.q)}</span></span></button>`).join("")}
-  <button class="btn mint wide" data-act="blankSave">Guardar resultado</button></div>`;
+  <div class="group" style="--inset:52px">${d.cards.map(c => `<button class="check" data-act="blankTick" data-v="${c.id}" aria-pressed="${!!B.got[c.id]}"><span class="box">${B.got[c.id] ? "✓" : ""}</span><span style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(c.a)}</b><span class="muted small" style="overflow-wrap:anywhere">${esc(c.q)}</span></span></button>`).join("")}</div>
+  <button class="btn primary wide" data-act="blankSave">Guardar resultado</button></div>`;
 }
 let blankTimer = null;
 function startBlank() {
@@ -909,31 +938,31 @@ let focusTimer = null;
 function vFoco() {
   const mins = S.profile.focus;
   const total = F.total || mins * 60, left = F.total ? F.left : mins * 60;
-  const C = 2 * Math.PI * 130, pct = total ? 1 - left / total : 0, isBreak = F.mode === "break";
+  const C = 2 * Math.PI * 108, pct = total ? 1 - left / total : 0, isBreak = F.mode === "break";
   const breaks = ["Levántate y estira los brazos 10 veces", "Bebe un vaso de agua", "Mira por la ventana a lo lejos 20 segundos", "Baila una canción entera", "Respira: 4 segundos dentro, 6 fuera, cinco veces", "Camina hasta otra habitación y vuelve"];
-  const items = [["phone", "Móvil fuera"], ["music", "Sin música"], ["goal", "Objetivo claro"]];
-  return `${header()}<div class="stack" style="margin-top:12px">
-  <h1 style="font-size:26px">${isBreak ? "Descanso de verdad" : "Bloque de foco"}</h1>
-  <p class="muted">${isBreak ? esc(breaks[(today() + (F.breakIdx || 0)) % breaks.length]) + ". Sin pantallas: el cerebro también consolida en las pausas." : "Bloques cortos, una sola tarea. Al terminar, descanso de 5 minutos."}</p>
-  <div class="ring"><svg viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="130" stroke="var(--ink-3)" stroke-width="22" fill="none"/><circle id="ring-p" cx="150" cy="150" r="130" stroke="${isBreak ? "var(--mint)" : "var(--pink)"}" stroke-width="22" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg>
-  <div class="t"><div><b class="num" id="ring-t">${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}</b><p class="muted small">${isBreak ? "descanso" : F.running ? "en foco" : "listo"}</p></div></div></div>
-  <div class="row" style="justify-content:center">
-    ${F.running ? `<button class="btn ghost" data-act="fPause">Pausa</button>` : `<button class="btn primary" data-act="fStart">${F.total && F.left < F.total ? "Seguir" : isBreak ? "Empezar descanso" : "Empezar"}</button>`}
-    ${F.total ? `<button class="btn ghost" data-act="fReset">Reiniciar</button>` : ""}
+  const items = [["phone", "Móvil fuera de la mesa"], ["music", "Sin música"], ["goal", "Sé qué voy a hacer en este bloque"]];
+  const col = isBreak ? "var(--green)" : "var(--pink)", bg = isBreak ? "var(--green-soft)" : "var(--pink-soft)";
+  return `${header(isBreak ? "Descanso" : "Foco")}<div class="stack" style="margin-top:16px">
+  ${!F.total && !isBreak ? `<div class="seg-ctl" role="group" aria-label="Duración">${[10, 15, 20, 25].map(m => `<button data-act="fMins" data-v="${m}" aria-pressed="${mins === m}">${m} min</button>`).join("")}</div>` : `<p class="muted">${isBreak ? esc(breaks[(today() + (F.breakIdx || 0)) % breaks.length]) + ". Sin pantallas: el cerebro también consolida en las pausas." : "Una sola tarea. Si te viene un pensamiento que no toca, apúntalo en un papel y vuelve."}</p>`}
+  <div class="ring"><svg viewBox="0 0 250 250" aria-hidden="true"><circle cx="125" cy="125" r="108" stroke="${bg}" stroke-width="20" fill="none"/><circle id="ring-p" cx="125" cy="125" r="108" stroke="${col}" stroke-width="20" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg>
+  <div class="t"><div><b id="ring-t">${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}</b><p class="muted" style="margin-top:6px;font-size:15px">${isBreak ? "descanso" : F.running ? "en foco" : "listo"}</p></div></div></div>
+  <div class="grid2">
+    ${F.total ? `<button class="btn ghost" data-act="fReset">Reiniciar</button>` : `<button class="btn ghost" data-act="tab" data-v="hoy">Volver</button>`}
+    ${F.running ? `<button class="btn" style="background:${col};color:#FFFFFF" data-act="fPause">Pausa</button>` : `<button class="btn" style="background:${col};color:#FFFFFF" data-act="fStart">${F.total && F.left < F.total ? "Seguir" : isBreak ? "Empezar descanso" : "Empezar"}</button>`}
   </div>
-  ${!F.total && !isBreak ? `<p class="eyebrow">Duración</p><div class="chiprow">${[10, 15, 20, 25].map(m => `<button class="chipbtn" data-act="fMins" data-v="${m}" aria-pressed="${mins === m}">${m} min</button>`).join("")}</div>` : ""}
-  <p class="eyebrow">Antes de empezar</p>
-  <div class="chiprow">${items.map(([k, l]) => `<button class="chipbtn" data-act="fCheck" data-v="${k}" aria-pressed="${!!F.checks[k]}">${F.checks[k] ? "✓ " : ""}${esc(l)}</button>`).join("")}</div>
-  <button class="check" data-act="fNoise" aria-pressed="${F.noise}"><span class="box">${F.noise ? "✓" : ""}</span><span>Ruido marrón de fondo<span class="muted small" style="display:block">No es música. A algunas personas con TDA les ayuda a aislarse; si a ti no, déjalo apagado.</span></span></button>
-  <div class="panel small muted">Si te viene un pensamiento que no toca («tengo que contestar a…»), apúntalo en un papel y vuelve. Lo atiendes en el descanso.</div>
+  <div class="stack" style="gap:6px"><p class="eyebrow">Antes de empezar</p><div class="group" style="--inset:52px">
+  ${items.map(([k, l]) => `<button class="check" data-act="fCheck" data-v="${k}" aria-pressed="${!!F.checks[k]}"><span class="box">${F.checks[k] ? "✓" : ""}</span>${esc(l)}</button>`).join("")}
+  </div></div>
+  <div class="stack" style="gap:6px"><div class="group"><button class="cell" data-act="fNoise" aria-pressed="${F.noise}"><span class="tx"><b>Ruido marrón</b><span>No es música. A algunas personas con TDA les ayuda a aislarse.</span></span><span class="switch" aria-hidden="true"></span></button></div>
+  <p class="small muted" style="padding:0 16px">Al terminar el bloque: 5 minutos de descanso sin pantallas.</p></div>
   </div>`;
 }
 function fTick() {
   if (!F.running) return;
   F.left = Math.max(0, Math.round((F.endAt - Date.now()) / 1000));
   const el = $("#ring-t"), p = $("#ring-p");
-  if (el) el.textContent = `${Math.floor(F.left / 60)}:${String(F.left % 60).padStart(2, "0")}`;
-  if (p) { const C = 2 * Math.PI * 130; p.setAttribute("stroke-dashoffset", C * (F.left / F.total)); }
+  if (el) el.textContent = `${String(Math.floor(F.left / 60)).padStart(2, "0")}:${String(F.left % 60).padStart(2, "0")}`;
+  if (p) { const C = 2 * Math.PI * 108; p.setAttribute("stroke-dashoffset", C * (F.left / F.total)); }
   if (!F.left) {
     clearInterval(focusTimer); F.running = false; releaseWake();
     if (F.mode === "focus") { addXP(20); logDay("fo"); touch(); SND.win(); confetti(); toast("+20 XP · bloque completado"); F.mode = "break"; F.total = 300; F.left = 300; F.breakIdx = (F.breakIdx || 0) + 1; }
@@ -951,20 +980,20 @@ function vYo() {
   const totalEv = Object.values(S.profile.days).reduce((a, d) => a + (d.ev || 0), 0);
   const totalFo = Object.values(S.profile.days).reduce((a, d) => a + (d.fo || 0), 0);
   const start = t - 7 * 12 + 1;
-  const cells = []; for (let k = start; k <= t; k++) { const d = S.profile.days[k]; const v = d ? (d.ev || 0) + (d.fo || 0) * 3 : 0; const a = v === 0 ? 0 : v < 5 ? .35 : v < 12 ? .65 : 1; cells.push(`<i title="${fmtDay(k)}: ${v}" style="${a ? `background:color-mix(in srgb,var(--mint) ${a * 100}%,var(--ink-3))` : ""}"></i>`); }
-  return `${header()}<div class="stack" style="margin-top:12px">
-  <div class="level"><p class="eyebrow">Tu cerebro</p><h1 style="font-size:28px;margin-top:4px">${esc(lv.name)}</h1><p class="muted small num">Nivel ${lv.level} · ${S.profile.xp} XP en total</p><div class="bar" style="margin-top:10px"><i style="width:${lv.rest / lv.need * 100}%"></i></div></div>
-  <div class="grid2"><div class="tile"><div class="v num">${s}</div><div class="muted small">${plural(s, "día")} de racha</div></div><div class="tile"><div class="v num">${totalEv}</div><div class="muted small">evocaciones</div></div><div class="tile"><div class="v num" style="color:var(--mint)">${st.done}</div><div class="muted small">dominadas 3/3</div></div><div class="tile"><div class="v num">${totalFo}</div><div class="muted small">bloques de foco</div></div></div>
-  <div class="panel stack"><b>Últimas 12 semanas</b><div class="heat" aria-label="Actividad diaria">${cells.join("")}</div></div>
-  <p class="eyebrow">Las 6 leyes de tu cerebro</p>
-  ${LAWS.map(l => `<details class="lawd"><summary><span class="k" style="background:${l.c};flex:none">${esc(l.k)}</span><span>${esc(l.t)}</span></summary><div class="body"><p><b style="color:var(--mint)">Truqui:</b> ${esc(l.truqui)}</p><p><b style="color:var(--coral)">Antitruqui:</b> ${esc(l.anti)}</p><p class="muted"><b>En Sinapsis:</b> ${esc(l.app)}</p></div></details>`).join("")}
-  <p class="small muted">Basado en <i>Aprender a aprender</i>, de Héctor Ruiz Martín.</p>
-  <p class="eyebrow">Ajustes</p>
-  <div class="panel stack"><b>Evocaciones por misión</b><div class="chiprow">${[5, 10, 15, 20].map(n => `<button class="chipbtn" data-act="setGoal" data-v="${n}" aria-pressed="${S.profile.goal === n}">${n}</button>`).join("")}</div>
-  <button class="check" data-act="sound" aria-pressed="${!!S.profile.sound}"><span class="box">${S.profile.sound ? "✓" : ""}</span>Sonidos de recompensa</button></div>
-  <div class="panel stack"><b>Copia de seguridad</b><p class="muted small">Copia tus datos para guardarlos en Notas o pasarlos a otro dispositivo.</p>
-  <div class="row"><button class="btn ghost" data-act="exportData">Copiar mis datos</button><button class="btn ghost" data-act="showImport">Restaurar</button></div>
-  ${ui.importing ? `<textarea id="imp" rows="4" placeholder="Pega aquí la copia"></textarea><button class="btn primary" data-act="importData">Restaurar desde la copia</button>` : ""}
+  const cells = []; for (let k = start; k <= t; k++) { const d = S.profile.days[k]; const v = d ? (d.ev || 0) + (d.fo || 0) * 3 : 0; const a = v === 0 ? 0 : v < 5 ? .35 : v < 12 ? .65 : 1; cells.push(`<i title="${fmtDay(k)}: ${v}" style="${a ? `background:color-mix(in srgb,var(--green) ${a * 100}%,var(--fill))` : ""}"></i>`); }
+  return `${header("Yo")}<div class="stack" style="margin-top:16px">
+  <div class="level"><div class="row between"><div><p class="small muted">Tu cerebro</p><h2 style="font-size:22px;font-weight:700">${esc(lv.name)}</h2></div><span class="tag count num">Nivel ${lv.level}</span></div><div class="bar" style="margin-top:12px"><i style="width:${lv.rest / lv.need * 100}%"></i></div><p class="small muted num" style="margin-top:6px">${lv.rest} / ${lv.need} XP para el siguiente nivel</p></div>
+  <div class="grid2"><div class="tile"><span class="k" style="padding:0;color:var(--orange-text)">Racha</span><div class="v num">${s}</div></div><div class="tile"><span class="k" style="padding:0;color:var(--tint-strong)">Evocaciones</span><div class="v num">${totalEv}</div></div><div class="tile"><span class="k" style="padding:0;color:var(--green-text)">Dominadas 3/3</span><div class="v num">${st.done}</div></div><div class="tile"><span class="k" style="padding:0;color:var(--pink-text)">Bloques de foco</span><div class="v num">${totalFo}</div></div></div>
+  <div class="stack" style="gap:6px"><p class="eyebrow">Últimas 12 semanas</p><div class="panel"><div class="heat" aria-label="Actividad diaria">${cells.join("")}</div></div></div>
+  <div class="stack" style="gap:6px"><p class="eyebrow">Las 6 leyes de tu cerebro</p>
+  ${LAWS.map(l => `<details class="lawd"><summary><span class="k" style="background:${l.c};flex:none">${esc(l.k)}</span><span>${esc(l.t)}</span></summary><div class="body"><p><b style="color:var(--green-text)">Truqui:</b> ${esc(l.truqui)}</p><p><b style="color:var(--red-text)">Antitruqui:</b> ${esc(l.anti)}</p><p class="muted"><b>En Sinapsis:</b> ${esc(l.app)}</p></div></details>`).join("")}
+  <p class="small muted" style="padding:0 16px">Basado en <i>Aprender a aprender</i>, de Héctor Ruiz Martín.</p></div>
+  <div class="stack" style="gap:6px"><p class="eyebrow">Evocaciones por misión</p><div class="seg-ctl" role="group" aria-label="Evocaciones por misión">${[5, 10, 15, 20].map(n => `<button data-act="setGoal" data-v="${n}" aria-pressed="${S.profile.goal === n}">${n}</button>`).join("")}</div></div>
+  <div class="group"><button class="cell" data-act="sound" aria-pressed="${!!S.profile.sound}"><span class="tx"><b>Sonidos de recompensa</b></span><span class="switch" aria-hidden="true"></span></button></div>
+  <div class="stack" style="gap:6px"><p class="eyebrow">Copia de seguridad</p><div class="group">
+  <button class="cell" data-act="exportData"><span class="tx"><b style="color:var(--tint)">Copiar mis datos</b><span>Pégalos en Notas para guardarlos</span></span></button>
+  <button class="cell" data-act="showImport"><span class="tx"><b style="color:var(--tint)">Restaurar desde una copia</b></span></button></div>
+  ${ui.importing ? `<textarea id="imp" rows="4" placeholder="Pega aquí la copia"></textarea><button class="btn primary wide" data-act="importData">Restaurar</button>` : ""}
   <textarea id="exp" rows="3" readonly hidden></textarea></div>
   <p class="sync" id="sync">${esc(syncLabel)}</p></div>`;
 }
