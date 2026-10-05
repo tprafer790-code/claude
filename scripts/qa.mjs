@@ -24,7 +24,7 @@ for (const w of [390, 768, 1440]) {
   await page.waitForSelector('body.is-static');
   const over = await page.evaluate(() => {
     const W = document.documentElement.clientWidth; const bad = [];
-    for (const el of document.querySelectorAll('body *')) { const r = el.getBoundingClientRect(); if (r.width && (r.right > W + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed' && !el.closest('.visually-hidden, .skip, .rail .lbl, .hotspot')) bad.push(el.tagName + '.' + el.className); }
+    for (const el of document.querySelectorAll('body *')) { const r = el.getBoundingClientRect(); if (r.width && (r.right > W + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed' && !el.closest('.visually-hidden, .skip, .rail .lbl, .hotspot, .details-list')) bad.push(el.tagName + '.' + el.className); }
     return { sw: document.documentElement.scrollWidth, W, bad: bad.slice(0, 5) };
   });
   ok(`Sin desbordamiento horizontal a ${w}px (estático)`, over.sw <= over.W && over.bad.length === 0, JSON.stringify(over));

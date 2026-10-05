@@ -4,13 +4,13 @@ Entorno de prueba: contenedor Linux, 4 núcleos, **sin GPU**. Chromium 1194 head
 
 ## Trayectoria (observado)
 ```
-Sólidos: 33 · muestras: 4001 · longitud: 23.95 pantallas
-Distancia mínima: 0.782 m en u=11.04 pos=-1.58,1.8,-5.96
+Sólidos: 35 · muestras: 4001 · longitud: 23.95 pantallas
+Distancia mínima: 0.630 m en u=11.75 pos=-1.93,1.74,-6.84
 OK: ninguna muestra a menos de 0.3 m de un sólido.
 Altura mínima sobre el terreno exterior: 1.44 m en 2.6,9.4,74
 ```
 
-## QA funcional — `node scripts/qa.mjs` (observado, 2026-10-05)
+## QA funcional — `node scripts/qa.mjs` (observado, tras iteración 1)
 ```
 OK   Sin desbordamiento horizontal a 390px (estático) — {"sw":390,"W":390,"bad":[]}
 OK   Versión estática con 5 planos de capítulo a 390px
@@ -38,7 +38,7 @@ OK   Movimiento reducido activa planos fijos — {"mode":"reduced","rm":true}
 OK   Salto a capítulo V usa el plano fijo final (clave 13) — 13
 OK   Consola sin errores (movimiento reducido)
 OK   Sin WebGL: cae a la versión estática
-OK   Carga de la escena (SwiftShader, calidad baja) — 9957 ms hasta escena lista
+OK   Carga de la escena (SwiftShader, calidad baja) — 9928 ms hasta escena lista
 OK   Hotspots visibles en la suite — lino,lampara
 OK   Detalle mueve la cámara a la perspectiva adicional — mezcla 0.93
 OK   Consola sin errores (en vivo)
