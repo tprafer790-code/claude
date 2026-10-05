@@ -206,8 +206,8 @@ def shot03(f):  # 04-06 GAMUZA Y PIEL: 3 subplanos (cortes en 15 y 38 = caja/hi-
         s["key"]["e"] = 0.55
     else:
         t = (f - 38) / 22.0
-        p = Vector((0.282, lin(-0.01, 0.012, e_sine(t)), 0.016))
-        camp = p + Vector((0.20, lin(0.07, 0.11, t), 0.035))
+        p = Vector((0.280, lin(0.0, 0.014, e_sine(t)), 0.022))
+        camp = p + Vector((0.20, lin(0.09, 0.12, t), 0.055))   # más alta: la entresuela ya no tapa en primer término
         cam(s, W(Mr, camp), W(Mr, p), 85, fstop=8)
         s["spot"] = dict(loc=W(Mr, p + Vector((0.05, 0.25, 0.25))), tgt=W(Mr, p), e=0.9, size=18.0)
         s["key"]["e"] = 0.6
