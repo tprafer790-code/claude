@@ -88,7 +88,7 @@ for (const w of [390, 768, 1440]) {
   const mode = await page.evaluate(() => ({ mode: window.__silva.state.mode, rm: document.body.classList.contains('reduce-motion') }));
   ok('Movimiento reducido activa planos fijos', mode.mode === 'reduced' && mode.rm, JSON.stringify(mode));
   await page.evaluate(() => window.__silva.goToChapter(4));
-  await page.waitForTimeout(1500);
+  await page.waitForFunction(() => window.__silva.state.stillKey === 13, null, { timeout: 30000 }).catch(() => {});
   const k = await page.evaluate(() => window.__silva.state.stillKey);
   ok('Salto a capítulo V usa el plano fijo final (clave 13)', k === 13, String(k));
   ok('Consola sin errores (movimiento reducido)', errors.length === 0, errors.join(' | '));

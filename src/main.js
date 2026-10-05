@@ -248,7 +248,7 @@ function loop(now) {
     else state.uCur += (state.uTarget - state.uCur) * (1 - Math.exp(-dt * 4.2));
     state.pointer[0] += (state.pointerT[0] - state.pointer[0]) * (1 - Math.exp(-dt * 2));
     state.pointer[1] += (state.pointerT[1] - state.pointer[1]) * (1 - Math.exp(-dt * 2));
-    state.blend += (state.blendTarget - state.blend) * (1 - Math.exp(-dt * 2.6));
+    state.blend += (state.blendTarget - state.blend) * (1 - Math.exp(-raw * 2.6));
     if (state.detail && Math.abs(state.uTarget - state.detailU) > 0.35) closeDetail(false);
     if (state.blendTarget === 0 && state.blend < 0.002) state.detail = null;
     engine.frame(state.uCur, { pointer: state.pointer, override: state.detail?.view, blend: state.blend });

@@ -125,7 +125,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .rail button[aria-current='step'] .tick { width: 34px; background: var(--ember); }
 
 /* ---------- Capítulos ---------- */
-.journey { position: relative; z-index: 10; }
+.journey { position: relative; z-index: 10; overflow-x: clip; } /* el velo del texto no desborda; clip no rompe sticky */
 .chapter { position: relative; }
 .chapter__stick { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: flex-end; pointer-events: none; }
 .chapter__panel {
@@ -162,7 +162,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chapter [data-r='3'] { --d: 0.22; }
 .chapter [data-r='4'] { --d: 0.4; }
 .chapter [data-r='5'] { --d: 0.55; }
-.chapter[data-hidden] .chapter__panel { visibility: hidden; }
+.chapter[data-hidden] .chapter__panel { pointer-events: none; }
 
 .scroll-cue { position: absolute; right: var(--gut); bottom: clamp(2rem, 7vh, 5.5rem); font: var(--t-mono)/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone-dim);
   display: flex; gap: 0.8rem; align-items: center; background: var(--veil); padding: 0.6rem 0.8rem; }
