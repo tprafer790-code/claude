@@ -70,12 +70,12 @@ for (const w of [390, 768, 1440]) {
   const errs = await page.evaluate(() => [...document.querySelectorAll('[aria-invalid=true]')].map((e) => e.id));
   ok('Formulario vacío marca 3 errores y enfoca el primero', errs.length === 3 && (await page.evaluate(() => document.activeElement.id)) === 'f-name', errs.join(','));
   await page.fill('#f-name', 'Ana Prueba'); await page.fill('#f-email', 'ana@ejemplo.es'); await page.fill('#f-msg', 'Querríamos información para mayo.');
-  await page.selectOption('#f-room', 'Suite Bosque');
+  await page.selectOption('#f-room', 'Casa Bosque');
   await page.evaluate(() => { window.__nav = []; const d = Object.getOwnPropertyDescriptor(Location.prototype, 'href'); });
   await page.click('#contact-form button[type=submit]');
   await page.waitForTimeout(300);
   const mail = await page.evaluate(() => ({ url: window.__silvaLastMailto || '', status: document.getElementById('form-status').textContent }));
-  ok('Formulario válido prepara mailto con datos', mail.url.startsWith('mailto:') && decodeURIComponent(mail.url).includes('Suite Bosque') && decodeURIComponent(mail.url).includes('Ana Prueba'), mail.url.slice(0, 80));
+  ok('Formulario válido prepara mailto con datos', mail.url.startsWith('mailto:') && decodeURIComponent(mail.url).includes('Casa Bosque') && decodeURIComponent(mail.url).includes('Ana Prueba'), mail.url.slice(0, 80));
   ok('Estado declara que no se ha enviado', /no se ha enviado/i.test(mail.status), mail.status.slice(0, 90));
   ok('Consola sin errores (recorridos estáticos)', errors.length === 0, errors.join(' | '));
   await page.close();

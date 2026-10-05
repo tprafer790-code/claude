@@ -5,12 +5,12 @@ Entorno de prueba: contenedor Linux, 4 núcleos, **sin GPU**. Chromium 1194 head
 ## Trayectoria (observado)
 ```
 Sólidos: 35 · muestras: 4001 · longitud: 23.95 pantallas
-Distancia mínima: 0.630 m en u=11.75 pos=-1.93,1.74,-6.84
+Distancia mínima: 0.557 m en u=11.75 pos=-2.05,1.65,-6.85
 OK: ninguna muestra a menos de 0.3 m de un sólido.
 Altura mínima sobre el terreno exterior: 1.44 m en 2.6,9.4,74
 ```
 
-## QA funcional — `node scripts/qa.mjs` (observado, tras iteración 1)
+## QA funcional — `node scripts/qa.mjs` (observado, tras iteración 2)
 ```
 OK   Sin desbordamiento horizontal a 390px (estático) — {"sw":390,"W":390,"bad":[]}
 OK   Versión estática con 5 planos de capítulo a 390px
@@ -38,7 +38,7 @@ OK   Movimiento reducido activa planos fijos — {"mode":"reduced","rm":true}
 OK   Salto a capítulo V usa el plano fijo final (clave 13) — 13
 OK   Consola sin errores (movimiento reducido)
 OK   Sin WebGL: cae a la versión estática
-OK   Carga de la escena (SwiftShader, calidad baja) — 9928 ms hasta escena lista
+OK   Carga de la escena (SwiftShader, calidad baja) — 9805 ms hasta escena lista
 OK   Hotspots visibles en la suite — lino,lampara
 OK   Detalle mueve la cámara a la perspectiva adicional — mezcla 0.93
 OK   Consola sin errores (en vivo)
@@ -61,3 +61,6 @@ El motor 3D (`engine-*.js`) se carga de forma diferida tras pintar el HTML. Las 
 axe-core 4.13.0, reglas WCAG 2.1 A/AA, versión estática, 390 y 1440 px, con menú y diálogo abiertos: **0 incumplimientos** en las 6 pasadas.
 Límite: axe no evalúa el contraste del texto sobre la escena 3D/imagen (lo marca como *incompleto*). Por eso el texto lleva siempre un velo oscuro (rgba(14,11,8,0.78) en el centro del panel; degradado de 0.9 en móvil). Comprobación visual en las capturas de `capturas/`.
 Revisión manual (observado en QA): orden de foco, salto de contenido, trampa de foco en el menú, Esc en menú/detalle/diálogo, devolución del foco, errores de formulario con `aria-invalid` y `aria-describedby`, `aria-current` en capítulos, `aria-pressed` en sonido.
+
+## Incidencia de captura (observado)
+En la tanda de la iteración 2, `apertura-390.png` salió con la escena en negro bajo el texto. Repetida la captura en las mismas condiciones, el plano se renderiza correctamente; se atribuye a un fotograma aún no presentado por el render por software. Se sustituyó por la captura repetida.
