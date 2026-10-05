@@ -57,6 +57,7 @@ export function createMaterials(T) {
     book1: new THREE.MeshStandardMaterial({ color: 0x6e3b2a, roughness: 0.8 }),
     book2: new THREE.MeshStandardMaterial({ color: 0x2f3b33, roughness: 0.8 }),
     book3: new THREE.MeshStandardMaterial({ color: 0xc9b99b, roughness: 0.85 }),
+    boulder: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, normalMap: T.plaster.normalMap, normalScale: ns(2.5) }),
     rock: pbr(T.stone, { color: 0xa39a8b, normalScale: ns(1.6) }),
   };
   // Escala de UV de los tejidos: más fina en tela que en piedra.

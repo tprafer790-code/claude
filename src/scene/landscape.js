@@ -53,7 +53,7 @@ function buildTerrain(M, q) {
   g.translate(0, 0, -60);
   const p = g.attributes.position;
   const colors = new Float32Array(p.count * 3);
-  const c1 = new THREE.Color(0xffffff), c2 = new THREE.Color(0x8f8a6a);
+  const c1 = new THREE.Color(1.25, 1.2, 1.12), c2 = new THREE.Color(0x8f8a6a);
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i);
     const h = terrainHeight(x, z);
@@ -155,7 +155,7 @@ function beechGeometry(seed) {
   const leaves = mergeGeometries(cards);
   // tronco + ramas principales
   const parts = [];
-  const trunk = new THREE.CylinderGeometry(0.14, 0.3, H * 0.75, 8, 4); trunk.translate(0, H * 0.375, 0); parts.push(trunk);
+  const trunk = new THREE.CylinderGeometry(0.1, 0.21, H * 0.75, 9, 4); trunk.translate(0, H * 0.375, 0); parts.push(trunk);
   for (const b of blobs.slice(0, 4)) {
     const from = new THREE.Vector3(0, H * (0.4 + r() * 0.2), 0), to = b.clone().multiplyScalar(0.85);
     const len = from.distanceTo(to);
@@ -184,21 +184,24 @@ function pineGeometry(seed) {
     }
   }
   const leaves = mergeGeometries(cards);
-  const trunk = new THREE.CylinderGeometry(0.08, 0.36, H, 8, 4); trunk.translate(0, H / 2, 0);
+  const trunk = new THREE.CylinderGeometry(0.05, 0.24, H, 9, 4); trunk.translate(0, H / 2, 0);
   return { leaves, wood: trunk.toNonIndexed(), height: H };
 }
 
 function fernGeometry() {
   const fronds = [];
   const r = rng(17);
-  for (let i = 0; i < 9; i++) {
-    const g = new THREE.PlaneGeometry(0.5, 1.2, 1, 6); g.translate(0, 0.6, 0);
+  for (let i = 0; i < 13; i++) {
+    const len = 0.8 + r() * 0.5;
+    const g = new THREE.PlaneGeometry(0.34, len, 1, 8); g.translate(0, len / 2, 0);
     const p = g.attributes.position;
-    for (let k = 0; k < p.count; k++) { const y = p.getY(k); p.setZ(k, y * y * 0.35); p.setY(k, y * (1 - y * 0.15)); }
-    g.rotateX(-0.5 - r() * 0.3); g.rotateY((i / 9) * Math.PI * 2 + r() * 0.3);
+    // arco: sube y cae hacia fuera
+    for (let k = 0; k < p.count; k++) { const t = p.getY(k) / len; p.setZ(k, t * t * len * 0.75); p.setY(k, p.getY(k) * (1 - t * 0.45)); }
+    g.rotateX(-0.35 - r() * 0.45); g.rotateY((i / 13) * Math.PI * 2 + r() * 0.4);
     fronds.push(g);
   }
   const m = mergeGeometries(fronds); m.computeVertexNormals();
+  const n = m.attributes.normal; for (let k = 0; k < n.count; k++) n.setXYZ(k, n.getX(k) * 0.3, 0.95, n.getZ(k) * 0.3);
   return m;
 }
 
@@ -361,18 +364,18 @@ export function buildLandscape(M, scene, q, sunDir) {
     else { x = (r() - 0.5) * 50; z = 14 + r() * 70; if (Math.abs(x) < 2) x += 3; }
     rockPts.push([x, terrainHeight(x, z) - 0.15, z]);
   }
-  const fernMat = windMaterial({ map: leafTexture('fern'), color: 0xc9c8a2 }, 0.05);
+  const fernMat = windMaterial({ map: leafTexture('fern'), color: 0xa8a886 }, 0.05);
   group.add(scatterInstanced(fernGeometry(), fernMat, fernPts, { scale: [0.6, 1.3], tint: (c, rr) => c.setHSL(0.15 + rr() * 0.06, 0.3, 0.55 + rr() * 0.2), shadow: q.tier !== 'low' }));
   const grassMat = windMaterial({ color: 0x8a8150, alphaTest: 0 }, 0.22);
   group.add(scatterInstanced(grassGeometry(), grassMat, grassPts, { scale: [0.7, 1.4], tint: (c, rr) => c.setHSL(0.12 + rr() * 0.07, 0.22 + rr() * 0.15, 0.3 + rr() * 0.16), shadow: false }));
   const rockGeo = new THREE.IcosahedronGeometry(1, 3);
   {
     const p = rockGeo.attributes.position, v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = fbm(v.x * 1.5 + 3, v.z * 1.5 + v.y, 4); v.multiplyScalar(0.7 + n * 0.6); v.y *= 0.6; p.setXYZ(i, v.x, v.y, v.z); }
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = fbm(v.x * 1.5 + 3, v.z * 1.5 + v.y, 4); v.multiplyScalar(0.65 + n * 0.7); v.y *= 0.75; p.setXYZ(i, v.x, v.y, v.z); }
     rockGeo.computeVertexNormals();
     const uv = rockGeo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, p.getX(i) * 0.5, p.getY(i) * 0.5 + p.getZ(i) * 0.3);
   }
-  group.add(scatterInstanced(rockGeo, M.rock, rockPts, { scale: [0.3, 1.6] }));
+  group.add(scatterInstanced(rockGeo, M.boulder, rockPts, { scale: [0.3, 1.6], tint: (c, rr) => c.setHSL(0.08, 0.1, 0.24 + rr() * 0.14) }));
 
   scene.add(group);
   return { group, water };

@@ -214,6 +214,7 @@ async function boot() {
   state.mode = reduced ? 'reduced' : 'live';
   document.body.classList.toggle('reduce-motion', reduced);
   state.uTarget = state.uCur = uFromScroll();
+  state.stillKey = stillKey[Math.max(0, state.chapter)];
   hideLoader();
   window.__silva = { engine, state, journey, goToChapter, openDetail, closeDetail, scrollToU, keyCenter: (i) => journey.keyCenter(i) };
 }
