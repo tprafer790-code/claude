@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SILVA — Refugio entre bosque, piedra y agua</title>
+  <meta name="description" content="SILVA es un refugio arquitectónico entre bosque, piedra y agua. Recorre el lugar en 3D, conoce las estancias y solicita información." />
+  <meta name="theme-color" content="#14110e" />
+  <meta property="og:title" content="SILVA — Un refugio que se descubre" />
+  <meta property="og:description" content="Recorrido 3D por un refugio entre bosque, piedra y agua." />
+  <meta property="og:image" content="renders/descubrimiento.webp" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314110e'/%3E%3Cpath d='M6 22h20M9 22V12h14v10' stroke='%23e39a57' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <a class="skip" href="#estancias">Saltar al contenido: estancias y contacto</a>
+
+  <!-- Pantalla de carga: progreso basado en recursos generados realmente -->
+  <div class="loader" id="loader" role="status" aria-live="polite" aria-busy="true">
+    <div class="loader__inner">
+      <p class="loader__mark" data-brand-name>SILVA</p>
+      <p class="loader__label" id="loader-label">Preparando el recorrido</p>
+      <div class="loader__bar" aria-hidden="true"><span id="loader-bar"></span></div>
+      <p class="loader__pct"><span id="loader-pct">0</span> %</p>
+      <button class="loader__skip link" type="button" id="loader-skip">Ver la versión sin 3D</button>
+    </div>
+  </div>
+
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="still-stage" id="still-stage" aria-hidden="true"></div>
+  <div class="cut" id="cut" aria-hidden="true"></div>
+
+  <header class="top" id="top">
+    <a class="wordmark" href="#descubrimiento" data-brand-name aria-label="SILVA, volver al inicio">SILVA</a>
+    <button class="chapter-indicator" type="button" id="chapter-indicator" aria-controls="menu" aria-label="Capítulo actual; abrir índice"><span id="ci-n">I</span> / V</button>
+    <nav class="top__nav" aria-label="Principal">
+      <a href="#estancias">Estancias</a>
+      <a href="#contacto" class="btn btn--small"><span class="hide-sm">Solicitar </span><span class="cap-sm">información</span></a>
+      <button class="icon-btn" type="button" id="sound-btn" aria-pressed="false" aria-label="Sonido ambiente: desactivado">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="wave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /><path class="mute" d="M16 9l5 6M21 9l-5 6" /></svg>
+      </button>
+      <button class="icon-btn" type="button" id="menu-btn" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16" /></svg>
+      </button>
+    </nav>
+  </header>
+
+  <div class="menu" id="menu" hidden>
+    <div class="menu__panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <div class="menu__head">
+        <p class="eyebrow" id="menu-title">Recorrido</p>
+        <button class="icon-btn" type="button" data-close-menu aria-label="Cerrar menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
+      </div>
+      <ol class="menu__chapters" id="menu-chapters"></ol>
+      <div class="menu__links">
+        <a href="#estancias" data-close-menu>Las estancias</a>
+        <a href="#contacto" data-close-menu>Solicitar información</a>
+      </div>
+      <div class="menu__prefs">
+        <label class="switch"><input type="checkbox" id="motion-toggle" /> <span>Reducir movimiento (planos fijos)</span></label>
+        <label class="switch"><input type="checkbox" id="sound-toggle" /> <span>Sonido ambiente</span></label>
+      </div>
+      <p class="menu__note" data-brand-location></p>
+    </div>
+  </div>
+
+  <nav class="rail" aria-label="Capítulos del recorrido">
+    <ol id="rail"></ol>
+  </nav>
+
+  <main id="main">
+    <div class="journey" id="journey"><!-- capítulos generados desde la configuración --></div>
+
+    <section class="rooms" id="estancias" aria-labelledby="rooms-title">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Las estancias · conceptos</p>
+          <h2 id="rooms-title" class="display">Tres maneras<br /><em>de quedarse</em></h2>
+          <p class="lede">Cada estancia mira a un elemento distinto del lugar. Son propuestas de proyecto: la disponibilidad y las tarifas se confirman por correo.</p>
+        </header>
+        <ul class="rooms__list" id="rooms-list"></ul>
+      </div>
+    </section>
+
+    <section class="contact" id="contacto" aria-labelledby="contact-title">
+      <div class="wrap contact__grid">
+        <header class="section-head">
+          <p class="eyebrow">Solicitar información</p>
+          <h2 id="contact-title" class="display">Escríbenos<br /><em>con calma</em></h2>
+          <p class="lede">Cuéntanos fechas aproximadas y qué estancia te interesa. Respondemos personalmente.</p>
+          <p class="contact__direct">También puedes escribir directamente a <a id="contact-email" href="#"></a>
+            <button class="link" type="button" id="copy-email">Copiar dirección</button>
+            <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span></p>
+        </header>
+        <form class="form" id="contact-form" novalidate>
+          <div class="field">
+            <label for="f-name">Nombre</label>
+            <input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name" />
+            <p class="field__error" id="e-name"></p>
+          </div>
+          <div class="field">
+            <label for="f-email">Correo electrónico</label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required aria-describedby="e-email" />
+            <p class="field__error" id="e-email"></p>
+          </div>
+          <div class="field field--half">
+            <label for="f-dates">Fechas aproximadas <span class="opt">(opcional)</span></label>
+            <input id="f-dates" name="dates" placeholder="p. ej. segunda quincena de mayo" />
+          </div>
+          <div class="field field--half">
+            <label for="f-guests">Personas</label>
+            <select id="f-guests" name="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option></select>
+          </div>
+          <div class="field">
+            <label for="f-room">Estancia de interés</label>
+            <select id="f-room" name="room"><option value="">Aún no lo sé</option></select>
+          </div>
+          <div class="field">
+            <label for="f-msg">Mensaje</label>
+            <textarea id="f-msg" name="message" rows="4" required aria-describedby="e-msg"></textarea>
+            <p class="field__error" id="e-msg"></p>
+          </div>
+          <p class="form__note" id="form-note"></p>
+          <button class="btn" type="submit">Preparar correo de solicitud</button>
+          <div class="form__status" id="form-status" role="status" aria-live="polite" tabindex="-1"></div>
+        </form>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="wrap foot__grid">
+        <p class="wordmark" data-brand-name>SILVA</p>
+        <p data-brand-descriptor></p>
+        <p class="foot__small">Proyecto conceptual. Lugar, estancias y escena 3D son una propuesta de diseño; no representan un alojamiento existente.</p>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Detalle de hotspot -->
+  <aside class="detail" id="detail" hidden aria-labelledby="detail-title" role="dialog" aria-modal="false">
+    <button class="icon-btn detail__close" type="button" id="detail-close" aria-label="Cerrar detalle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
+    <p class="eyebrow" id="detail-kind"></p>
+    <h3 id="detail-title" class="display display--s"></h3>
+    <p id="detail-body"></p>
+    <dl class="specs" id="detail-specs"></dl>
+    <p class="detail__hint">La cámara se acerca a la pieza. Cierra el detalle o sigue desplazándote para continuar.</p>
+  </aside>
+  <div class="hotspots" id="hotspots"></div>
+
+  <!-- Detalle de estancia -->
+  <dialog class="room-dialog" id="room-dialog" aria-labelledby="room-title">
+    <form method="dialog"><button class="icon-btn room-dialog__close" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button></form>
+    <img id="room-img" alt="" width="1280" height="720" />
+    <div class="room-dialog__body">
+      <p class="eyebrow" id="room-size"></p>
+      <h3 id="room-title" class="display display--s"></h3>
+      <p id="room-summary"></p>
+      <ul id="room-features" class="ticks"></ul>
+      <a class="btn" href="#contacto" id="room-cta">Solicitar información sobre esta estancia</a>
+    </div>
+  </dialog>
+
+  <noscript><style>.loader{display:none}</style></noscript>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
