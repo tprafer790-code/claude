@@ -121,7 +121,6 @@ export function buildArchitecture(M, scene, opts = {}) {
   // ---------- Torre-linterna ----------
   B.box(M.stone, [-14.4, -10.0], [0, 7.4], [-18.4, -7.6], S);
   B.box(M.coping, [-14.5, -9.9], [7.4, 7.55], [-18.5, -7.5], { uvScale: 3, r: 0.02, solid: false });
-  B.box(M.windowGlow, [-12.55, -11.85], [1.2, 6.4], [-7.62, -7.56], { solid: false, r: 0 });
   B.box(M.windowGlow, [-14.42, -14.36], [2.0, 5.6], [-13.4, -12.6], { solid: false, r: 0 });
 
   // ---------- Terraza, muro de contención y muelle ----------

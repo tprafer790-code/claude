@@ -18,7 +18,7 @@ export function renderChapters(root) {
             ${c.title.map((l, k) => `<span class="line"><span data-r="${2 + k}">${esc(l)}</span></span>`).join('')}
           </${i === 0 ? 'h1' : 'h2'}>
           <p class="chapter__body" data-r="4">${esc(c.body)}</p>
-          ${c.id === 'estancia' ? `<ul class="details-list" data-r="5" aria-label="Detalles de la suite">${brand.hotspots.map((h) => `<li><button type="button" data-hotspot="${h.id}" aria-expanded="false" aria-controls="detail">${esc(h.label)}</button></li>`).join('')}</ul>` : ''}
+          ${c.id === 'estancia' ? `<ul class="details-list" data-r="5" aria-label="Detalles de la casa">${brand.hotspots.map((h) => `<li><button type="button" data-hotspot="${h.id}" aria-expanded="false" aria-controls="detail">${esc(h.label)}</button></li>`).join('')}</ul>` : ''}
           ${i === last ? `<div class="final-cta" data-r="5"><a class="btn" href="#estancias">Explorar las estancias</a><a class="link final-cta__alt" href="#contacto">o solicitar información</a></div>` : ''}
           <p class="chapter__note" data-r="5">${esc(c.note)}</p>
         </div>

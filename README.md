@@ -33,7 +33,7 @@ npm run check:path               # colisiones de cámara y altura sobre el terre
 node scripts/qa.mjs              # pruebas funcionales (con preview en marcha)
 node scripts/shoot.mjs           # capturas por capítulo
 ```
-Estado de las verificaciones: `docs/estudio/proyecto/evidencias.md`.
+Estado de las verificaciones: `docs/estudio/proyecto/evidencias.md`. Estado de entrega y pendientes: `docs/estudio/proyecto/entrega.md`.
 
 ## Licencias
 | Recurso | Licencia |

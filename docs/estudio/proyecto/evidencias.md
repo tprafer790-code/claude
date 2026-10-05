@@ -10,7 +10,7 @@ OK: ninguna muestra a menos de 0.3 m de un sólido.
 Altura mínima sobre el terreno exterior: 1.44 m en 2.6,9.4,74
 ```
 
-## QA funcional — `node scripts/qa.mjs` (observado, tras iteración 2)
+## QA funcional — `node scripts/qa.mjs` (observado, versión final)
 ```
 OK   Sin desbordamiento horizontal a 390px (estático) — {"sw":390,"W":390,"bad":[]}
 OK   Versión estática con 5 planos de capítulo a 390px
@@ -38,7 +38,7 @@ OK   Movimiento reducido activa planos fijos — {"mode":"reduced","rm":true}
 OK   Salto a capítulo V usa el plano fijo final (clave 13) — 13
 OK   Consola sin errores (movimiento reducido)
 OK   Sin WebGL: cae a la versión estática
-OK   Carga de la escena (SwiftShader, calidad baja) — 9805 ms hasta escena lista
+OK   Carga de la escena (SwiftShader, calidad baja) — 10398 ms hasta escena lista
 OK   Hotspots visibles en la suite — lino,lampara
 OK   Detalle mueve la cámara a la perspectiva adicional — mezcla 0.93
 OK   Consola sin errores (en vivo)

@@ -109,6 +109,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .top .btn--small { white-space: nowrap; }
 body.at-end .top .btn--small { background: transparent; color: var(--bone); box-shadow: inset 0 0 0 1px var(--line); }
 .rail button { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
+/* contraste del raíl sobre cielo y agua claros */
+.rail ol { background: linear-gradient(to right, rgba(14, 11, 8, 0.55), rgba(14, 11, 8, 0)); padding: 0.4rem 1.2rem 0.4rem 0.2rem; }
 .top__nav { display: flex; align-items: center; gap: 0.6rem; }
 .top__nav > a:not(.btn) { text-decoration: none; padding: 0.6rem 0.8rem; font-size: 0.92rem; }
 .top__nav > a:not(.btn):hover { text-decoration: underline; text-underline-offset: 4px; }
@@ -312,7 +314,7 @@ body.is-static .hotspots { display: none; }
   .cap-sm { text-transform: capitalize; }
   .top__nav { gap: 0.4rem; }
   .wordmark { font-size: 1.45rem; }
-  .chapter-indicator { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.6rem; margin-right: auto; margin-left: 0.8rem; background: none; border: 0; color: var(--bone-dim); font: var(--t-mono)/1 var(--f-mono); letter-spacing: 0.12em; cursor: pointer; }
+  .chapter-indicator { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.6rem; margin-right: auto; margin-left: 0.6rem; background: rgba(14, 11, 8, 0.55); border: 0; border-radius: 2px; color: var(--bone); font: var(--t-mono)/1 var(--f-mono); letter-spacing: 0.12em; cursor: pointer; }
   .chapter-indicator span { color: var(--ember-strong); margin-right: 0.3em; }
   .chapter .chapter__stick { align-items: flex-end; justify-content: flex-start !important; }
   .chapter[data-layout] .chapter__panel { margin: 0 var(--gut) calc(1.4rem + env(safe-area-inset-bottom)); max-width: none; text-align: left; padding: 1.4rem 0 0; }

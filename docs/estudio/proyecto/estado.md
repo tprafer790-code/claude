@@ -11,8 +11,8 @@
 - [x] Iteración 1 (ver tabla)
 - [x] Crítica independiente 2 → 62,75/100 (`revisiones/critica-2-2026-10-05.md`)
 - [x] Iteración 2 (ver tabla)
-- [ ] Crítica independiente 3 (última del presupuesto)
-- [ ] Entrega
+- [x] Crítica independiente 3 → 66,5/100 (`revisiones/critica-3-2026-10-05.md`)
+- [x] Entrega como **incompleta** respecto al umbral de calidad (`entrega.md`)
 
 ## Iteración 1 — respuesta a la crítica
 | Defecto | Corrección aplicada |
