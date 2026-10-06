@@ -48,10 +48,33 @@ Toda la revisión la ha realizado el propio agente de producción (Claude) sobre
 | Luces prácticas visibles al fondo en el despiece | Diseño del estudio | Se leen como tubos de luz, no tapan producto ni texto |
 | 8 muestras por píxel + OIDN | Presupuesto de CPU | Posible ruido temporal leve en sombras; ver §4 |
 
-## 4. Verificaciones del máster
+## 4. Verificaciones del máster (`deliver/FLOOR_ONE_30s_1080p_master.mp4`)
 
-Completadas en la entrega final; ver §5.
+| Prueba | Método | Resultado |
+|---|---|---|
+| Resolución y origen | ffprobe + log de render | 1920×1080, render nativo Cycles |
+| Fotogramas | `ffprobe -count_frames` | **900** |
+| Duración | ffprobe `format=duration` | **30,000000 s** |
+| Cadencia | `r_frame_rate` / `avg_frame_rate` | 30/1 y 30/1 (CFR) |
+| Fotogramas negros accidentales | `blackdetect=d=0.05:pix_th=0.06` | Ninguno detectado |
+| Sonoridad | `ebur128=peak=true` sobre el MP4 (AAC) | **−14,1 LUFS** integrados, LRA 2,9 LU |
+| True peak | ídem | **−1,2 dBTP** (objetivo ≤ −1) |
+| Fidelidad de codificación | SSIM del MP4 frente a los PNG compuestos | 0,977; la diferencia se concentra en el grano |
+| Principio | Fotograma 1 | La zapatilla entra en cuadro (no es negro). Reconocible en el f10 (0,3 s); franja naranja visible antes de 1,5 s |
+| Transiciones | Hojas `qa/final_seg1-4_sheet.jpg`, fotogramas frontera 135/136, 158/159, 405/406, 750/751 | Sin doble exposición tras la corrección 15 |
+| Tipografía | `qa/master_typo_sheet.jpg` | «ENCUENTRA TU EJE», «MARCA TU RITMO», «ROMPE EL RITMO», «EL SUELO ES TUYO», «FLOOR/ONE», «DESCUBRE FLOOR/ONE»: ortografía y espaciado correctos |
+| Último fotograma | f900 | Logo, titular y CTA legibles; el cierre se mantiene estable desde f850 |
+| Revisión 4K nativa | `deliver/stills_4k/`, recortes al 100 % | Trama textil correcta. Defectos menores: escalonado fino en el borde de la franja, gamuza naranja demasiado lisa, puntadas con aspecto de grano |
 
-## 5. Resultados de verificación
+### Pruebas no realizadas
 
-Pendiente de completar al finalizar el render.
+- **Reproducción en tiempo real con escucha:** el entorno no tiene salida de audio ni pantalla. La reproducción se ha validado decodificando el fichero completo (FFmpeg sin errores) y midiendo el audio.
+- **Flicker temporal:** no hay medición numérica. La revisión se ha hecho por hojas de contacto y fotogramas consecutivos en las fronteras.
+
+## 5. Versión UHD
+
+`deliver/FLOOR_ONE_30s_UHD_upscaled.mp4`: render 1080p reescalado (Lanczos) a 3840×2160, con postproceso y tipografía compuestos a 4K. Codificada en H.265 10 bit (CRF 22) para quedar por debajo de 100 MB. **No es 4K nativo.** Los únicos fotogramas 4K nativos son los seis stills.
+
+## 6. Coste de render medido
+
+Render final: 930 fotogramas renderizados (900 más 30 repetidos por correcciones) en **8,3 h** de CPU, con una media de 32,1 s por fotograma. Stills 4K: 4.542 s para 6 fotogramas. Hubo dos reinicios del contenedor durante el render; no se perdió ningún fotograma terminado porque el render es reanudable.

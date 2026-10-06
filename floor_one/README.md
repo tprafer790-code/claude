@@ -6,9 +6,10 @@ Producción completa, reproducible desde scripts, de un anuncio de producto para
 
 | Fichero | Descripción |
 |---|---|
-| `deliver/FLOOR_ONE_30s_1080p_master.mp4` | **Máster.** 1920×1080 **render nativo**, 30 fps CFR, 900 fotogramas, 30,000 s, H.264 High CRF 14 + AAC 320 kbps 48 kHz |
-| `deliver/FLOOR_ONE_30s_UHD_upscaled.mp4` | 3840×2160 **reescalado** (Lanczos) del render 1080p con tipografía y grano compuestos a 4K. **No es 4K nativo** (ver §4) |
-| `deliver/stills_4k/` | Seis fotogramas críticos renderizados **nativos a 3840×2160** (32 muestras) para QA de calidad final |
+| `deliver/FLOOR_ONE_30s_1080p_master.mp4` | **Máster.** 1920×1080 **render nativo**, 30 fps CFR, 900 fotogramas, 30,000 s, H.264 High CRF 17 + AAC 320 kbps 48 kHz (62 MB) |
+| `deliver/FLOOR_ONE_30s_UHD_upscaled.mp4` | 3840×2160 **reescalado** (Lanczos) del render 1080p con tipografía y grano compuestos a 4K, H.265 10 bit. **No es 4K nativo** (ver §4) |
+| `previews/FLOOR_ONE_30s_preview_720p.mp4` | Vista previa ligera (5 MB) |
+| `deliver/stills_4k/` | Seis fotogramas críticos renderizados **nativos a 3840×2160** (32 muestras): tejido, puntera, suela, despiece, acción, hero |
 | `audio/mix.wav`, `audio/music.wav`, `audio/sfx.wav` | Mezcla y pistas separadas, 48 kHz / 24 bit |
 | `previews/` | Animatic(s) a baja resolución con audio guía |
 | `project/shoe.blend`, `project/floor_one.blend` | Proyecto editable de Blender 4.2 (modelo, materiales, luces, cámaras, animación horneada) |
@@ -33,7 +34,7 @@ $PY scripts/render.py animatic 1 900 2  # animatic 480x270
 $PY scripts/render.py final 1 900       # render final 1080p (≈31 s/fotograma en 4 CPU)
 $PY scripts/audio.py                    # música + foley + mezcla (-14 LUFS, <= -1 dBTP)
 $PY scripts/comp.py renders/final renders/final_comp
-scripts/assemble.sh renders/final_comp deliver/FLOOR_ONE_30s_1080p_master 14
+scripts/assemble.sh renders/final_comp deliver/FLOOR_ONE_30s_1080p_master 17
 ```
 `render.py` es reanudable: no sobrescribe fotogramas existentes. `scripts/preview_shoe.py` genera vistas de control del modelo.
 

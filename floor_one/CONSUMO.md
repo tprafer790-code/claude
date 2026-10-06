@@ -32,4 +32,5 @@ Ningún cargo adicional: sin servicios de vídeo, música, render en la nube ni 
 | Fotograma 3840×2160, 32 muestras (prueba) | 365 s |
 | Fotograma 1920×1080 final, 8 muestras + OIDN + motion blur | ≈31 s |
 | Animatic 480×270 (450 fotogramas) | 531 s |
-| Render final 900 fotogramas | ver `renders/final_render.log` (resumen en QA.md) |
+| Render final (930 fotogramas, incluidas 30 repeticiones) | 8,3 h; media de 32,1 s |
+| 6 stills a 3840×2160, 32 muestras | 4.542 s |
