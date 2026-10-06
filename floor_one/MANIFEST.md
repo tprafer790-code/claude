@@ -26,7 +26,6 @@ Generado al cierre de la entrega. SHA-256 de los entregables para comprobar su i
 |---|---|
 | `project/shoe.blend` | Modelo editable: 24 objetos en colección SHOE (UPPER/INSOLE/MIDSOLE/OUTSOLE) |
 | `project/floor_one.blend` | Escena completa con animación horneada (900 fotogramas), look B |
-| `scripts/__pycache__` |  |
 | `scripts/assemble.sh` | usr/bin/env bash |
 | `scripts/audio.py` | FLOOR/ONE - música original (breakbeat 120 BPM, 15 compases) y foley sintetizado. 100 % ge |
 | `scripts/bench.py` | Benchmark de render 4K: escena mínima (suelo + 3 luces + zapatilla).""" |
