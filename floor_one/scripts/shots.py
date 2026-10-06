@@ -494,5 +494,14 @@ def state_at(frame, sub=0.0):
     """frame: fotograma entero 1..900; sub: desplazamiento de subfotograma (motion blur).
     El plano lo decide el fotograma entero, así el desenfoque nunca cruza un corte."""
     i = (frame - 1) // 60
-    local = (frame - 1) - 60 * i + sub
+    base = (frame - 1) - 60 * i
+    local = base + sub
+    for c in INNER_CUTS.get(i, ()):          # cortes internos: el obturador no cruza el corte
+        if base < c <= local:
+            local = c - 1e-3
+        elif local < c <= base:
+            local = c
     return i, SHOTS[i](local)
+
+
+INNER_CUTS = {2: (15, 38), 6: (45,), 12: (30,)}   # plano 3 (3 subplanos), 7 (corte al pulso), 13 (silueta)
