@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d3d6e"/>
+      <stop offset="1" stop-color="#8fb4d9"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#cielo)"/>
+  <polygon points="6,112 46,40 62,66 82,26 122,112" fill="#e9f1fa"/>
+  <polygon points="46,40 54,54 46,52 40,58" fill="#ffffff"/>
+  <polygon points="82,26 94,50 84,46 76,54 72,46" fill="#ffffff"/>
+  <polygon points="62,66 82,26 70,72" fill="#9fb3c8"/>
+  <path d="M20 104 Q 60 80 108 100" stroke="#e8582a" stroke-width="5" fill="none" stroke-linecap="round"/>
+</svg>

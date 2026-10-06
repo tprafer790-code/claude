@@ -1,0 +1,3 @@
+# Caché que Godot regenera automáticamente al abrir el proyecto
+game/.godot/
+*.tmp
