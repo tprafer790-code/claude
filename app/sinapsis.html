@@ -219,6 +219,8 @@ details.lawd .body{display:grid;gap:10px;padding-bottom:14px;font-size:15px;line
 .onb h1{font-size:30px;line-height:36px;font-weight:700}
 .onb .dotsnav{display:flex;gap:8px}.onb .dotsnav i{width:8px;height:8px;border-radius:50%;background:var(--fill)}.onb .dotsnav i.on{background:var(--tint)}
 .sync{font-size:13px;color:var(--secondary);text-align:center;margin-top:8px}
+ol.steps{margin:0;padding-left:22px;display:grid;gap:8px;font-size:15px;line-height:1.4}
+ol.steps li::marker{color:var(--tint);font-weight:700}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .cell:disabled{opacity:.45}
 .opt{display:block;width:100%;text-align:left;padding:14px 16px;min-height:50px;background:var(--card);font-size:17px;color:inherit}
@@ -560,7 +562,7 @@ const I = {
 /* ============ Render principal ============ */
 function render() {
   const app = $("#app"), tabs = $("#tabs");
-  const full = !S.profile.onboarded || ["mission", "blank", "gen", "deck", "add", "newdeck", "team", "deckset", "mat", "plan", "topic", "pmenu", "practice"].includes(ui.screen);
+  const full = !S.profile.onboarded || ["mission", "blank", "gen", "deck", "add", "newdeck", "team", "deckset", "mat", "plan", "topic", "pmenu", "practice", "lock"].includes(ui.screen);
   app.classList.toggle("full", full);
   tabs.hidden = full;
   let html;
@@ -578,6 +580,7 @@ function render() {
   else if (ui.screen === "topic") html = vTopic();
   else if (ui.screen === "pmenu") html = vPracticeMenu();
   else if (ui.screen === "practice") html = vPractice();
+  else if (ui.screen === "lock") html = vLock();
   else html = ({ hoy: vHoy, mazos: vMazos, foco: vFoco, yo: vYo })[ui.tab]();
   app.innerHTML = html;
   if (!full) tabs.innerHTML = `<nav aria-label="Secciones">${[["hoy", "Hoy"], ["mazos", "Mazos"], ["foco", "Foco"], ["yo", "Yo"]].map(([k, l]) => `<button class="tab" data-act="tab" data-v="${k}" ${ui.tab === k ? 'aria-current="page"' : ""}>${I[k]}${l}</button>`).join("")}</nav>`;
@@ -978,14 +981,52 @@ function vFoco() {
   <div class="t"><div><b id="ring-t">${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}</b><p class="muted" style="margin-top:6px;font-size:15px">${isBreak ? "descanso" : F.running ? "en foco" : "listo"}</p></div></div></div>
   <div class="grid2">
     ${F.total ? `<button class="btn ghost" data-act="fReset">Reiniciar</button>` : `<button class="btn ghost" data-act="tab" data-v="hoy">Volver</button>`}
-    ${F.running ? `<button class="btn" style="background:${col};color:#FFFFFF" data-act="fPause">Pausa</button>` : `<button class="btn" style="background:${col};color:#FFFFFF" data-act="fStart">${F.total && F.left < F.total ? "Seguir" : isBreak ? "Empezar descanso" : "Empezar"}</button>`}
+    ${F.running ? `<button class="btn" style="background:${col};color:#FFFFFF" data-act="fPause">Pausa</button>`
+      : lockOn() && !isBreak && !(F.total && F.left < F.total) ? `<a class="btn" style="background:${col};color:#FFFFFF;text-decoration:none" href="${esc(lockURL(mins))}" data-act="fStart" data-keep="1">Bloquear y empezar</a>`
+      : `<button class="btn" style="background:${col};color:#FFFFFF" data-act="fStart">${F.total && F.left < F.total ? "Seguir" : isBreak ? "Empezar descanso" : "Empezar"}</button>`}
   </div>
+  ${F.running && F.locked ? `<div class="panel small"><b style="font-weight:600">Modo Estudio activado hasta las ${new Date(F.endAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}.</b> <span class="muted">Si no se abrió Atajos, actívalo en el Centro de control: Concentración › Estudio.</span></div>` : ""}
   <div class="stack" style="gap:6px"><p class="eyebrow">Antes de empezar</p><div class="group" style="--inset:52px">
   ${items.map(([k, l]) => `<button class="check" data-act="fCheck" data-v="${k}" aria-pressed="${!!F.checks[k]}"><span class="box">${F.checks[k] ? "✓" : ""}</span>${esc(l)}</button>`).join("")}
+  </div></div>
+  <div class="stack" style="gap:6px"><p class="eyebrow">Bloquear apps</p><div class="group">
+    <button class="cell" data-act="lockToggle" aria-pressed="${lockOn()}"><span class="tx"><b>Bloquear apps al empezar</b><span>${lockOn() ? `Abre el atajo «${esc(lockCfg().name)}» al pulsar Empezar` : "Activa el modo Estudio del iPhone durante el bloque"}</span></span><span class="switch" aria-hidden="true"></span></button>
+    <button class="cell" data-act="lockGuide"><span class="tx"><b>Configurar el bloqueo</b><span>${lockDone()}/4 pasos hechos · 15 min, una sola vez</span></span>${CHEV}</button>
   </div></div>
   <div class="stack" style="gap:6px"><div class="group"><button class="cell" data-act="fNoise" aria-pressed="${F.noise}"><span class="tx"><b>Ruido marrón</b><span>No es música. A algunas personas con TDA les ayuda a aislarse.</span></span><span class="switch" aria-hidden="true"></span></button></div>
   <p class="small muted" style="padding:0 16px">Al terminar el bloque: 5 minutos de descanso sin pantallas.</p></div>
   </div>`;
+}
+/* --- Bloqueo de apps con el modo de concentración y Tiempo de uso del iPhone --- */
+const lockCfg = () => (S.profile.lock = S.profile.lock || { on: false, name: "Sinapsis Estudio", steps: {} });
+const lockOn = () => !!lockCfg().on;
+const lockDone = () => [0, 1, 2, 3].filter(k => lockCfg().steps[k]).length;
+const lockURL = (mins) => `shortcuts://run-shortcut?name=${encodeURIComponent(lockCfg().name)}&input=text&text=${mins}`;
+const FKEY = LS + ".focus";
+function saveFocus() { try { localStorage.setItem(FKEY, JSON.stringify({ mode: F.mode, total: F.total, left: F.left, endAt: F.endAt, running: F.running, locked: !!F.locked, breakIdx: F.breakIdx || 0 })); } catch {} }
+function restoreFocus() {
+  let x = null; try { x = JSON.parse(localStorage.getItem(FKEY)); } catch {}
+  if (!x || !x.total) return;
+  Object.assign(F, x);
+  if (F.running) { focusTimer = setInterval(fTick, 250); fTick(); }
+}
+function vLock() {
+  const L = lockCfg();
+  const steps = [
+    { h: "Crea el modo de concentración «Estudio»", why: "Silencia avisos y oculta las apps que distraen mientras dura el bloque.", list: ["Abre Ajustes › Concentración y pulsa «+».", "Elige «Personalizado», llámalo Estudio y ponle un icono.", "En «Permitir notificaciones», deja solo a las personas y apps imprescindibles (por ejemplo, Teléfono para tu familia).", "En «Personalizar pantallas», elige una pantalla de inicio que tenga solo Sinapsis, Calculadora y Reloj. Así el resto de apps no se ven."] },
+    { h: "Pon contraseña a las apps que más te enganchan", why: "Este es el bloqueo de verdad: al terminar el tiempo permitido, la app se bloquea y pide la contraseña de Tiempo de uso.", list: ["Ajustes › Tiempo de uso › activa «Actividad de apps y sitios web» si te lo pide.", "Pulsa «Usar código de Tiempo de uso» (en algunas versiones: «Bloquear ajustes de Tiempo de uso»). Pide a otra persona que escriba el código y no te lo diga.", "Entra en «Límites de uso de apps» › «Añadir límite» y elige Redes sociales, Juegos o las apps concretas.", "Ponles el tiempo diario que quieras permitirte y deja activado «Bloquear al final del límite».", "Si estudias siempre a la misma hora, añade «Tiempo de inactividad» con ese horario: bloquea todo salvo lo que marques en «Siempre permitido» (añade Safari o Claude para que Sinapsis funcione)."] },
+    { h: "Crea el atajo «" + L.name + "»", why: "Es lo que Sinapsis abre al pulsar Empezar: enciende el modo Estudio justo durante los minutos del bloque.", list: ["Abre la app Atajos › «+» y llama al atajo exactamente " + L.name + ".", "Añade la acción «Obtener números de» y elige «Entrada del atajo» (son los minutos que envía Sinapsis).", "Añade «Ajustar fecha»: Añadir [Números] minutos a «Fecha actual».", "Añade «Definir modo de concentración»: Activar «Estudio» hasta «Fecha ajustada».", "Opcional: añade «Abrir URL» con el enlace de Sinapsis para volver sola a la app.", "En el panel de detalles del atajo, activa «Usar como acción rápida» si te lo ofrece. Los nombres pueden variar un poco según tu versión de iOS."] },
+    { h: "Pruébalo", why: "Comprueba que el atajo se abre desde Sinapsis y vuelve.", list: ["Pulsa el botón de abajo para lanzar un bloque de prueba de 1 minuto.", "Si iOS pregunta si permites que Sinapsis abra Atajos, pulsa Permitir.", "Si dentro de claude.ai no se abre, activa el modo Estudio desde el Centro de control: el bloqueo funciona igual."] },
+  ];
+  return `<div class="stack"><div class="row">${backBtn("tab", "foco", "Foco")}</div><h1 class="large">Bloquear apps</h1>
+  <p class="muted">Una app web no puede bloquear otras apps del iPhone: eso solo lo hace iOS. Aquí lo configuras una vez y Sinapsis lo activa cada vez que empiezas un bloque.</p>
+  <div class="panel small"><b style="font-weight:600">Cómo queda:</b> el modo Estudio esconde y silencia las distracciones durante el bloque y se apaga solo al acabar. Los Límites de uso con el código que pone otra persona son los que bloquean de verdad y piden contraseña.</div>
+  ${steps.map((st, k) => `<div class="stack" style="gap:6px"><p class="eyebrow">Paso ${k + 1} de 4</p><div class="panel stack" style="gap:10px"><b style="font-size:17px;font-weight:600">${esc(st.h)}</b><p class="small muted">${esc(st.why)}</p><ol class="steps">${st.list.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
+    ${k === 3 ? `<a class="btn tinted wide" style="text-decoration:none" href="${esc(lockURL(1))}">Probar el atajo (1 min)</a>` : ""}
+    </div><div class="group"><button class="check" data-act="lockStep" data-v="${k}" aria-pressed="${!!L.steps[k]}"><span class="box">${L.steps[k] ? "✓" : ""}</span>Hecho</button></div></div>`).join("")}
+  <div class="stack" style="gap:6px"><p class="eyebrow">Nombre del atajo</p><input type="text" id="lock-name" value="${esc(L.name)}" aria-label="Nombre del atajo"><button class="btn ghost wide" data-act="lockName">Guardar nombre</button></div>
+  <div class="group"><button class="cell" data-act="lockToggle" aria-pressed="${lockOn()}"><span class="tx"><b>Bloquear apps al empezar</b><span>Usa el atajo cada vez que pulses Empezar en Foco</span></span><span class="switch" aria-hidden="true"></span></button></div>
+  <p class="small muted" style="padding:0 16px">Si paras o reinicias el cronómetro antes de tiempo, el modo Estudio sigue hasta la hora prevista. Puedes quitarlo antes desde el Centro de control; las apps con límite seguirán pidiendo el código.</p></div>`;
 }
 function fTick() {
   if (!F.running) return;
@@ -997,6 +1038,7 @@ function fTick() {
     clearInterval(focusTimer); F.running = false; releaseWake();
     if (F.mode === "focus") { addXP(20); logDay("fo"); touch(); SND.win(); confetti(); toast("+20 XP · bloque completado"); F.mode = "break"; F.total = 300; F.left = 300; F.breakIdx = (F.breakIdx || 0) + 1; }
     else { SND.tick(); toast("Descanso terminado. ¿Otro bloque?"); F.mode = "focus"; F.total = 0; F.left = 0; }
+    F.locked = false; saveFocus();
     if (ui.tab === "foco" && !ui.screen) render();
   }
 }
@@ -1606,11 +1648,18 @@ const A = {
   fCheck(v) { F.checks[v] = !F.checks[v]; render(); },
   fStart() {
     if (!F.total) { F.total = F.mode === "break" ? 300 : S.profile.focus * 60; F.left = F.total; }
+    const fresh = F.left === F.total;
     F.endAt = Date.now() + F.left * 1000; F.running = true; audio(); requestWake();
-    clearInterval(focusTimer); focusTimer = setInterval(fTick, 250); render();
+    if (fresh && F.mode === "focus") F.locked = lockOn();
+    saveFocus(); clearInterval(focusTimer); focusTimer = setInterval(fTick, 250);
+    setTimeout(render, 0); // deja que el enlace al atajo se abra antes de repintar
   },
-  fPause() { F.running = false; clearInterval(focusTimer); F.left = Math.max(0, Math.round((F.endAt - Date.now()) / 1000)); releaseWake(); render(); },
-  fReset() { F.running = false; clearInterval(focusTimer); F.total = 0; F.left = 0; F.mode = "focus"; releaseWake(); render(); },
+  fPause() { F.running = false; clearInterval(focusTimer); F.left = Math.max(0, Math.round((F.endAt - Date.now()) / 1000)); releaseWake(); saveFocus(); render(); },
+  fReset() { F.running = false; clearInterval(focusTimer); F.total = 0; F.left = 0; F.mode = "focus"; F.locked = false; releaseWake(); saveFocus(); render(); },
+  lockToggle() { const L = lockCfg(); L.on = !L.on; touch(); if (L.on && lockDone() < 3) toast("Configura primero el atajo: «Configurar el bloqueo»"); render(); },
+  lockGuide() { ui.screen = "lock"; render(); scrollTo(0, 0); },
+  lockStep(v) { const L = lockCfg(); L.steps[v] = !L.steps[v]; touch(); render(); },
+  lockName() { const n = ($("#lock-name").value || "").trim(); if (!n) { toast("Escribe el nombre del atajo"); return; } lockCfg().name = n.slice(0, 60); touch(); toast("Nombre guardado"); render(); },
   fNoise() { F.noise = toggleNoise(!F.noise); render(); },
   setGoal(v) { S.profile.goal = Number(v); touch(); render(); },
   sound() { S.profile.sound = !S.profile.sound; touch(); render(); },
@@ -1633,7 +1682,7 @@ function copy(text, ta) {
 
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
-  const fn = A[b.dataset.act]; if (fn) { e.preventDefault(); fn(b.dataset.v); }
+  const fn = A[b.dataset.act]; if (fn) { if (!b.dataset.keep) e.preventDefault(); fn(b.dataset.v); }
 });
 document.addEventListener("input", (e) => {
   if (e.target.id === "ev-in" && M) M.typed = e.target.value;
@@ -1654,6 +1703,7 @@ document.addEventListener("keydown", (e) => {
   if (M.revealed && e.target.tagName !== "TEXTAREA") { if (e.key === "1") doGrade("ok"); if (e.key === "2") doGrade("mid"); if (e.key === "3") doGrade("no"); }
 });
 
+restoreFocus();
 render();
 initCloud();
 })();
