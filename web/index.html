@@ -1,0 +1,851 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Solera Social Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;700;800;900&family=DM+Serif+Display:ital@0;1&family=Graduate&family=Herr+Von+Muellerhoff&family=IBM+Plex+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&family=Silkscreen:wght@400;700&display=swap">
+<style>
+/* Escaparate de invierno: barra de anuncio, héroe marino con prendas apiladas, rejillas de producto sobre fondo de tela, manifiesto a toda anchura */
+:root{
+  --bg:#F1EEE7; --surface:#E6E0D3; --fg:#18213A; --muted:#565C69; --line:rgba(24,33,58,.16);
+  --accent:#C8401F; --on-accent:#FFFFFF;
+  --winter:#1E2A44; --winter-fg:#E4EEF3; --winter-muted:#A9BCCB; --winter-line:rgba(228,238,243,.22);
+  --band:#141414; --band-fg:#EDE6D6; --band-muted:#B5AC9A;
+  --display:'Anton','Impact','Arial Narrow',sans-serif;
+  --serif:'DM Serif Display',Georgia,'Times New Roman',serif;
+  --body:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F141E; --surface:#1B2232; --fg:#ECE6D9; --muted:#A4AAB6; --line:rgba(236,230,217,.14);
+    --accent:#EC6A47; --on-accent:#0F141E;
+    --winter:#1E2A44; --winter-fg:#E4EEF3; --winter-muted:#A9BCCB; --winter-line:rgba(228,238,243,.22);
+    --band:#090B10; --band-fg:#EDE6D6; --band-muted:#B5AC9A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F141E; --surface:#1B2232; --fg:#ECE6D9; --muted:#A4AAB6; --line:rgba(236,230,217,.14);
+  --accent:#EC6A47; --on-accent:#0F141E;
+  --winter:#1E2A44; --winter-fg:#E4EEF3; --winter-muted:#A9BCCB; --winter-line:rgba(228,238,243,.22);
+  --band:#090B10; --band-fg:#EDE6D6; --band-muted:#B5AC9A;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
+.wrap{max-width:1240px;margin-inline:auto;padding-inline:clamp(16px,4vw,40px)}
+h1,h2,h3{text-wrap:balance}
+
+/* ---------- Barra de anuncio ---------- */
+.announce{background:var(--fg);color:var(--bg);font-family:var(--mono);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;overflow:hidden}
+.marquee{overflow:hidden;padding-block:10px}
+.track{display:flex;width:max-content;animation:mq 60s linear infinite}
+.mq{display:flex;align-items:center;gap:22px;padding-right:22px;white-space:nowrap}
+.mq b{font-weight:600}
+.mq i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+.announce-static{display:none;margin:0;padding:10px 16px;text-align:center}
+@keyframes mq{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.marquee{display:none}.announce-static{display:block}}
+
+/* ---------- Cabecera ---------- */
+.site-head{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.head-row{display:flex;align-items:center;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;min-height:68px}
+.logo{display:inline-flex;align-items:baseline;gap:10px;text-decoration:none;padding-block:6px}
+.logo-word{font-family:var(--serif);font-style:italic;font-size:2rem;line-height:1}
+.logo-sub{font-family:var(--mono);font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.site-nav ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:0 clamp(14px,2.4vw,32px)}
+.site-nav a{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:.92rem;font-weight:500;text-decoration:none;text-underline-offset:6px}
+.site-nav a:hover{text-decoration:underline}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+@media (max-width:640px){.site-nav{flex-basis:100%}.site-nav ul{gap:0 18px}.site-nav a{font-size:.86rem}.head-row{padding-block:6px}}
+
+/* ---------- Héroe ---------- */
+.hero{background:var(--winter);color:var(--winter-fg);overflow:hidden;scroll-margin-top:80px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:center;gap:32px 48px;padding-block:clamp(44px,7vw,96px)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;margin:0 0 18px;font-family:var(--mono);font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--winter-fg)}
+.eyebrow .dot{width:9px;height:9px;border-radius:50%;background:#E0552F}
+.hero h1{margin:0;font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(4.2rem,12.5vw,10.5rem);line-height:.86;letter-spacing:.005em}
+.h1-solid,.h1-outline{display:block}
+.h1-outline{color:transparent;-webkit-text-stroke:2px var(--winter-fg)}
+.hero-lead{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.3vw,1.7rem);line-height:1.3;max-width:28ch;margin:26px 0 0;color:var(--winter-fg)}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.hero-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:40px 0 0;padding-top:18px;border-top:1px solid var(--winter-line);max-width:560px}
+.hero-facts dt{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--winter-muted)}
+.hero-facts dd{margin:4px 0 0;font-family:var(--display);font-size:1.7rem;line-height:1}
+.hero-stack{position:relative;width:100%;max-width:640px;margin-inline:auto;aspect-ratio:1/.92}
+.hs{position:absolute;width:58%}
+.hs-l{left:-1%;top:15%;rotate:-8deg;z-index:1;animation:rise 1s cubic-bezier(.2,.7,.2,1) .15s both}
+.hs-r{right:-1%;top:15%;rotate:8deg;z-index:2;animation:rise 1s cubic-bezier(.2,.7,.2,1) .3s both}
+.hs-f{left:21%;top:2%;z-index:3;animation:rise 1s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{translate:0 28px}to{translate:0 0}}
+@media (prefers-reduced-motion: reduce){.hs{animation:none}}
+@media (max-width:900px){
+  .hero-grid{grid-template-columns:minmax(0,1fr)}
+  .hero-stack{max-width:520px}
+}
+@media (max-width:520px){.hero-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- Film ---------- */
+.film{background:var(--winter);color:var(--winter-fg);padding-bottom:clamp(44px,6vw,80px)}
+.film-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 24px;border-top:1px solid var(--winter-line);padding-top:18px;margin-bottom:18px}
+.film-kicker{margin:0;font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--winter-muted)}
+.film-title{margin:0;font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(1.3rem,2.4vw,1.7rem)}
+.film-frame{position:relative;aspect-ratio:16/9;max-width:100%;background:#141414;overflow:hidden}
+.film-frame video{display:block;width:100%;height:100%;object-fit:cover}
+.film-toggle{position:absolute;right:14px;bottom:14px;width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(20,20,20,.62);color:#FFFFFF;cursor:pointer}
+.film-toggle:hover{background:rgba(20,20,20,.85)}
+.film-toggle svg{width:20px;height:20px}
+
+/* ---------- Botones ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;font-family:var(--body);font-weight:700;font-size:.95rem;letter-spacing:.01em;text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:background-color .2s,color .2s}
+.btn svg{width:18px;height:18px}
+.btn-light{background:var(--winter-fg);color:var(--winter)}
+.btn-light:hover{background:#FFFFFF}
+.btn-ghost{border-color:var(--winter-line);color:var(--winter-fg)}
+.btn-ghost:hover{border-color:var(--winter-fg)}
+.btn-dark{background:var(--fg);color:var(--bg)}
+.btn-dark:hover{background:var(--accent);color:var(--on-accent)}
+
+/* ---------- Secciones ---------- */
+.sec{padding-block:clamp(64px,9vw,120px);scroll-margin-top:72px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 48px;margin-bottom:32px}
+.sec-head > *{min-width:0}
+.kicker{font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.h2{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(2.8rem,6.4vw,5rem);line-height:.92;letter-spacing:.01em;margin:0}
+.sec-intro{max-width:46ch;margin:0;color:var(--muted);font-size:1.02rem}
+.sub-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;border-top:1px solid var(--line);padding-top:16px;margin:56px 0 24px}
+.sub-head h3{margin:0;font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:1.9rem;letter-spacing:.02em}
+.sub-head span{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.chip{min-height:44px;padding:0 18px;border:1.5px solid var(--line);background:transparent;color:var(--fg);font-family:var(--body);font-size:.9rem;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip span{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.chip:hover{border-color:var(--fg)}
+.chip[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.chip[aria-pressed="true"] span{color:inherit;opacity:.75}
+
+/* ---------- Rejillas y fichas ---------- */
+.grid{display:grid;gap:44px 24px}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1060px){.grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.grid{gap:32px 12px}.card-name{font-size:1rem}.way-label{font-size:.8rem}.tag{font-size:.6rem;top:8px;left:8px}}
+@media (max-width:340px){.grid-3,.grid-4{grid-template-columns:minmax(0,1fr)}}
+
+.card{display:flex;flex-direction:column;gap:10px;min-width:0}
+.card-open{appearance:none;background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.card-open:focus-visible{outline:2px solid var(--fg);outline-offset:4px}
+.stage{position:relative;aspect-ratio:5/6;background:var(--surface);display:grid;place-items:center;overflow:hidden;margin-bottom:12px}
+.stage .garment{width:84%;transition:translate .35s cubic-bezier(.2,.7,.2,1)}
+.card-open:hover .stage .garment{translate:0 -6px}
+@media (prefers-reduced-motion: reduce){.stage .garment{transition:none}}
+.tag{position:absolute;top:12px;left:12px;z-index:2;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;background:var(--accent);color:var(--on-accent);padding:4px 8px}
+.tag-alt{background:var(--fg);color:var(--bg)}
+/* Huecos de foto: la ilustración queda debajo hasta que existe fotos/<código>.jpg */
+.stage .photo{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover}
+.stage.has-photo .garment,.stage.has-photo .stage-note{visibility:hidden}
+.slot{position:absolute;inset:10px;z-index:1;border:1.5px dashed var(--muted);pointer-events:none}
+.slot-label{position:absolute;left:8px;bottom:8px;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:var(--bg);color:var(--fg);padding:3px 6px}
+.stage.has-photo .slot,.stage.photo-ready .slot{display:none}
+.qv-photo img{display:block;width:100%;max-width:520px;height:auto}
+.qv-slot{width:100%;max-width:440px;aspect-ratio:3/4;border:1.5px dashed var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;text-align:center;font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.qv-slot b{font-family:var(--display);font-weight:400;font-size:2.4rem;color:var(--fg);letter-spacing:.02em}
+.stage-note{position:absolute;right:12px;bottom:10px;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.card-name{font-weight:700;font-size:1.15rem;line-height:1.2}
+.card-kind{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.ways{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 10px}
+.way-label{font-size:.86rem;color:var(--muted)}
+.way-label b{color:var(--fg);font-weight:600}
+.swatches{display:flex;gap:2px;margin-inline:-6px}
+.sw{width:44px;height:44px;display:grid;place-items:center;background:none;border:0;padding:0;cursor:pointer;border-radius:50%}
+.sw span{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--a) 0 58%,var(--b) 58% 100%);box-shadow:inset 0 0 0 1px rgba(128,128,128,.55)}
+.sw[aria-pressed="true"] span{outline:2px solid var(--fg);outline-offset:3px}
+.sw:focus-visible{outline:2px solid var(--fg);outline-offset:0}
+
+/* ---------- Prenda y diseño ---------- */
+.garment{position:relative;width:100%;aspect-ratio:500/560}
+.gsvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 14px 16px rgba(10,14,24,.2))}
+.g-body{fill:var(--tee)}
+.g-rib{fill:rgba(0,0,0,.14)}
+.g-seam{fill:none;stroke:rgba(0,0,0,.2);stroke-width:2}
+.g-edge{fill:none;stroke:rgba(120,120,120,.45);stroke-width:1.5}
+.print{position:absolute}
+.g-hoodie .print{left:17%;top:24%;width:66%}
+.g-crew .print{left:17%;top:15.1%;width:66%}
+.g-tee .print{left:19%;top:15.8%;width:62%}
+.fit{position:relative;overflow:hidden;aspect-ratio:760/900}
+.flat{width:100%;background:var(--tee)}
+.board{position:absolute;left:0;top:0;width:760px;height:900px;transform:scale(var(--k,.3));transform-origin:0 0;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:16px;font-weight:400;line-height:normal;letter-spacing:normal;text-transform:none;text-align:left;color:var(--ink)}
+.board,.board *{box-sizing:content-box}
+
+/* ---------- Manifiesto ---------- */
+.band{background:var(--band);color:var(--band-fg)}
+.band-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:40px 64px;align-items:end;padding-block:clamp(64px,9vw,120px)}
+.manifesto{margin:0;font-family:var(--body);font-weight:800;font-size:clamp(3.6rem,11vw,9.5rem);line-height:.9;letter-spacing:-.045em}
+.band-serif{font-family:'Instrument Serif',var(--serif);font-style:italic;font-size:clamp(1.6rem,3vw,2.2rem);margin:0 0 28px;color:var(--band-fg)}
+.principles{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:1rem;border-top:1px solid rgba(237,230,214,.25)}
+.principles li{display:flex;gap:18px;padding-block:12px;border-bottom:1px solid rgba(237,230,214,.25)}
+.principles li span{color:var(--band-muted)}
+.band-note{font-family:var(--mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--band-muted);margin:22px 0 0}
+@media (max-width:820px){.band-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- El club ---------- */
+.club-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:40px 64px;align-items:center}
+.club-mark{max-width:460px;width:100%}
+.club-copy h2{font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(2rem,4.2vw,3.3rem);line-height:1.08;margin:0 0 22px}
+.club-copy p{max-width:56ch;margin:0 0 14px}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px;margin:28px 0 0}
+.facts > div{border-top:1px solid var(--line);padding-block:12px}
+.facts dt{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-weight:600;font-variant-numeric:tabular-nums}
+@media (max-width:820px){.club-grid{grid-template-columns:minmax(0,1fr)}.club-mark{margin-inline:auto}}
+@media (max-width:420px){.facts{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- Contacto y pie ---------- */
+.contact{background:var(--surface)}
+.contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px 64px;align-items:start}
+.contact-grid p{margin:16px 0 0;color:var(--muted);max-width:40ch}
+.contact-list{margin:0}
+.contact-list > div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 20px;border-top:1px solid var(--line);padding-block:16px}
+.contact-list > div:last-child{border-bottom:1px solid var(--line)}
+.contact-list dt{font-family:var(--mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.contact-list dd{margin:0;font-weight:600}
+.ph{font-family:var(--mono);font-size:.88em;font-weight:400;padding:2px 6px;border:1px dashed var(--muted);color:var(--fg)}
+@media (max-width:820px){.contact-grid{grid-template-columns:minmax(0,1fr)}}
+.site-foot{padding-block:40px 48px;border-top:1px solid var(--line)}
+.foot-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:20px 40px}
+.foot-word{font-family:var(--serif);font-style:italic;font-size:2.6rem;line-height:1;margin:0}
+.foot-meta{font-family:var(--mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:10px 0 0}
+.foot-right{text-align:right;font-size:.9rem}
+.foot-right p{margin:0}
+@media (max-width:640px){.foot-right{text-align:left}}
+
+/* ---------- Vista rápida ---------- */
+dialog.qv{padding:0;border:0;width:calc(100% - 32px);max-width:1000px;max-height:calc(100% - 32px);background:var(--bg);color:var(--fg);overflow:auto}
+dialog.qv::backdrop{background:rgba(8,12,20,.66)}
+.qv-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.qv-art{background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:16px;align-items:center}
+.qv-art .flat{max-width:440px}
+.qv-art .garment{max-width:420px}
+.qv-pane{width:100%;display:flex;justify-content:center}
+.seg{display:inline-flex;border:1.5px solid var(--line)}
+.seg button{min-height:44px;padding:0 16px;border:0;background:transparent;color:var(--fg);font:inherit;font-size:.86rem;font-weight:500;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.qv-info{padding:clamp(24px,4vw,44px);display:flex;flex-direction:column;gap:14px;min-width:0}
+.qv-info .kicker{margin:0}
+.qv-name{margin:0;font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(2.4rem,5vw,3.5rem);line-height:.95}
+.qv-kind{margin:0;font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+.qv-desc{margin:0;max-width:44ch}
+.qv-spec{margin:6px 0 4px}
+.qv-spec > div{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--line);padding-block:10px}
+.qv-spec > div:last-child{border-bottom:1px solid var(--line)}
+.qv-spec dt{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.qv-spec dd{margin:0;font-weight:600}
+.qv-close{position:absolute;top:8px;right:8px;z-index:3;width:44px;height:44px;display:grid;place-items:center;border:0;background:var(--bg);color:var(--fg);cursor:pointer;border-radius:50%}
+.qv-close svg{width:20px;height:20px}
+.qv-wrap{position:relative}
+@media (max-width:760px){.qv-grid{grid-template-columns:minmax(0,1fr)}.qv-art .flat{max-width:340px}.qv-art .garment{max-width:320px}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gshade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000" stop-opacity=".24"></stop>
+      <stop offset=".28" stop-color="#000" stop-opacity="0"></stop>
+      <stop offset=".72" stop-color="#000" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#000" stop-opacity=".24"></stop>
+    </linearGradient>
+    <linearGradient id="gshadeV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".06"></stop>
+      <stop offset="1" stop-color="#000" stop-opacity=".14"></stop>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="announce">
+  <p class="sr">Nueva colección de invierno 26/27 ya disponible.</p>
+  <div class="marquee" aria-hidden="true">
+    <div class="track">
+      <span class="mq"><b>Nueva colección de invierno 26/27</b><i></i>Ya disponible<i></i>15° y bufanda<i></i>Churrería<i></i>Hibernando<i></i>Sierra<i></i>Abuela<i></i>Jacquard<i></i><b>Nueva colección de invierno 26/27</b><i></i>Ya disponible<i></i>15° y bufanda<i></i>Churrería<i></i>Hibernando<i></i>Sierra<i></i>Abuela<i></i>Jacquard<i></i></span>
+      <span class="mq"><b>Nueva colección de invierno 26/27</b><i></i>Ya disponible<i></i>15° y bufanda<i></i>Churrería<i></i>Hibernando<i></i>Sierra<i></i>Abuela<i></i>Jacquard<i></i><b>Nueva colección de invierno 26/27</b><i></i>Ya disponible<i></i>15° y bufanda<i></i>Churrería<i></i>Hibernando<i></i>Sierra<i></i>Abuela<i></i>Jacquard<i></i></span>
+    </div>
+  </div>
+  <p class="announce-static" aria-hidden="true">Nueva colección de invierno 26/27 · Ya disponible</p>
+</div>
+
+<header class="site-head">
+  <div class="wrap head-row">
+    <a class="logo" href="#top"><span class="logo-word">Solera</span><span class="logo-sub">Social Club</span></a>
+    <nav class="site-nav" aria-label="Principal">
+      <ul>
+        <li><a href="#invierno"><span class="nav-dot" aria-hidden="true"></span>Invierno 26/27</a></li>
+        <li><a href="#coleccion-01">Colección 01</a></li>
+        <li><a href="#club">El club</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Nueva colección · Ya disponible</p>
+        <h1 id="hero-title"><span class="h1-solid">Invierno</span><span class="h1-outline">26/27</span></h1>
+        <p class="hero-lead">Seis sudaderas nuevas para sobrevivir a los 15 grados, la bufanda y la sobremesa larga.</p>
+        <div class="hero-cta">
+          <a class="btn btn-light" href="#invierno">Ver la colección de invierno
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+          </a>
+          <a class="btn btn-ghost" href="#coleccion-01">Colección 01</a>
+        </div>
+        <dl class="hero-facts">
+          <div><dt>Colección</dt><dd>02</dd></div>
+          <div><dt>Con capucha</dt><dd>3</dd></div>
+          <div><dt>Cuello redondo</dt><dd>3</dd></div>
+          <div><dt>Studio</dt><dd>Madrid</dd></div>
+        </dl>
+      </div>
+      <div class="hero-stack" role="img" aria-label="Sudaderas 15° y bufanda, Jacquard e Hibernando de la colección de invierno, vistas de espalda">
+        <div class="hs hs-l" id="hs-l"></div>
+        <div class="hs hs-r" id="hs-r"></div>
+        <div class="hs hs-f" id="hs-f"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="film" aria-labelledby="film-title">
+    <div class="wrap">
+      <div class="film-head">
+        <p class="film-kicker">Campaña · Invierno 26/27</p>
+        <h2 class="film-title" id="film-title">El film de la colección</h2>
+      </div>
+      <div class="film-frame">
+        <video id="film-video" src="solera-film-invierno-16x9.mp4" poster="solera-film-poster.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Film de la colección Invierno 26/27: el termómetro baja a 15 grados, pasan las seis sudaderas nuevas y aparece el manifiesto de Solera"></video>
+        <button type="button" class="film-toggle" id="film-toggle" aria-label="Pausar el film">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="film-icon" d="M8 5v14M16 5v14"></path></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="invierno" aria-labelledby="inv-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <p class="kicker">Colección 02 · Novedad</p>
+          <h2 class="h2" id="inv-title">Invierno 26/27</h2>
+        </div>
+        <p class="sec-intro">Un termómetro clavado en los 15 grados, churros desde las siete, la sierra a 1.858 metros y la frase de todas las abuelas. Tres sudaderas con capucha y tres de cuello redondo, con el diseño en la espalda.</p>
+      </div>
+      <div class="filters" role="group" aria-label="Filtrar la colección de invierno">
+        <button type="button" class="chip" aria-pressed="true" data-grid="grid-inv" data-filter="all">Todas <span>6</span></button>
+        <button type="button" class="chip" aria-pressed="false" data-grid="grid-inv" data-filter="hoodie">Con capucha <span>3</span></button>
+        <button type="button" class="chip" aria-pressed="false" data-grid="grid-inv" data-filter="crew">Cuello redondo <span>3</span></button>
+      </div>
+      <div class="grid grid-3" id="grid-inv"></div>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="man-title">
+    <div class="wrap band-grid">
+      <h2 class="manifesto" id="man-title">lento,<br>pero sin<br>parar.</h2>
+      <div>
+        <p class="band-serif">no está hecho para todos.</p>
+        <ol class="principles">
+          <li><span>01</span>paciencia</li>
+          <li><span>02</span>constancia</li>
+          <li><span>03</span>sobremesa</li>
+        </ol>
+        <p class="band-note">Hecho a fuego lento · Madrid</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="coleccion-01" aria-labelledby="c01-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <p class="kicker">Colección 01 · 2026</p>
+          <h2 class="h2" id="c01-title">Colección 01</h2>
+        </div>
+        <p class="sec-intro">La primera tanda: el escudo del club, el departamento de sobremesa, la siesta de 15:00 a 17:00 y el vermut del domingo.</p>
+      </div>
+      <div class="sub-head"><h3>Sudaderas</h3><span>4 diseños</span></div>
+      <div class="grid grid-4" id="grid-c01-sud"></div>
+      <div class="sub-head"><h3>Camisetas</h3><span>6 diseños</span></div>
+      <div class="grid grid-3" id="grid-c01-cam"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="club" aria-labelledby="club-title" style="padding-top:0">
+    <div class="wrap club-grid">
+      <div class="club-mark" id="club-mark" role="img" aria-label="Emblema de Solera Social Club, establecido en MMXXVI"></div>
+      <div class="club-copy">
+        <p class="kicker">El club</p>
+        <h2 id="club-title">Para los que llegan tarde a todo, menos a lo importante.</h2>
+        <p>Solera nace en Madrid en 2026, en la terraza de siempre. Diseñamos camisetas y sudaderas para la sobremesa que se alarga, el vermut del domingo y la siesta de 15:00 a 17:00.</p>
+        <p>Sin prisa y sin parar. Cada diseño va en la espalda, para que se lea cuando ya te has ido.</p>
+        <dl class="facts">
+          <div><dt>Fundado</dt><dd>MMXXVI</dd></div>
+          <div><dt>Sede</dt><dd>Madrid</dd></div>
+          <div><dt>Departamento</dt><dd>Sobremesa</dd></div>
+          <div><dt>Coordenadas</dt><dd>40.4168° N, 3.7038° W</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec contact" id="contacto" aria-labelledby="contact-title">
+    <div class="wrap contact-grid">
+      <div>
+        <p class="kicker">Contacto</p>
+        <h2 class="h2" id="contact-title">Hablemos</h2>
+        <p>Pedidos, tallas, tiendas y colaboraciones. Escríbenos y te respondemos sin prisa, pero sin parar.</p>
+      </div>
+      <dl class="contact-list">
+        <div><dt>Correo</dt><dd><span class="ph">[correo de la marca]</span></dd></div>
+        <div><dt>Instagram</dt><dd><span class="ph">[@usuario]</span></dd></div>
+        <div><dt>Tienda online</dt><dd><span class="ph">[enlace de compra]</span></dd></div>
+        <div><dt>Puntos de venta</dt><dd><span class="ph">[tiendas físicas]</span></dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap foot-row">
+    <div>
+      <p class="foot-word">Solera</p>
+      <p class="foot-meta">Social Club · Madrid · Est. MMXXVI</p>
+    </div>
+    <div class="foot-right">
+      <p><a href="#invierno">Colección 02 · Invierno 26/27, ya disponible</a></p>
+      <p class="foot-meta">© 2026 Solera</p>
+    </div>
+  </div>
+</footer>
+
+<dialog class="qv" id="qv" aria-labelledby="qv-name">
+  <div class="qv-wrap">
+    <button type="button" class="qv-close" data-close aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+    <div class="qv-grid">
+      <div class="qv-art">
+        <div class="seg" role="group" aria-label="Vista">
+          <button type="button" data-view="flat" aria-pressed="true">Diseño trasero</button>
+          <button type="button" data-view="worn" aria-pressed="false">En la prenda</button>
+          <button type="button" data-view="photo" aria-pressed="false">Foto</button>
+        </div>
+        <div class="qv-pane" id="qv-flat"></div>
+        <div class="qv-pane" id="qv-worn" hidden></div>
+        <div class="qv-pane qv-photo" id="qv-photo" hidden></div>
+      </div>
+      <div class="qv-info">
+        <p class="kicker" id="qv-line"></p>
+        <h3 class="qv-name" id="qv-name"></h3>
+        <p class="qv-kind" id="qv-kind"></p>
+        <p class="qv-desc" id="qv-desc"></p>
+        <div class="ways" id="qv-ways"></div>
+        <dl class="qv-spec">
+          <div><dt>Estampado</dt><dd>Espalda</dd></div>
+          <div><dt>Precio</dt><dd><span class="ph">[PVP]</span></dd></div>
+        </dl>
+        <a class="btn btn-dark" href="#contacto" data-close>Consultar disponibilidad</a>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  /* ---------- Siluetas de prenda (vista de espalda, viewBox 500x560) ---------- */
+  var P_CREW='M196 64C220 74 280 74 304 64L362 84C392 94 410 116 418 150L462 410L468 452L420 460L414 420L378 218L380 470L372 512L128 512L120 470L122 218L86 420L80 460L32 452L38 410L82 150C90 116 108 94 138 84Z';
+  var P_HOOD='M180 74C174 32 208 10 250 10C292 10 326 32 320 74C318 132 292 170 250 174C208 170 182 132 180 74Z';
+  var P_TEE='M198 62C222 72 278 72 302 62L362 80L444 128L408 214L364 196L366 500L134 500L136 196L92 214L56 128L138 80Z';
+  var SEAMS_SWEAT='M120 470L380 470M38 410L86 420M414 420L462 410M138 84C128 140 124 184 122 218M362 84C372 140 376 184 378 218';
+  function body(d){return '<path class="g-body" d="'+d+'"></path><path d="'+d+'" style="fill:url(#gshade)"></path>';}
+  var SVG={
+    crew:'<svg class="gsvg" viewBox="0 0 500 560" aria-hidden="true" focusable="false">'+body(P_CREW)+
+      '<path class="g-rib" d="M188 58C220 72 280 72 312 58L304 68C280 80 220 80 196 68Z"></path>'+
+      '<path class="g-seam" d="'+SEAMS_SWEAT+'"></path><path class="g-edge" d="'+P_CREW+'"></path></svg>',
+    hoodie:'<svg class="gsvg" viewBox="0 0 500 560" aria-hidden="true" focusable="false">'+body(P_CREW)+
+      '<path class="g-seam" d="'+SEAMS_SWEAT+'"></path><path class="g-edge" d="'+P_CREW+'"></path>'+
+      '<path class="g-body" d="'+P_HOOD+'"></path><path d="'+P_HOOD+'" style="fill:url(#gshadeV)"></path>'+
+      '<path class="g-seam" d="M250 12L250 172"></path><path class="g-edge" d="'+P_HOOD+'"></path></svg>',
+    tee:'<svg class="gsvg" viewBox="0 0 500 560" aria-hidden="true" focusable="false">'+body(P_TEE)+
+      '<path class="g-rib" d="M190 57C220 70 280 70 310 57L302 63C278 73 222 73 198 63Z"></path>'+
+      '<path class="g-seam" d="M134 486L366 486M67 123L103 209M433 123L397 209M138 80C140 120 138 160 136 196M362 80C360 120 362 160 364 196"></path>'+
+      '<path class="g-edge" d="'+P_TEE+'"></path></svg>'
+  };
+
+  /* ---------- Diseños (lienzo «Solera»: trasera 760x900) ---------- */
+  var ART={
+    social:function(){return '<div style="width:380px;display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--ink);text-align:center">'+
+      '<div style="font-size:12px;letter-spacing:0.42em;font-weight:500">EST. MMXXVI</div>'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-style:italic;font-size:118px;line-height:0.9;letter-spacing:-0.02em">Solera</div>'+
+      '<div style="font-size:20px;letter-spacing:0.55em;font-weight:700;margin-right:-0.55em">SOCIAL CLUB</div>'+
+      '<div style="width:220px;height:1px;background:var(--ink);margin-top:18px"></div>'+
+      '<div style="width:92px;height:92px;border:2px solid var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:10px">'+
+      '<div style="width:76px;height:76px;border:1px solid var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:46px;line-height:1">S</div></div>'+
+      '<div style="font-size:13px;line-height:1.55;max-width:250px;margin-top:10px">Para los que llegan tarde a todo,<br>menos a lo importante.</div>'+
+      '<div style="display:flex;gap:18px;font-size:10px;letter-spacing:0.3em;margin-top:26px;font-weight:500"><span>MADRID</span><span>—</span><span>MEMBERS ONLY</span><span>—</span><span>Nº 026</span></div></div>';},
+
+    statement:function(){return '<div style="width:360px;display:flex;flex-direction:column;gap:0;color:var(--ink)">'+
+      '<div style="display:flex;justify-content:center;font-family:\'Instrument Serif\',serif;font-size:30px;line-height:1">solera<span style="font-family:\'Archivo\',sans-serif;font-size:11px;vertical-align:top;margin-left:2px">®</span></div>'+
+      '<div style="font-weight:800;font-size:76px;line-height:0.92;letter-spacing:-0.045em;margin-top:150px">lento,<br>pero sin<br>parar.</div>'+
+      '<div style="font-family:\'Instrument Serif\',serif;font-style:italic;font-size:22px;margin-top:18px;opacity:0.85">no está hecho para todos.</div>'+
+      '<div style="height:1px;background:var(--ink);opacity:0.5;margin-top:120px"></div>'+
+      '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:0.08em;margin-top:10px"><span>colección 01 / 2026</span><span>40.4168° N, 3.7038° W</span></div></div>';},
+
+    badge:function(u){return '<div style="width:380px;display:flex;flex-direction:column;align-items:center;gap:0;color:var(--ink);text-align:center">'+
+      '<svg width="300" height="300" viewBox="0 0 300 300" aria-hidden="true"><defs><path id="ring'+u+'" d="M150,150 m-118,0 a118,118 0 1,1 236,0 a118,118 0 1,1 -236,0"></path></defs>'+
+      '<circle cx="150" cy="150" r="142" fill="none" style="stroke:var(--ink)" stroke-width="3"></circle>'+
+      '<circle cx="150" cy="150" r="96" fill="none" style="stroke:var(--ink)" stroke-width="1.5"></circle>'+
+      '<text font-family="Archivo, sans-serif" font-weight="700" font-size="15" style="fill:var(--ink)" letter-spacing="3"><textPath href="#ring'+u+'" textLength="735" lengthAdjust="spacing">SOLERA ATHLETIC DEPT. · SOBREMESA SIN PRISA · EST. 2026 ·</textPath></text>'+
+      '<circle cx="150" cy="135" r="26" style="fill:var(--accent)"></circle>'+
+      '<g style="stroke:var(--accent)" stroke-width="4" stroke-linecap="round">'+
+      '<line x1="184" y1="135" x2="196" y2="135"></line><line x1="179.4" y1="152" x2="189.8" y2="158"></line><line x1="167" y1="164.4" x2="173" y2="174.8"></line>'+
+      '<line x1="150" y1="169" x2="150" y2="181"></line><line x1="133" y1="164.4" x2="127" y2="174.8"></line><line x1="120.6" y1="152" x2="110.2" y2="158"></line>'+
+      '<line x1="116" y1="135" x2="104" y2="135"></line><line x1="120.6" y1="118" x2="110.2" y2="112"></line><line x1="133" y1="105.6" x2="127" y2="95.2"></line>'+
+      '<line x1="150" y1="101" x2="150" y2="89"></line><line x1="167" y1="105.6" x2="173" y2="95.2"></line><line x1="179.4" y1="118" x2="189.8" y2="112"></line></g>'+
+      '<text x="150" y="216" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="700" font-size="12" letter-spacing="3" style="fill:var(--ink)">BARRIO ALTO</text></svg>'+
+      '<div style="font-family:\'Anton\',sans-serif;font-size:124px;line-height:1;letter-spacing:0.01em;margin-top:26px;text-shadow:6px 6px 0 var(--accent)">SOLERA</div>'+
+      '<div style="font-size:13px;font-weight:700;letter-spacing:0.42em;margin-top:20px;margin-right:-0.42em">DEPARTAMENTO DE SOBREMESA</div>'+
+      '<div style="font-size:11px;font-weight:500;letter-spacing:0.12em;margin-top:12px;opacity:0.8">Fundado en la terraza de siempre</div></div>';},
+
+    varsity:function(u){return '<div style="width:380px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<svg width="380" height="130" viewBox="0 0 380 130" aria-hidden="true"><defs><path id="arco'+u+'" d="M18,124 Q190,-8 362,124"></path></defs>'+
+      '<text font-family="Graduate, serif" font-size="62" style="fill:var(--ink)" letter-spacing="4"><textPath href="#arco'+u+'" startOffset="50%" text-anchor="middle">SOLERA</textPath></text></svg>'+
+      '<div style="font-family:\'Graduate\',serif;font-size:200px;line-height:0.95;margin-top:4px;color:var(--tee);-webkit-text-stroke:5px var(--ink);text-shadow:7px 7px 0 var(--ink)">26</div>'+
+      '<div style="font-size:13px;font-weight:700;letter-spacing:0.42em;margin-top:22px;margin-right:-0.42em">ATHLETIC DEPT. · MADRID</div></div>';},
+
+    fuego:function(){return '<div style="width:300px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<div style="font-family:\'Instrument Serif\',serif;font-style:italic;font-size:64px;line-height:1">solera</div>'+
+      '<div style="font-size:12px;font-weight:500;letter-spacing:0.32em;margin-top:12px;margin-right:-0.32em">hecho a fuego lento</div>'+
+      '<div style="width:140px;height:1px;background:var(--ink);opacity:0.6;margin-top:34px"></div>'+
+      '<div style="display:flex;flex-direction:column;gap:8px;font-family:\'IBM Plex Mono\',monospace;font-size:11px;letter-spacing:0.06em;margin-top:30px;text-align:left"><span>01 — paciencia</span><span>02 — constancia</span><span>03 — sobremesa</span></div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:0.1em;margin-top:150px;opacity:0.7">colección 01 · invierno 2026</div></div>';},
+
+    triple:function(){var t='font-family:\'Anton\',sans-serif;font-size:112px;line-height:0.98;letter-spacing:0.02em';
+      return '<div style="width:400px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<div style="display:flex;justify-content:space-between;width:100%;font-size:10px;font-weight:700;letter-spacing:0.3em;margin-bottom:10px"><span>COLECCIÓN 01</span><span>®</span></div>'+
+      '<div style="'+t+';color:transparent;-webkit-text-stroke:1.6px var(--ink)">SOLERA</div>'+
+      '<div style="'+t+'">SOLERA</div>'+
+      '<div style="'+t+';color:transparent;-webkit-text-stroke:1.6px var(--ink)">SOLERA</div>'+
+      '<div style="display:flex;justify-content:space-between;width:100%;font-size:10px;font-weight:700;letter-spacing:0.3em;margin-top:12px"><span>SOBREMESA</span><span>MADRID</span></div></div>';},
+
+    firma:function(){return '<div style="width:420px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<div style="font-family:\'Herr Von Muellerhoff\',cursive;font-size:190px;line-height:0.8;transform:rotate(-7deg);margin-left:-20px">Solera</div>'+
+      '<svg width="300" height="24" viewBox="0 0 300 24" style="margin-top:-6px;transform:rotate(-7deg)" aria-hidden="true"><path d="M4 18 Q120 2 296 10" fill="none" style="stroke:var(--ink)" stroke-width="2.5" stroke-linecap="round"></path></svg>'+
+      '<div style="font-size:12px;font-weight:700;letter-spacing:0.45em;margin-top:70px;margin-right:-0.45em">STUDIO · MADRID · MMXXVI</div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:0.1em;margin-top:14px;opacity:0.75">edición limitada · 001 / 150</div></div>';},
+
+    siesta:function(){return '<div style="width:360px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<div style="width:100%;box-sizing:border-box;border:3px solid var(--ink);border-radius:10px;padding:8px">'+
+      '<div style="border:1px solid var(--ink);border-radius:6px;padding:30px 20px 26px;display:flex;flex-direction:column;align-items:center">'+
+      '<svg width="64" height="64" viewBox="0 0 80 80" aria-hidden="true"><path d="M44 6 A34 34 0 1 0 74 56 A27 27 0 1 1 44 6 Z" style="fill:var(--accent)"></path></svg>'+
+      '<div style="font-family:\'Anton\',sans-serif;font-size:82px;line-height:1;letter-spacing:0.02em;margin-top:14px">SIESTA<br>CLUB</div>'+
+      '<div style="width:70%;height:2px;background:var(--ink);margin-top:18px"></div>'+
+      '<div style="font-size:14px;font-weight:700;letter-spacing:0.22em;margin-top:16px">CERRADO DE 15:00 A 17:00</div>'+
+      '<div style="font-family:\'Instrument Serif\',serif;font-style:italic;font-size:22px;margin-top:10px">Volvemos cuando volvamos.</div></div></div>'+
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.5em;margin-top:22px;margin-right:-0.5em">SOLERA</div></div>';},
+
+    billete:function(){var m='font-family:\'IBM Plex Mono\',monospace';
+      return '<div style="width:360px;box-sizing:border-box;border:2px solid var(--ink);border-radius:8px;color:var(--ink);display:flex;flex-direction:column">'+
+      '<div style="display:flex;justify-content:space-between;padding:14px 18px;'+m+';font-size:11px;font-weight:600;letter-spacing:0.08em;border-bottom:2px solid var(--ink)"><span>SOLERA · BILLETE DE IDA</span><span>Nº 0026</span></div>'+
+      '<div style="padding:22px 18px 18px;display:flex;flex-direction:column;gap:6px"><div style="'+m+';font-size:10px;letter-spacing:0.12em;opacity:0.8">DESTINO</div>'+
+      '<div style="font-weight:900;font-size:54px;line-height:0.92;letter-spacing:-0.03em">VERANO<br>ETERNO</div></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 18px 20px;'+m+'">'+
+      '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:9px;letter-spacing:0.12em;opacity:0.8">SALIDA</span><span style="font-size:15px;font-weight:600">15:00</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:9px;letter-spacing:0.12em;opacity:0.8">PUERTA</span><span style="font-size:15px;font-weight:600">26</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:9px;letter-spacing:0.12em;opacity:0.8">ASIENTO</span><span style="font-size:15px;font-weight:600">VENTANILLA</span></div></div>'+
+      '<div style="border-top:2px dashed var(--ink);padding:18px 18px 14px;display:flex;flex-direction:column;align-items:center;gap:10px">'+
+      '<svg width="300" height="44" viewBox="0 0 300 44" aria-hidden="true"><path style="fill:var(--ink)" d="M0 0h3v44h-3zM5 0h1v44h-1zM8 0h2v44h-2zM12 0h4v44h-4zM18 0h1v44h-1zM21 0h2v44h-2zM25 0h3v44h-3zM30 0h1v44h-1zM33 0h1v44h-1zM36 0h4v44h-4zM42 0h2v44h-2zM46 0h1v44h-1zM49 0h3v44h-3zM54 0h2v44h-2zM58 0h1v44h-1zM61 0h4v44h-4zM67 0h1v44h-1zM70 0h2v44h-2zM74 0h3v44h-3zM79 0h1v44h-1zM82 0h2v44h-2zM86 0h4v44h-4zM92 0h1v44h-1zM95 0h3v44h-3zM100 0h2v44h-2zM104 0h1v44h-1zM107 0h3v44h-3zM112 0h1v44h-1zM115 0h4v44h-4zM121 0h2v44h-2zM125 0h1v44h-1zM128 0h3v44h-3zM133 0h2v44h-2zM137 0h1v44h-1zM140 0h4v44h-4zM146 0h1v44h-1zM149 0h2v44h-2zM153 0h3v44h-3zM158 0h1v44h-1zM161 0h2v44h-2zM165 0h4v44h-4zM171 0h1v44h-1zM174 0h3v44h-3zM179 0h2v44h-2zM183 0h1v44h-1zM186 0h3v44h-3zM191 0h1v44h-1zM194 0h4v44h-4zM200 0h2v44h-2zM204 0h1v44h-1zM207 0h3v44h-3zM212 0h2v44h-2zM216 0h1v44h-1zM219 0h4v44h-4zM225 0h1v44h-1zM228 0h2v44h-2zM232 0h3v44h-3zM237 0h1v44h-1zM240 0h2v44h-2zM244 0h4v44h-4zM250 0h1v44h-1zM253 0h3v44h-3zM258 0h2v44h-2zM262 0h1v44h-1zM265 0h3v44h-3zM270 0h1v44h-1zM273 0h4v44h-4zM279 0h2v44h-2zM283 0h1v44h-1zM286 0h3v44h-3zM291 0h2v44h-2zM295 0h1v44h-1zM298 0h2v44h-2z"></path></svg>'+
+      '<div style="'+m+';font-size:10px;letter-spacing:0.12em">SIN BILLETE DE VUELTA</div></div></div>';},
+
+    vermut:function(){return '<div style="width:330px;box-sizing:border-box;border:3px solid var(--ink);border-radius:170px 170px 14px 14px;padding:8px;color:var(--ink)">'+
+      '<div style="border:1px solid var(--ink);border-radius:162px 162px 8px 8px;padding:70px 22px 30px;display:flex;flex-direction:column;align-items:center;text-align:center">'+
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.4em;margin-right:-0.4em">DESDE MMXXVI</div>'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-style:italic;font-size:92px;line-height:0.95;margin-top:16px;color:var(--accent)">Vermut</div>'+
+      '<div style="font-size:15px;font-weight:700;letter-spacing:0.35em;margin-top:8px;margin-right:-0.35em">&amp; SOBREMESA</div>'+
+      '<svg width="120" height="14" viewBox="0 0 120 14" style="margin-top:22px" aria-hidden="true"><path d="M0 7 H44 M76 7 H120" style="stroke:var(--ink)" stroke-width="1.5"></path><path d="M60 0 L67 7 L60 14 L53 7 Z" style="fill:var(--ink)"></path></svg>'+
+      '<div style="font-size:12px;font-weight:500;letter-spacing:0.14em;line-height:1.7;margin-top:18px">DOMINGOS · 13:00<br>BARRIO ALTO</div>'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-size:13px;letter-spacing:0.5em;margin-top:26px;margin-right:-0.5em">SOLERA</div></div></div>';},
+
+    grados:function(){return '<div style="width:380px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<div style="display:flex;align-items:flex-end;gap:22px">'+
+      '<svg width="50" height="200" viewBox="0 0 50 200" aria-hidden="true">'+
+      '<rect x="15" y="4" width="20" height="160" rx="10" fill="none" style="stroke:var(--ink)" stroke-width="3"></rect>'+
+      '<rect x="21" y="110" width="8" height="60" style="fill:var(--accent)"></rect>'+
+      '<circle cx="25" cy="176" r="20" style="fill:var(--accent);stroke:var(--ink)" stroke-width="3"></circle>'+
+      '<path d="M37 30 H45 M37 55 H45 M37 80 H45 M37 105 H45 M37 130 H45" style="stroke:var(--ink)" stroke-width="2"></path></svg>'+
+      '<div style="font-family:\'Anton\',sans-serif;font-size:200px;line-height:0.88">15°</div></div>'+
+      '<div style="font-family:\'Anton\',sans-serif;font-size:66px;line-height:1;letter-spacing:0.04em;margin-top:18px">Y BUFANDA.</div>'+
+      '<div style="font-size:12px;font-weight:500;letter-spacing:0.18em;margin-top:18px">INVIERNO EN ESPAÑA · NIVEL SUPERVIVENCIA</div>'+
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.5em;margin-top:40px;margin-right:-0.5em;opacity:0.8">SOLERA</div></div>';},
+
+    churreria:function(){return '<div style="width:320px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<div style="width:320px;height:320px;box-sizing:border-box;border:3px solid var(--ink);border-radius:50%;padding:9px">'+
+      '<div style="width:100%;height:100%;box-sizing:border-box;border:1px solid var(--ink);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">'+
+      '<div style="font-size:12px;font-weight:700;letter-spacing:0.45em;margin-right:-0.45em">CHURRERÍA</div>'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-style:italic;font-size:76px;line-height:0.95">Solera</div>'+
+      '<div style="font-size:11px;font-weight:500;letter-spacing:0.2em">CHOCOLATE · CHURROS · PORRAS</div>'+
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.2em;color:var(--accent);margin-top:6px">ABIERTO DESDE LAS 7:00</div></div></div>'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-style:italic;font-size:24px;margin-top:26px">Mojar es obligatorio.</div>'+
+      '<div style="font-size:10px;font-weight:700;letter-spacing:0.4em;margin-top:12px;margin-right:-0.4em;opacity:0.8">DESDE MMXXVI · MADRID</div></div>';},
+
+    hibernando:function(){var m='font-family:\'IBM Plex Mono\',monospace';
+      return '<div style="width:380px;display:flex;flex-direction:column;color:var(--ink)">'+
+      '<div style="'+m+';font-size:12px;letter-spacing:0.08em">estado actual:</div>'+
+      '<div style="font-weight:900;font-size:62px;line-height:1;letter-spacing:-0.03em;margin-top:10px">HIBERNANDO</div>'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-top:22px"><div style="flex:1;height:28px;box-sizing:border-box;border:2px solid var(--ink);padding:3px"><div style="width:87%;height:100%;background:var(--accent)"></div></div>'+
+      '<div style="'+m+';font-size:15px;font-weight:600">87%</div></div>'+
+      '<div style="font-family:\'Instrument Serif\',serif;font-style:italic;font-size:26px;margin-top:22px">no molestar hasta marzo.</div>'+
+      '<div style="display:flex;justify-content:space-between;'+m+';font-size:10px;letter-spacing:0.1em;margin-top:60px;opacity:0.75"><span>solera — colección 02</span><span>invierno 26/27</span></div></div>';},
+
+    sierra:function(){return '<div style="width:380px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<svg width="380" height="160" viewBox="0 0 380 160" aria-hidden="true">'+
+      '<circle cx="306" cy="40" r="15" fill="none" style="stroke:var(--ink)" stroke-width="3"></circle>'+
+      '<path d="M0 156 L70 76 L106 112 L170 24 L232 102 L266 72 L380 156" fill="none" style="stroke:var(--ink)" stroke-width="3.5" stroke-linejoin="round"></path>'+
+      '<path d="M150 52 L170 24 L192 52 L180 46 L170 56 L161 46 Z" style="fill:var(--ink)"></path>'+
+      '<path d="M58 90 L70 76 L82 90 L74 87 L70 92 L65 87 Z" style="fill:var(--ink)"></path>'+
+      '<path d="M0 156 H380" style="stroke:var(--ink)" stroke-width="2"></path></svg>'+
+      '<div style="font-family:\'Anton\',sans-serif;font-size:104px;line-height:1;letter-spacing:0.06em;margin-top:22px;margin-right:-0.06em">SOLERA</div>'+
+      '<div style="font-size:15px;font-weight:700;letter-spacing:0.55em;margin-top:10px;margin-right:-0.55em">ALPINE DEPT.</div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;letter-spacing:0.08em;margin-top:22px;opacity:0.85">1.858 m · Puerto de Navacerrada</div></div>';},
+
+    abuela:function(){return '<div style="width:400px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-size:170px;line-height:0.55;height:70px">“</div>'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-style:italic;font-size:60px;line-height:1.02;margin-top:10px">¿Vas a salir así?</div>'+
+      '<div style="font-size:19px;font-weight:500;line-height:1.45;margin-top:18px;max-width:320px">Ponte una chaqueta, que vas a coger frío.</div>'+
+      '<div style="width:60px;height:2px;background:var(--ink);margin-top:26px"></div>'+
+      '<div style="font-size:12px;font-weight:700;letter-spacing:0.3em;margin-top:18px;margin-right:-0.3em">— TODAS LAS ABUELAS DE ESPAÑA</div>'+
+      '<div style="font-family:\'DM Serif Display\',serif;font-size:13px;letter-spacing:0.5em;margin-top:46px;margin-right:-0.5em;opacity:0.8">SOLERA</div></div>';},
+
+    jacquard:function(u){return '<div style="width:392px;display:flex;flex-direction:column;align-items:center;color:var(--ink);text-align:center">'+
+      '<svg width="392" height="136" viewBox="0 0 392 136" aria-hidden="true"><defs>'+
+      '<pattern id="zA'+u+'" width="20" height="14" patternUnits="userSpaceOnUse"><path d="M0 14 L10 0 L20 14 Z" style="fill:var(--accent)"></path></pattern>'+
+      '<pattern id="zB'+u+'" width="20" height="14" patternUnits="userSpaceOnUse"><path d="M0 0 L10 14 L20 0 Z" style="fill:var(--accent)"></path></pattern>'+
+      '<pattern id="pt'+u+'" width="14" height="6" patternUnits="userSpaceOnUse"><rect x="5" y="0" width="5" height="5" style="fill:var(--ink)"></rect></pattern>'+
+      '<pattern id="cp'+u+'" width="56" height="54" patternUnits="userSpaceOnUse"><g style="fill:var(--ink)">'+
+      '<rect x="25" y="6" width="6" height="42"></rect><rect x="7" y="24" width="42" height="6"></rect>'+
+      '<rect x="13" y="12" width="6" height="6"></rect><rect x="37" y="12" width="6" height="6"></rect>'+
+      '<rect x="13" y="36" width="6" height="6"></rect><rect x="37" y="36" width="6" height="6"></rect>'+
+      '<rect x="19" y="18" width="6" height="6"></rect><rect x="31" y="18" width="6" height="6"></rect>'+
+      '<rect x="19" y="30" width="6" height="6"></rect><rect x="31" y="30" width="6" height="6"></rect></g></pattern></defs>'+
+      '<rect x="0" y="0" width="392" height="14" fill="url(#zA'+u+')"></rect>'+
+      '<rect x="0" y="22" width="392" height="6" fill="url(#pt'+u+')"></rect>'+
+      '<rect x="0" y="36" width="392" height="54" fill="url(#cp'+u+')"></rect>'+
+      '<rect x="0" y="100" width="392" height="6" fill="url(#pt'+u+')"></rect>'+
+      '<rect x="0" y="114" width="392" height="14" fill="url(#zB'+u+')"></rect></svg>'+
+      '<div style="font-family:\'Silkscreen\',monospace;font-weight:700;font-size:70px;line-height:1;letter-spacing:0.04em;margin-top:34px">SOLERA</div>'+
+      '<div style="font-size:13px;font-weight:700;letter-spacing:0.45em;margin-top:16px;margin-right:-0.45em">WINTER CLUB · MMXXVI</div>'+
+      '<div style="font-size:11px;font-weight:500;letter-spacing:0.15em;margin-top:10px;opacity:0.8">Tejido para la sobremesa larga</div></div>';}
+  };
+
+  /* ---------- Catálogo ---------- */
+  function W(n,tee,ink,acc){return {n:n,tee:tee,ink:ink,acc:acc||ink};}
+  var PRODUCTS=[
+    {id:'grados',line:'02',kind:'hoodie',name:'15° y bufanda',art:'grados',
+      desc:'El termómetro marca 15 grados y en la calle ya hay bufandas. Invierno en España, nivel supervivencia.',
+      ways:[W('Marino','#1E2A44','#CFE0EA','#D9482B'),W('Hueso','#F1EEE7','#1E2A44','#D9482B'),W('Negro','#141414','#F1EEE7','#E0A42B')]},
+    {id:'churreria',line:'02',kind:'hoodie',name:'Churrería',art:'churreria',
+      desc:'Sello de churrería de barrio: chocolate, churros y porras, abierto desde las 7:00. Mojar es obligatorio.',
+      ways:[W('Chocolate','#3D2A1E','#F2E6D0','#E39A3B'),W('Crema','#F2E6D0','#3D2A1E','#D9482B'),W('Burdeos','#6B1E2A','#F2E6D0','#E39A3B')]},
+    {id:'hibernando',line:'02',kind:'hoodie',name:'Hibernando',art:'hibernando',
+      desc:'Estado actual: hibernando, con la barra al 87 %. No molestar hasta marzo.',
+      ways:[W('Negro','#141414','#EDE6D6','#E0662B'),W('Pizarra','#2E3A4A','#EDE6D6','#6FA3C7'),W('Chocolate','#4A3426','#EDE6D6','#C8A13A')]},
+    {id:'sierra',line:'02',kind:'crew',name:'Sierra',art:'sierra',
+      desc:'Perfil de montaña y cota exacta: 1.858 m, Puerto de Navacerrada. Solera Alpine Dept.',
+      ways:[W('Bosque','#23382C','#EFE6D2'),W('Marino','#1E2A44','#EFE6D2'),W('Crudo','#EFE6D2','#23382C')]},
+    {id:'abuela',line:'02',kind:'crew',name:'Abuela',art:'abuela',
+      desc:'«¿Vas a salir así? Ponte una chaqueta, que vas a coger frío.» Firmado: todas las abuelas de España.',
+      ways:[W('Arena','#D8CFC0','#6B1E2A'),W('Hueso','#F1EEE7','#1E2A44'),W('Marino','#1E2A44','#F1EEE7')]},
+    {id:'jacquard',line:'02',kind:'crew',name:'Jacquard',art:'jacquard',
+      desc:'Copos y zigzag de jersey de lana, en versión estampada. Winter Club: tejido para la sobremesa larga.',
+      ways:[W('Crudo','#EFE8DA','#1E2A44','#B23A3A'),W('Marino','#1E2A44','#EFE8DA','#B23A3A'),W('Rojo','#B23A3A','#EFE8DA','#23382C')]},
+
+    {id:'varsity',line:'01',kind:'hoodie',name:'Varsity 26',art:'varsity',
+      desc:'Arco universitario y dorsal 26. Solera Athletic Dept., Madrid.',
+      ways:[W('Gris jaspeado','#B9B8B3','#1E2A44'),W('Hueso','#F1EEE7','#6B1E2A'),W('Marino','#1E2A44','#F1EEE7')]},
+    {id:'fuego',line:'01',kind:'hoodie',name:'Fuego lento',art:'fuego',
+      desc:'Hecho a fuego lento. Tres principios en tipografía mono: paciencia, constancia y sobremesa.',
+      ways:[W('Negro','#141414','#EDE6D6'),W('Chocolate','#4A3426','#EDE6D6'),W('Gris','#B9B8B3','#141414')]},
+    {id:'triple',line:'01',kind:'hoodie',name:'Triple Solera',art:'triple',
+      desc:'Tres veces Solera, en contorno y en relleno. Sobremesa y Madrid.',
+      ways:[W('Chocolate','#4A3426','#EFE3CF'),W('Negro','#141414','#E0662B'),W('Verde','#1F3A2E','#EFE3CF')]},
+    {id:'firma',line:'01',kind:'hoodie',name:'Firma',art:'firma',limited:true,
+      desc:'La firma de la casa, a mano alzada. Studio Madrid, MMXXVI. Edición limitada y numerada: 150 unidades.',
+      ways:[W('Hueso','#F1EEE7','#1F3A2E'),W('Verde','#1F3A2E','#F1EEE7'),W('Gris','#B9B8B3','#6B1E2A')]},
+
+    {id:'social',line:'01',kind:'tee',name:'Social Club',art:'social',
+      desc:'El emblema del club. Para los que llegan tarde a todo, menos a lo importante. Members only, Nº 026.',
+      ways:[W('Crudo','#EFE8DA','#6B1E2A'),W('Negro','#1B1B1B','#F2EFE8'),W('Salvia','#7D8471','#F2EFE8')]},
+    {id:'statement',line:'01',kind:'tee',name:'Frase minimal',art:'statement',
+      desc:'Lento, pero sin parar. No está hecho para todos.',
+      ways:[W('Negro','#161616','#F2EFE8'),W('Blanco roto','#F7F5F0','#161616'),W('Tabaco','#5B4636','#F2EFE8')]},
+    {id:'badge',line:'01',kind:'tee',name:'Insignia retro',art:'badge',
+      desc:'Insignia del Departamento de Sobremesa, con sol de terraza. Fundado en la terraza de siempre.',
+      ways:[W('Marino','#2F3B4C','#F3E9D2','#E0662B'),W('Crudo','#F3EDE1','#2F3B4C','#E0662B'),W('Oliva','#3B4A3A','#F3E9D2','#C8A13A')]},
+    {id:'siesta',line:'01',kind:'tee',name:'Siesta Club',art:'siesta',
+      desc:'Cerrado de 15:00 a 17:00. Volvemos cuando volvamos.',
+      ways:[W('Crudo','#F3EDE1','#1B1B1B','#D9482B'),W('Salvia','#8E9A84','#1E2A44','#E0A42B'),W('Negro','#141414','#F3EDE1','#E0A42B')]},
+    {id:'billete',line:'01',kind:'tee',name:'Billete de ida',art:'billete',
+      desc:'Destino: verano eterno. Salida a las 15:00, puerta 26, asiento de ventanilla. Sin billete de vuelta.',
+      ways:[W('Blanco roto','#F7F5F0','#1F3FA8'),W('Crudo','#F3EDE1','#D9482B'),W('Marino','#1E2A44','#F7F5F0')]},
+    {id:'vermut',line:'01',kind:'tee',name:'Vermut',art:'vermut',
+      desc:'Vermut y sobremesa, los domingos a las 13:00 en el Barrio Alto.',
+      ways:[W('Salvia','#8E9A84','#F3EAD8','#6B1E2A'),W('Crudo','#F3EDE1','#1B1B1B','#6B1E2A'),W('Burdeos','#6B1E2A','#F3EAD8','#F3EAD8')]}
+  ];
+  /* ---------- Fotos de producto (Google Flow) ----------
+     Cada prenda tiene una toma con código (W = invierno, S = sudaderas 01, T = camisetas 01).
+     La foto se busca en fotos/<código>.jpg, .png o .webp y se muestra solo con su color (way). */
+  var PHOTOS={
+    grados:{code:'W1',way:0}, churreria:{code:'W2',way:0}, hibernando:{code:'W3',way:0},
+    sierra:{code:'W4',way:0}, abuela:{code:'W5',way:0}, jacquard:{code:'W6',way:0},
+    varsity:{code:'S1',way:0}, fuego:{code:'S2',way:0}, triple:{code:'S3',way:0}, firma:{code:'S4',way:0},
+    social:{code:'T1',way:0}, statement:{code:'T2',way:0}, badge:{code:'T3',way:0},
+    siesta:{code:'T4',way:0}, billete:{code:'T5',way:0}, vermut:{code:'T6',way:0}
+  };
+  var EXT=['jpg','png','webp'], photoUrl={};
+  var KIND={hoodie:'Sudadera con capucha',crew:'Sudadera cuello redondo',tee:'Camiseta'};
+  var LINE={'02':'Colección 02 · Invierno 26/27','01':'Colección 01'};
+  var byId={}, state={};
+  PRODUCTS.forEach(function(p){byId[p.id]=p;state[p.id]=0;});
+
+  var uid=0;
+  function vars(w){return '--tee:'+w.tee+';--ink:'+w.ink+';--accent:'+w.acc;}
+  function art(p){uid++;return ART[p.art]('u'+uid);}
+  function garment(p,w,linked){
+    return '<div class="garment g-'+p.kind+' tinted"'+(linked?' data-pid="'+p.id+'"':'')+' style="'+vars(w)+'" aria-hidden="true">'+SVG[p.kind]+
+      '<div class="print fit"><div class="board">'+art(p)+'</div></div></div>';
+  }
+  function flat(p,w,linked){
+    return '<div class="flat fit tinted"'+(linked?' data-pid="'+p.id+'"':'')+' style="'+vars(w)+'" aria-hidden="true"><div class="board">'+art(p)+'</div></div>';
+  }
+  function ways(p){
+    var cur=p.ways[state[p.id]];
+    return '<span class="way-label">Color: <b data-wayname="'+p.id+'">'+cur.n+'</b></span>'+
+      '<div class="swatches" role="group" aria-label="Colores de '+p.name+'">'+
+      p.ways.map(function(w,i){return '<button type="button" class="sw" data-swp="'+p.id+'" data-way="'+i+'" aria-pressed="'+(i===state[p.id])+'" aria-label="'+w.n+'" title="'+w.n+'"><span style="--a:'+w.tee+';--b:'+w.ink+'"></span></button>';}).join('')+
+      '</div>';
+  }
+  function slot(p){
+    var ph=PHOTOS[p.id];
+    return '<span class="slot" aria-hidden="true"><span class="slot-label">Foto pendiente · '+ph.code+' · '+p.ways[ph.way].n+'</span></span>';
+  }
+  function card(p){
+    var w=p.ways[state[p.id]];
+    return '<article class="card" data-kind="'+p.kind+'">'+
+      '<button type="button" class="card-open" data-open="'+p.id+'">'+
+        '<span class="stage" data-stage="'+p.id+'">'+slot(p)+(p.line==='02'?'<span class="tag">Nuevo</span>':'')+(p.limited?'<span class="tag tag-alt">Edición limitada · 150</span>':'')+
+          garment(p,w,true)+'<span class="stage-note" aria-hidden="true">Espalda</span></span>'+
+        '<span class="card-name">'+p.name+'</span><span class="card-kind">'+KIND[p.kind]+'</span>'+
+      '</button>'+
+      '<div class="ways">'+ways(p)+'</div></article>';
+  }
+
+  /* ---------- Escalado de los diseños (760x900) a su caja ---------- */
+  var ro=('ResizeObserver' in window)?new ResizeObserver(function(es){es.forEach(function(e){var w=e.contentRect.width;if(w>0)e.target.style.setProperty('--k',(w/760).toFixed(4));});}):null;
+  function fitAll(root){root.querySelectorAll('.fit').forEach(function(el){if(ro)ro.observe(el);else el.style.setProperty('--k',(el.clientWidth/760)||.3);});}
+  function unfit(root){if(ro)root.querySelectorAll('.fit').forEach(function(el){ro.unobserve(el);});}
+
+  /* ---------- Render ---------- */
+  function fill(id,list){var el=document.getElementById(id);el.innerHTML=list.map(card).join('');fitAll(el);}
+  fill('grid-inv',PRODUCTS.filter(function(p){return p.line==='02';}));
+  fill('grid-c01-sud',PRODUCTS.filter(function(p){return p.line==='01'&&p.kind!=='tee';}));
+  fill('grid-c01-cam',PRODUCTS.filter(function(p){return p.kind==='tee';}));
+
+  function hero(id,pid,way){var el=document.getElementById(id),p=byId[pid];el.innerHTML=garment(p,p.ways[way],false);fitAll(el);}
+  hero('hs-f','grados',1); hero('hs-l','jacquard',2); hero('hs-r','hibernando',0);
+  var cm=document.getElementById('club-mark'); cm.innerHTML=flat(byId.social,byId.social.ways[0],false); fitAll(cm);
+
+  /* ---------- Colores ---------- */
+  function applyWay(id,i){
+    state[id]=i; var w=byId[id].ways[i];
+    document.querySelectorAll('.tinted[data-pid="'+id+'"]').forEach(function(el){el.style.setProperty('--tee',w.tee);el.style.setProperty('--ink',w.ink);el.style.setProperty('--accent',w.acc);});
+    document.querySelectorAll('[data-wayname="'+id+'"]').forEach(function(el){el.textContent=w.n;});
+    document.querySelectorAll('.sw[data-swp="'+id+'"]').forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.way===i));});
+    showPhoto(id);
+  }
+
+  /* ---------- Fotos: carga y sustitución ---------- */
+  function showPhoto(id){
+    var url=photoUrl[id], on=!!url&&state[id]===PHOTOS[id].way, p=byId[id];
+    document.querySelectorAll('[data-stage="'+id+'"]').forEach(function(st){
+      st.classList.toggle('photo-ready',!!url);
+      st.classList.toggle('has-photo',on);
+      var img=st.querySelector('.photo');
+      if(on&&!img){img=document.createElement('img');img.className='photo';img.alt=p.name+', '+KIND[p.kind].toLowerCase()+' en color '+p.ways[PHOTOS[id].way].n.toLowerCase()+', vista de espalda';img.src=url;st.appendChild(img);}
+      if(img)img.hidden=!on;
+    });
+  }
+  function probe(id,k){
+    if(k>=EXT.length)return;
+    var url='fotos/'+PHOTOS[id].code+'.'+EXT[k], im=new Image();
+    im.onload=function(){photoUrl[id]=url;showPhoto(id);};
+    im.onerror=function(){probe(id,k+1);};
+    im.src=url;
+  }
+  Object.keys(PHOTOS).forEach(function(id){probe(id,0);});
+
+  /* ---------- Vista rápida ---------- */
+  var qv=document.getElementById('qv'), qFlat=document.getElementById('qv-flat'), qWorn=document.getElementById('qv-worn'), qPhoto=document.getElementById('qv-photo');
+  function setView(v){
+    qFlat.hidden=v!=='flat'; qWorn.hidden=v!=='worn'; qPhoto.hidden=v!=='photo';
+    qv.querySelectorAll('[data-view]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.view===v));});
+  }
+  function openQV(id){
+    var p=byId[id], w=p.ways[state[id]];
+    document.getElementById('qv-line').textContent=LINE[p.line];
+    document.getElementById('qv-name').textContent=p.name;
+    document.getElementById('qv-kind').textContent=KIND[p.kind]+(p.limited?' · Edición limitada, 150 unidades':'');
+    document.getElementById('qv-desc').textContent=p.desc;
+    unfit(qv);
+    qFlat.innerHTML=flat(p,w,true); qWorn.innerHTML=garment(p,w,true);
+    document.getElementById('qv-ways').innerHTML=ways(p);
+    var ph=PHOTOS[id], phName=p.ways[ph.way].n;
+    qPhoto.innerHTML=photoUrl[id]
+      ?'<img src="'+photoUrl[id]+'" alt="'+p.name+' en color '+phName.toLowerCase()+', foto de producto">'
+      :'<div class="qv-slot"><b>'+ph.code+'</b><span>Foto pendiente · color '+phName+'</span><span>fotos/'+ph.code+'.jpg</span></div>';
+    setView(photoUrl[id]?'photo':'flat'); fitAll(qv);
+    if(typeof qv.showModal==='function'){qv.showModal();}else{qv.setAttribute('open','');}
+  }
+  function closeQV(){if(qv.open){if(typeof qv.close==='function')qv.close();else qv.removeAttribute('open');}}
+  qv.addEventListener('click',function(e){if(e.target===qv)closeQV();});
+
+  /* ---------- Film ---------- */
+  var film=document.getElementById('film-video'), filmBtn=document.getElementById('film-toggle'), filmIcon=document.getElementById('film-icon');
+  function filmUI(){var on=!film.paused;filmBtn.setAttribute('aria-label',on?'Pausar el film':'Reproducir el film');filmIcon.setAttribute('d',on?'M8 5v14M16 5v14':'M7 4l13 8-13 8z');}
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){film.removeAttribute('autoplay');film.pause();}
+  film.addEventListener('play',filmUI);film.addEventListener('pause',filmUI);
+  filmBtn.addEventListener('click',function(){if(film.paused){var pr=film.play();if(pr&&pr.catch)pr.catch(function(){});}else{film.pause();}});
+  filmUI();
+
+  /* ---------- Delegación de eventos ---------- */
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var sw=t.closest('.sw'); if(sw){applyWay(sw.dataset.swp,+sw.dataset.way);return;}
+    var op=t.closest('[data-open]'); if(op){openQV(op.dataset.open);return;}
+    var cl=t.closest('[data-close]'); if(cl){closeQV();return;}
+    var vw=t.closest('[data-view]'); if(vw){setView(vw.dataset.view);return;}
+    var ch=t.closest('.chip'); if(ch){
+      var g=document.getElementById(ch.dataset.grid), f=ch.dataset.filter;
+      ch.parentNode.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===ch));});
+      g.querySelectorAll('.card').forEach(function(c){c.hidden=!(f==='all'||c.dataset.kind===f);});
+    }
+  });
+})();
+</script>
+
+</body></html>
