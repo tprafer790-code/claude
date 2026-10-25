@@ -14,20 +14,33 @@ def _jit(p, a=0.7):
     return (p[0] + rnd.uniform(-a, a), p[1] + rnd.uniform(-a, a))
 
 
+def _n(v):
+    if v == int(v):
+        return f"{v:.0f}"
+    t = f"{v:.1f}"
+    return t[1:] if t.startswith("0.") else "-" + t[2:] if t.startswith("-0.") else t
+
+
 def suave(pts, cerrado=False):
-    """Catmull-Rom a curvas de Bézier cúbicas."""
+    """Catmull-Rom a curvas de Bézier cúbicas, en coordenadas relativas redondeadas
+    (medio píxel de precisión basta para un trazo a mano y reduce el peso a la mitad)."""
+    r = lambda q: (round(q[0] * 2) / 2, round(q[1] * 2) / 2)
     if len(pts) < 3:
-        (x0, y0), (x1, y1) = pts[0], pts[-1]
-        return f"M{x0:.1f} {y0:.1f}L{x1:.1f} {y1:.1f}"
+        (x0, y0), (x1, y1) = r(pts[0]), r(pts[-1])
+        return f"M{_n(x0)} {_n(y0)}l{_n(x1 - x0)} {_n(y1 - y0)}"
     p = pts + pts[:2] if cerrado else [pts[0]] + pts + [pts[-1]]
-    d = f"M{p[1][0]:.1f} {p[1][1]:.1f}"
+    cx, cy = r(p[1])
+    d = f"M{_n(cx)} {_n(cy)}c"
+    seg = []
     for i in range(1, len(p) - 2):
         a, b, c, e = p[i - 1], p[i], p[i + 1], p[i + 2]
-        c1 = (b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6)
-        c2 = (c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6)
-        d += f"C{c1[0]:.1f} {c1[1]:.1f} {c2[0]:.1f} {c2[1]:.1f} {c[0]:.1f} {c[1]:.1f}"
-    return d
-
+        c1 = r((b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6))
+        c2 = r((c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6))
+        fin = r(c)
+        nums = [c1[0] - cx, c1[1] - cy, c2[0] - cx, c2[1] - cy, fin[0] - cx, fin[1] - cy]
+        seg.append(" ".join(_n(v) for v in nums))
+        cx, cy = fin
+    return d + " ".join(seg).replace(" -", "-")
 
 def linea(a, b, pasos=5, temblor=0.7, exceso=0.04):
     """Recta a mano: varios puntos con temblor y un ligero exceso en los extremos."""
@@ -37,11 +50,12 @@ def linea(a, b, pasos=5, temblor=0.7, exceso=0.04):
     return suave(pts)
 
 
-def curva(fn, t0, t1, n=60, temblor=0.5):
+def curva(fn, t0, t1, n=34, temblor=0.5):
     return suave([_jit(fn(t0 + (t1 - t0) * i / n), temblor) for i in range(n + 1)])
 
 
 def elipse(cx, cy, rx, ry, a0=0.0, a1=2 * math.pi, n=64, temblor=0.5):
+    n = max(8, min(n, int(abs(a1 - a0) * max(rx, ry) / 14) + 8))
     return curva(lambda t: (cx + rx * math.cos(t), cy + ry * math.sin(t)), a0, a1, n, temblor)
 
 
@@ -69,7 +83,7 @@ def espiral(cx, cy, r, vueltas=2.2, sentido=1, aplast=0.82, fase=0.0, temblor=0.
         rr = r * (0.06 + 0.94 * t / tmax)
         a = fase + sentido * t
         return (cx + rr * math.cos(a), cy + rr * math.sin(a) * aplast)
-    return curva(f, 0, tmax, int(36 * vueltas), temblor)
+    return curva(f, 0, tmax, int((14 + r / 4) * vueltas), temblor)
 
 
 # ---------------------------------------------------------------- dibujos
@@ -86,7 +100,7 @@ def tornillo():
         r = 165 - 45 * t
         return (cx + r * math.cos(th), 352 - 250 * t + r * 0.28 * math.sin(th))
     T.append((linea((cx, 54), (cx, 452), 8, 0.5), "tr"))
-    T.append((curva(borde, 0, 1, 140, 0.4), "tr"))
+    T.append((curva(borde, 0, 1, 70, 0.4), "tr"))
     for k in range(0, 21):
         t = k / 20
         x, y = borde(t)
@@ -265,7 +279,7 @@ def vitruvio():
 
 # ---------------------------------------------------------------- figura humana
 
-def _cr(pts, n=10):
+def _cr(pts, n=5):
     """Muestras de una Catmull-Rom que pasa por pts, con el parámetro de tramo."""
     p = [pts[0]] + pts + [pts[-1]]
     out = []
@@ -360,33 +374,71 @@ def figura_circulo():
 
 
 def craneo():
+    """Cráneo de perfil, con la bóveda en sección para mostrar su grosor, en el espíritu de las láminas de 1489."""
     T = []
-    boveda = [(152, 252), (140, 205), (150, 155), (184, 110), (238, 82), (300, 78), (356, 94), (396, 128),
-              (418, 178), (422, 228), (410, 274), (386, 308), (350, 326), (316, 332)]
-    T.append((suave([_jit(q, 0.4) for q in boveda]), "tr"))
-    cara = [(152, 252), (142, 264), (134, 292), (140, 314), (128, 320), (138, 336), (142, 346), (200, 352)]
-    T.append((suave([_jit(q, 0.4) for q in cara]), "tr"))
-    mandibula = [(142, 352), (144, 378), (160, 398), (204, 404), (258, 396), (292, 384), (302, 356), (306, 334)]
-    T.append((suave([_jit(q, 0.4) for q in mandibula]), "tr"))
-    T.append((elipse(186, 256, 30, 26, 0, 2 * math.pi, 40, 0.3), "tr"))
-    T.append((elipse(186, 258, 18, 14, 0.4, 5.6, 30, 0.3), "fn"))
-    T.append((cuad((140, 296), (156, 304), (146, 316)), "fn"))
-    T.append((cuad((212, 286), (262, 280), (304, 300)), "tr"))
-    T.append((cuad((212, 298), (262, 296), (300, 312)), "fn"))
-    for k in range(9):
-        x = 146 + k * 7
-        T.append((linea((x, 340), (x + 1, 352), 2, 0.2, 0), "fn"))
-        T.append((linea((x + 1, 356), (x + 2, 368), 2, 0.2, 0), "fn"))
-    T.append((elipse(318, 318, 12, 10, 0, 2 * math.pi, 20, 0.2), "fn"))
-    # Sutura coronal en zigzag
-    zz = [(262 - k * 3 + (5 if k % 2 else -5), 84 + k * 12) for k in range(10)]
-    T.append((suave([_jit(q, 0.3) for q in zz]), "fn"))
+    P = lambda pts, c="tr", t=0.35, cerrado=False: T.append((suave([_jit(q, t) for q in pts], cerrado), c))
+    boveda = [(154, 250), (146, 220), (148, 180), (164, 140), (196, 104), (244, 82), (300, 76), (354, 88),
+              (394, 118), (418, 162), (426, 214), (418, 262), (400, 296), (376, 316), (350, 328), (330, 334)]
+    P(boveda)
+    # Tabla interna: la sección deja ver el grosor del hueso
+    cx, cy = 292, 218
+    interna = [(cx + (x - cx) * 0.92, cy + (y - cy) * 0.92) for x, y in boveda[1:13]]
+    P(interna)
+    for (x0, y0), (x1, y1) in list(zip(boveda[1:13], interna))[::1]:
+        for f in (0.3, 0.7):
+            a = (x0 + (x1 - x0) * 0.15, y0 + (y1 - y0) * 0.15)
+            P([(a[0] + (x1 - x0) * f * 0.2, a[1]), (x0 + (x1 - x0) * 0.85, y0 + (y1 - y0) * 0.85 + f * 2)], "fn", 0.2)
+    # Seno frontal tras la ceja
+    P([(160, 228), (170, 218), (180, 224), (176, 238), (164, 240)], "fn", 0.2, True)
+    # Órbita: reborde, profundidad y sombreado
+    P([(160, 240), (182, 231), (206, 235), (216, 255), (208, 278), (184, 284), (163, 274), (157, 255)], "tr", 0.3, True)
+    P([(170, 246), (190, 241), (204, 249), (204, 268), (186, 274), (170, 266)], "fn", 0.25, True)
+    for k in range(6):
+        x = 168 + k * 6
+        P([(x, 244 - k * 0.6), (x + 4, 258)], "fn", 0.2)
+    # Hueso nasal y abertura piriforme
+    P([(154, 250), (148, 262), (140, 282), (138, 300), (134, 318), (140, 324)])
+    P([(146, 288), (158, 294), (162, 308), (154, 318), (144, 318)], "tr", 0.25)
+    P([(152, 298), (150, 312)], "fn", 0.2)
+    # Pómulo y arco cigomático
+    P([(208, 278), (222, 290), (226, 304), (214, 316), (196, 318)])
+    P([(226, 292), (262, 290), (300, 298)])
+    P([(226, 304), (264, 304), (302, 312)])
+    for k in range(7):
+        x = 238 + k * 9
+        P([(x, 312), (x - 8, 330)], "fn", 0.2)
+    # Fosa temporal y línea temporal
+    P([(206, 150), (262, 128), (330, 134), (376, 168), (392, 228), (372, 276)], "fn", 0.4)
+    # Conducto auditivo, apófisis mastoides y estiloides
+    P([(308, 312), (318, 302), (330, 310), (326, 322), (312, 322)], "tr", 0.2, True)
+    P([(314, 311), (322, 308), (324, 316)], "fn", 0.15)
+    P([(350, 328), (346, 346), (336, 356), (326, 344), (324, 330)])
+    # Maxilar y dientes superiores
+    P([(140, 324), (143, 334), (152, 338), (210, 340), (230, 336)])
+    dientes = [(146, 6, 15), (153, 6, 15), (160, 6, 15), (167, 7, 16), (175, 8, 14), (184, 9, 13), (194, 11, 13), (206, 12, 12), (219, 12, 11)]
+    for x, w, h in dientes:
+        P([(x, 339), (x + 1, 339 + h * 0.8), (x + w / 2, 339 + h), (x + w - 1, 339 + h * 0.8), (x + w, 339)], "fn", 0.15)
+    # Mandíbula: cuerpo, ángulo, rama, apófisis coronoides y cóndilo
+    P([(150, 370), (152, 390), (170, 404), (220, 404), (268, 396), (292, 386), (300, 362), (306, 340), (310, 326)])
+    P([(146, 356), (148, 370)])
+    P([(246, 394), (258, 360), (266, 330), (272, 318)])
+    P([(272, 318), (286, 336), (302, 332)], "tr", 0.2)
+    P([(258, 372), (268, 340)], "fn", 0.2)
+    P([(304, 330), (314, 324), (318, 330)], "tr", 0.15)
+    for x, w, h in dientes:
+        P([(x, 369), (x + 1, 369 - h * 0.8), (x + w / 2, 369 - h), (x + w - 1, 369 - h * 0.8), (x + w, 369)], "fn", 0.15)
+    P([(146, 368), (232, 370)], "fn", 0.3)
+    P(list(map(lambda a: (176 + 3 * math.cos(a), 386 + 2.4 * math.sin(a)), [i * 0.8 for i in range(9)])), "fn", 0.1)
+    for k in range(6):
+        P([(186 + k * 14, 398), (196 + k * 14, 384)], "fn", 0.2)
+    # Suturas: coronal, escamosa y lambdoidea
+    P([(252 - k * 2.6 + (5 if k % 2 else -5), 84 + k * 11) for k in range(11)], "fn", 0.2)
+    P([(246, 284), (270, 266), (304, 260), (338, 270), (356, 290)], "fn", 0.3)
+    P([(386 + k * 3 + (4 if k % 2 else -4), 112 + k * 13) for k in range(10)], "fn", 0.2)
     # Sombreado de la nuca
-    for k in range(9):
-        a = -0.7 + k * 0.17
-        x0, y0 = 300 + 108 * math.cos(a), 200 + 118 * math.sin(a)
-        x1, y1 = 300 + 92 * math.cos(a + 0.08), 200 + 100 * math.sin(a + 0.08)
-        T.append((linea((x0, y0), (x1, y1), 2, 0.3, 0), "fn"))
+    for k in range(10):
+        a = -0.75 + k * 0.16
+        P([(292 + 124 * math.cos(a), 214 + 128 * math.sin(a)), (292 + 106 * math.cos(a + 0.07), 214 + 110 * math.sin(a + 0.07))], "fn", 0.25)
     # Ejes que se cruzan en el «senso comune»
     T.append((linea((60, 214), (460, 214), 10, 0.4, 0), "sn"))
     T.append((linea((290, 40), (290, 440), 10, 0.4, 0), "sn"))
@@ -400,7 +452,7 @@ def craneo():
 
 def svg(nombre, etiqueta, clase="boceto"):
     vb, T, txt = {"tornillo": tornillo, "ornitoptero": ornitoptero, "puente": puente, "agua": agua, "craneo": craneo}[nombre]()
-    fantasma = "".join(f'<path class="{c}" d="{d}"/>' for d, c in T)
+    fantasma = "".join(f'<path d="{d}"/>' for d, c in T if c != "fn")
     tinta = "".join(f'<path class="{c}" d="{d}" pathLength="1"/>' for d, c in T)
     return (f'<svg class="{clase}" viewBox="{vb}" role="img" aria-label="{etiqueta}">'
             f'<g class="fantasma" aria-hidden="true">{fantasma}</g>'
@@ -409,7 +461,7 @@ def svg(nombre, etiqueta, clase="boceto"):
 
 def svg_vitruvio(etiqueta):
     vb, G, txt = vitruvio()
-    fantasma = "".join(f'<path class="{c}" d="{d}"/>' for _, d, c in G)
+    fantasma = "".join(f'<path d="{d}"/>' for _, d, c in G if c != "fn")
     tinta = "".join(f'<path class="{c}" data-paso="{p}" d="{d}" pathLength="1"/>' for p, d, c in G)
     return (f'<svg class="boceto vitruvio" viewBox="{vb}" role="img" aria-label="{etiqueta}">'
             f'<g class="fantasma" aria-hidden="true">{fantasma}</g>'

@@ -138,7 +138,7 @@ a { color: inherit; text-decoration-thickness: .08em; text-underline-offset: .22
 .boceto .fn { stroke: var(--c-fg); stroke-width: .9; opacity: .78; }
 .boceto .sn { stroke: var(--c-acc); stroke-width: 1.7; }
 .boceto .fantasma path { stroke: var(--c-ghost); opacity: 1; stroke-width: 1; }
-.boceto .anota { font: 400 19px var(--f-mono); fill: var(--c-acc); letter-spacing: .02em; }
+.boceto .anota { font: 400 19px var(--f-mono); fill: var(--c-acc); letter-spacing: .02em; paint-order: stroke; stroke: var(--c-bg); stroke-width: 4px; stroke-linejoin: round; }
 .vitruvio .anota { font-size: 26px; }
 .dibujar .tinta path { stroke-dasharray: 1 1; stroke-dashoffset: 1; }
 .dibujar .boceto .anota { opacity: 0; transition: opacity var(--dur-3) var(--ease-out); }
