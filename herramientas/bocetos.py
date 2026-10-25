@@ -320,6 +320,34 @@ def _espejo(pts):
     return [(800 - x, y) for x, y in pts]
 
 
+def mano(muneca, angulo, lado, k=1.15):
+    """Mano extendida con la palma al frente: silueta de los dedos juntos, separaciones
+    entre dedos y pulgar hacia arriba. Coordenadas locales (x a lo largo del brazo),
+    giradas al ángulo del antebrazo; lado = 1 o -1 mantiene el pulgar arriba al reflejar."""
+    ca, sa = math.cos(angulo), math.sin(angulo)
+    def g(q):
+        x, y = q[0] * k, q[1] * k * lado
+        return (muneca[0] + x * ca - y * sa, muneca[1] + x * sa + y * ca)
+    L = lambda pts, t=0.12: suave([_jit(g(q), t) for q in pts])
+    return [
+        L([(0, -6.5), (14, -8.8), (27, -9.6), (42, -9.8), (51, -8.4), (54.5, -4.6), (55, -.5), (53.5, 3.6), (48.5, 7.6), (39, 9.8), (27, 9.6), (13, 8.6), (0, 6.5)]),
+        L([(29, -4.8), (41, -5.1), (52.5, -4.8)], 0.08),
+        L([(30, -.2), (43, -.1), (54.5, .2)], 0.08),
+        L([(29, 4.6), (40, 5.2), (51, 5)], 0.08),
+        L([(5, -6.4), (13, -11.5), (22, -15.6), (28, -16.4), (30, -14.2), (25, -11.6), (18, -8.6)]),
+        L([(24, -9.4), (25, -8), (26.5, -7.2)], 0.05),
+    ]
+
+
+def brazo_con_mano(eje, lado):
+    """Brazo con contorno por tramos y la mano al final, orientada según el antebrazo."""
+    T = miembro(eje, [30, 31, 24, 19, 21, 13], cerrar=False)
+    (x0, y0), (x1, y1) = eje[-2], eje[-1]
+    ang = math.atan2(y1 - y0, x1 - x0)
+    T += mano(eje[-1], ang, lado)
+    return T
+
+
 def figura_cuadrado():
     T = []
     # Cabeza, cabello en rizos y rasgos mínimos
@@ -346,10 +374,9 @@ def figura_cuadrado():
     T.append(cuad((352, 396), (380, 408), (400, 418)))
     T.append(cuad((448, 396), (420, 408), (400, 418)))
     # Brazos horizontales
-    brazo = [(468, 222), (530, 216), (588, 212), (650, 212), (700, 212)]
-    anch = [30, 26, 21, 16, 10]
-    T += miembro(brazo, anch)
-    T += miembro(_espejo(brazo), anch)
+    # Brazos horizontales: deltoides, bíceps, codo a media longitud, antebrazo y muñeca
+    T += brazo_con_mano([(470, 222), (500, 216), (545, 213), (588, 212), (616, 212), (638, 212)], 1)
+    T += brazo_con_mano(_espejo([(470, 222), (500, 216), (545, 213), (588, 212), (616, 212), (638, 212)]), -1)
     # Piernas juntas
     pierna = [(428, 408), (424, 478), (418, 550), (416, 610), (410, 682), (420, 700)]
     anchp = [46, 38, 24, 28, 14, 12]
@@ -362,10 +389,9 @@ def figura_cuadrado():
 
 def figura_circulo():
     T = []
-    brazo = [(468, 218), (535, 206), (600, 196), (668, 188), (731, 181)]
-    anch = [28, 25, 20, 15, 9]
-    T += miembro(brazo, anch)
-    T += miembro(_espejo(brazo), anch)
+    alzado = [(470, 218), (502, 210), (548, 203), (594, 197), (626, 193), (668, 188)]
+    T += brazo_con_mano(alzado, 1)
+    T += brazo_con_mano(_espejo(alzado), -1)
     pierna = [(432, 410), (466, 468), (500, 525), (536, 584), (574, 640), (590, 654)]
     anchp = [44, 36, 24, 27, 14, 11]
     T += miembro(pierna, anchp)
