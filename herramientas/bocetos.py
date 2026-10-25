@@ -248,35 +248,158 @@ def vitruvio():
     # Paso 4 · los cuartos
     for y in (250, 400, 550):
         G.append((3, linea((100, y), (712, y), 10, 0.5, 0), "sn"))
-    # Paso 5 · la figura, en articulaciones
-    A = dict(cab=(400, 137), cue=(400, 175), hi=(325, 212), hd=(475, 212), ci=(212, 212), cd=(588, 212),
-             mi=(100, 212), md=(700, 212), ca=(380, 400), cb=(420, 400), ri=(386, 550), rd=(414, 550),
-             pi=(392, 700), pd=(408, 700), pub=(400, 400))
-    G.append((4, elipse(400, 137, 36, 38, -math.pi / 2, 1.5 * math.pi, 40, 0.4), "tr"))
-    for a, b in [("cue", "pub"), ("hi", "hd"), ("hi", "ci"), ("ci", "mi"), ("hd", "cd"), ("cd", "md"),
-                 ("pub", "ca"), ("pub", "cb"), ("ca", "ri"), ("ri", "pi"), ("cb", "rd"), ("rd", "pd")]:
-        G.append((4, linea(A[a], A[b], 4, 0.4, 0), "tr"))
-    # Segunda postura en sanguina: brazos alzados y piernas abiertas
-    for a, b in [((325, 212), (198, 196)), ((198, 196), (69, 181)), ((475, 212), (602, 196)), ((602, 196), (731, 181)),
-                 ((380, 400), (300, 525)), ((300, 525), (218, 651)), ((420, 400), (500, 525)), ((500, 525), (582, 651))]:
-        G.append((4, linea(a, b, 4, 0.4, 0), "sn"))
-    for p in [A["hi"], A["hd"], A["ci"], A["cd"], A["mi"], A["md"], A["ca"], A["cb"], A["ri"], A["rd"], A["pi"], A["pd"],
-              (69, 181), (731, 181), (218, 651), (582, 651)]:
-        G.append((4, elipse(p[0], p[1], 4.5, 4.5, 0, 2 * math.pi, 14, 0.1), "tr"))
+    # Paso 5 · la figura con contorno: postura del cuadrado en trazo y del círculo en acento
+    for d in figura_cuadrado():
+        G.append((4, d, "tr"))
+    for d in figura_circulo():
+        G.append((4, d, "sn"))
     txt = [
         '<text class="anota" data-paso="2" x="62" y="141" text-anchor="end">1/8</text>',
-        '<text class="anota" data-paso="3" x="726" y="255">1/4</text>',
-        '<text class="anota" data-paso="3" x="726" y="405">1/2</text>',
-        '<text class="anota" data-paso="3" x="726" y="555">3/4</text>',
+        '<text class="anota" data-paso="3" x="768" y="255">1/4</text>',
+        '<text class="anota" data-paso="3" x="768" y="405">1/2</text>',
+        '<text class="anota" data-paso="3" x="768" y="555">3/4</text>',
         '<text class="anota" data-paso="1" x="580" y="327">ombligo</text>',
     ]
     return "-20 -60 840 840", G, txt
 
 
+# ---------------------------------------------------------------- figura humana
+
+def _cr(pts, n=10):
+    """Muestras de una Catmull-Rom que pasa por pts, con el parámetro de tramo."""
+    p = [pts[0]] + pts + [pts[-1]]
+    out = []
+    for i in range(1, len(p) - 2):
+        a, b, c, d = p[i - 1], p[i], p[i + 1], p[i + 2]
+        for k in range(n):
+            t = k / n
+            t2, t3 = t * t, t * t * t
+            x = 0.5 * ((2 * b[0]) + (-a[0] + c[0]) * t + (2 * a[0] - 5 * b[0] + 4 * c[0] - d[0]) * t2 + (-a[0] + 3 * b[0] - 3 * c[0] + d[0]) * t3)
+            y = 0.5 * ((2 * b[1]) + (-a[1] + c[1]) * t + (2 * a[1] - 5 * b[1] + 4 * c[1] - d[1]) * t2 + (-a[1] + 3 * b[1] - 3 * c[1] + d[1]) * t3)
+            out.append((x, y, i - 1 + t))
+    out.append((pts[-1][0], pts[-1][1], len(pts) - 1))
+    return out
+
+
+def miembro(eje, anchos, cerrar=True):
+    """Contorno de un miembro a partir de su eje y del ancho en cada punto del eje."""
+    m = _cr(eje)
+    izq, der = [], []
+    for j, (x, y, u) in enumerate(m):
+        a = m[max(0, j - 1)]
+        b = m[min(len(m) - 1, j + 1)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1
+        nx, ny = -dy / L, dx / L
+        i0 = min(int(u), len(anchos) - 2)
+        w = (anchos[i0] + (anchos[i0 + 1] - anchos[i0]) * (u - i0)) / 2
+        izq.append(_jit((x + nx * w, y + ny * w), 0.35))
+        der.append(_jit((x - nx * w, y - ny * w), 0.35))
+    trazos = [suave(izq), suave(der)]
+    if cerrar:
+        fx, fy = eje[-1]
+        trazos.append(suave([izq[-1], _jit((fx + (eje[-1][0] - eje[-2][0]) * 0.12, fy + (eje[-1][1] - eje[-2][1]) * 0.12), 0.2), der[-1]]))
+    return trazos
+
+
+def _espejo(pts):
+    return [(800 - x, y) for x, y in pts]
+
+
+def figura_cuadrado():
+    T = []
+    # Cabeza, cabello en rizos y rasgos mínimos
+    T.append(elipse(400, 138, 30, 38, -math.pi / 2, 1.5 * math.pi, 48, 0.3))
+    for cx, cy, r, s in [(378, 108, 9, 1), (396, 100, 10, -1), (416, 104, 9, 1), (428, 120, 7, -1), (372, 126, 7, -1)]:
+        T.append(espiral(cx, cy, r, 1.3, s, 0.9, 0, 0.2))
+    T.append(linea((390, 136), (397, 136), 1, 0.2, 0))
+    T.append(linea((403, 136), (410, 136), 1, 0.2, 0))
+    T.append(linea((400, 140), (398, 152), 1, 0.2, 0))
+    T.append(linea((394, 160), (406, 160), 1, 0.2, 0))
+    # Cuello
+    T.append(linea((390, 172), (388, 194), 2, 0.2, 0))
+    T.append(linea((410, 172), (412, 194), 2, 0.2, 0))
+    # Tronco: contorno derecho y su espejo
+    tronco = [(412, 194), (446, 203), (472, 214)]
+    costado = [(462, 230), (456, 262), (452, 300), (442, 336), (448, 368), (452, 396)]
+    for lado in (tronco, costado):
+        T.append(suave([_jit(q, 0.3) for q in lado]))
+        T.append(suave([_jit(q, 0.3) for q in _espejo(lado)]))
+    # Pecho, ombligo, ingle
+    T.append(cuad((404, 252), (432, 272), (454, 250)))
+    T.append(cuad((396, 252), (368, 272), (346, 250)))
+    T.append(elipse(400, 335, 3, 3, 0, 2 * math.pi, 10, 0.1))
+    T.append(cuad((352, 396), (380, 408), (400, 418)))
+    T.append(cuad((448, 396), (420, 408), (400, 418)))
+    # Brazos horizontales
+    brazo = [(468, 222), (530, 216), (588, 212), (650, 212), (700, 212)]
+    anch = [30, 26, 21, 16, 10]
+    T += miembro(brazo, anch)
+    T += miembro(_espejo(brazo), anch)
+    # Piernas juntas
+    pierna = [(428, 408), (424, 478), (418, 550), (416, 610), (410, 682), (420, 700)]
+    anchp = [46, 38, 24, 28, 14, 12]
+    T += miembro(pierna, anchp)
+    T += miembro(_espejo(pierna), anchp)
+    T.append(cuad((410, 548), (418, 560), (426, 548)))
+    T.append(cuad((390, 548), (382, 560), (374, 548)))
+    return T
+
+
+def figura_circulo():
+    T = []
+    brazo = [(468, 218), (535, 206), (600, 196), (668, 188), (731, 181)]
+    anch = [28, 25, 20, 15, 9]
+    T += miembro(brazo, anch)
+    T += miembro(_espejo(brazo), anch)
+    pierna = [(432, 410), (466, 468), (500, 525), (536, 584), (574, 640), (590, 654)]
+    anchp = [44, 36, 24, 27, 14, 11]
+    T += miembro(pierna, anchp)
+    T += miembro(_espejo(pierna), anchp)
+    return T
+
+
+def craneo():
+    T = []
+    boveda = [(152, 252), (140, 205), (150, 155), (184, 110), (238, 82), (300, 78), (356, 94), (396, 128),
+              (418, 178), (422, 228), (410, 274), (386, 308), (350, 326), (316, 332)]
+    T.append((suave([_jit(q, 0.4) for q in boveda]), "tr"))
+    cara = [(152, 252), (142, 264), (134, 292), (140, 314), (128, 320), (138, 336), (142, 346), (200, 352)]
+    T.append((suave([_jit(q, 0.4) for q in cara]), "tr"))
+    mandibula = [(142, 352), (144, 378), (160, 398), (204, 404), (258, 396), (292, 384), (302, 356), (306, 334)]
+    T.append((suave([_jit(q, 0.4) for q in mandibula]), "tr"))
+    T.append((elipse(186, 256, 30, 26, 0, 2 * math.pi, 40, 0.3), "tr"))
+    T.append((elipse(186, 258, 18, 14, 0.4, 5.6, 30, 0.3), "fn"))
+    T.append((cuad((140, 296), (156, 304), (146, 316)), "fn"))
+    T.append((cuad((212, 286), (262, 280), (304, 300)), "tr"))
+    T.append((cuad((212, 298), (262, 296), (300, 312)), "fn"))
+    for k in range(9):
+        x = 146 + k * 7
+        T.append((linea((x, 340), (x + 1, 352), 2, 0.2, 0), "fn"))
+        T.append((linea((x + 1, 356), (x + 2, 368), 2, 0.2, 0), "fn"))
+    T.append((elipse(318, 318, 12, 10, 0, 2 * math.pi, 20, 0.2), "fn"))
+    # Sutura coronal en zigzag
+    zz = [(262 - k * 3 + (5 if k % 2 else -5), 84 + k * 12) for k in range(10)]
+    T.append((suave([_jit(q, 0.3) for q in zz]), "fn"))
+    # Sombreado de la nuca
+    for k in range(9):
+        a = -0.7 + k * 0.17
+        x0, y0 = 300 + 108 * math.cos(a), 200 + 118 * math.sin(a)
+        x1, y1 = 300 + 92 * math.cos(a + 0.08), 200 + 100 * math.sin(a + 0.08)
+        T.append((linea((x0, y0), (x1, y1), 2, 0.3, 0), "fn"))
+    # Ejes que se cruzan en el «senso comune»
+    T.append((linea((60, 214), (460, 214), 10, 0.4, 0), "sn"))
+    T.append((linea((290, 40), (290, 440), 10, 0.4, 0), "sn"))
+    T.append((elipse(290, 214, 14, 14, 0, 2 * math.pi, 24, 0.2), "sn"))
+    T.append((elipse(290, 214, 3, 3, 0, 2 * math.pi, 10, 0.1), "sn"))
+    txt = ['<text class="anota" x="306" y="196">senso comune</text>']
+    return "40 20 440 440", T, txt
+
+
 # ---------------------------------------------------------------- salida
 
 def svg(nombre, etiqueta, clase="boceto"):
-    vb, T, txt = {"tornillo": tornillo, "ornitoptero": ornitoptero, "puente": puente, "agua": agua}[nombre]()
+    vb, T, txt = {"tornillo": tornillo, "ornitoptero": ornitoptero, "puente": puente, "agua": agua, "craneo": craneo}[nombre]()
     fantasma = "".join(f'<path class="{c}" d="{d}"/>' for d, c in T)
     tinta = "".join(f'<path class="{c}" d="{d}" pathLength="1"/>' for d, c in T)
     return (f'<svg class="{clase}" viewBox="{vb}" role="img" aria-label="{etiqueta}">'

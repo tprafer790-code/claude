@@ -9,10 +9,10 @@
 <meta property="og:title" content="Bottega Leonardo">
 <meta property="og:description" content="Ingeniería, anatomía, pintura y vuelo. Saber ver.">
 <meta property="og:image" content="assets/img/og.jpg">
-<meta name="theme-color" content="#efe6d2">
+<meta name="theme-color" content="#1b2d9e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400&family=Manrope:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=DM+Mono:wght@400&family=Manrope:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="assets/css/estilos.css">
 </head>
 <body>
@@ -38,13 +38,14 @@
 
 <main>
   <!-- Portada -->
-  <section class="portada envoltura">
+  <section class="portada" data-tono="azul">
+    <div class="portada-in envoltura">
     <div class="portada-txt">
       <p class="rotulo">Florencia · Milán · Roma · Amboise &nbsp;/&nbsp; 1472–1519</p>
-      <h1>Saber <em>ver</em>.</h1>
+      <h1><span class="h1-a">Saber</span> <em class="h1-b">ver.</em></h1>
       <p class="entrada">El taller de Leonardo da Vinci contado como un estudio de diseño. Ingeniería, anatomía, pintura y vuelo, cuando nadie separaba el arte de la técnica.</p>
       <div class="acciones">
-        <a class="boton" href="#obras">Ver las obras <span aria-hidden="true">↓</span></a>
+        <a class="boton boton-oro" href="#obras">Ver las obras <span aria-hidden="true">↓</span></a>
         <a class="enlace" href="#servicios">Leer la carta de servicios</a>
       </div>
     </div>
@@ -53,6 +54,7 @@
       <p class="espejo" aria-hidden="true">farà la sua femina nell'aria e monterà in alto</p>
       <figcaption class="pie"><span>Tornillo aéreo</span><span>Manuscrito B, f. 83v · c. 1489</span></figcaption>
     </figure>
+    </div>
   </section>
 
   <!-- Manifiesto -->
@@ -75,7 +77,7 @@
         <figcaption class="pie"><span>Máquina voladora de alas batientes</span><span>Manuscrito B · c. 1487–1490</span></figcaption>
       </figure>
       <div class="obra-txt">
-        <p class="obra-n">Obra I</p>
+        <p class="obra-n"><span>Obra</span>I</p>
         <h3>Ornitóptero</h3>
         <dl class="ficha">
           <div><dt>Encargo</dt><dd>Volar como el milano: un hombre tumbado acciona, con pies y manos, dos alas articuladas de madera, caña y tela.</dd></div>
@@ -91,7 +93,7 @@
         <figcaption class="pie"><span>Puente sobre el Cuerno de Oro</span><span>Manuscrito L, f. 66r · 1502</span></figcaption>
       </figure>
       <div class="obra-txt">
-        <p class="obra-n">Obra II</p>
+        <p class="obra-n"><span>Obra</span>II</p>
         <h3>Puente de <em>Estambul</em></h3>
         <dl class="ficha">
           <div><dt>Encargo</dt><dd>Propuesta por carta al sultán Bayezid II: unir Pera y Estambul con un solo arco de piedra.</dd></div>
@@ -107,7 +109,7 @@
         <figcaption class="pie"><span>Caída de agua en un estanque</span><span>Royal Collection, Windsor · c. 1510–1513</span></figcaption>
       </figure>
       <div class="obra-txt">
-        <p class="obra-n">Obra III</p>
+        <p class="obra-n"><span>Obra</span>III</p>
         <h3>Estudios de <em>agua</em></h3>
         <dl class="ficha">
           <div><dt>Encargo</dt><dd>Sin cliente. Entender cómo se mueve el agua para canalizar ríos, drenar pantanos y pintar el diluvio.</dd></div>
@@ -116,10 +118,25 @@
         </dl>
       </div>
     </article>
+    <article class="obra obra-inv envoltura">
+      <figure class="obra-fig">
+        {{craneo}}
+        <figcaption class="pie"><span>Cráneo en sección lateral</span><span>Royal Collection, Windsor · 1489</span></figcaption>
+      </figure>
+      <div class="obra-txt">
+        <p class="obra-n"><span>Obra</span>IV</p>
+        <h3>Estudios del <em>cráneo</em></h3>
+        <dl class="ficha">
+          <div><dt>Encargo</dt><dd>Encontrar el <em>senso comune</em>: el punto del cerebro donde, según la teoría de la época, se reúnen todos los sentidos.</dd></div>
+          <div><dt>Proceso</dt><dd>Serrar un cráneo, dibujarlo en sección y trazar ejes que se cruzan para situar ese centro con precisión de arquitecto.</dd></div>
+          <div><dt>Resultado</dt><dd>Láminas de una exactitud inédita. El tratado de anatomía que preparaba nunca llegó a publicarse.</dd></div>
+        </dl>
+      </div>
+    </article>
   </section>
 
   <!-- Interludio con imagen o vídeo -->
-  <section class="taller" aria-labelledby="t-taller">
+  <section class="taller" data-tono="azul" aria-labelledby="t-taller">
     <div class="taller-medio" aria-hidden="true">
       <img src="assets/img/taller.webp" width="2400" height="1350" alt="" loading="lazy" decoding="async" onerror="this.remove()">
       <video muted loop playsinline preload="none" data-src="assets/video/taller.mp4"></video>
@@ -134,7 +151,7 @@
   </section>
 
   <!-- Método: retícula vitruviana fija -->
-  <section class="metodo" id="metodo" aria-labelledby="t-metodo">
+  <section class="metodo" id="metodo" data-tono="azul" aria-labelledby="t-metodo">
     <div class="metodo-fijo envoltura">
       <div class="metodo-txt">
         <h2 id="t-metodo">Método: medir <em>antes</em> de dibujar</h2>
@@ -180,17 +197,19 @@
     <dl>
       <div><dt>Nacimiento en Vinci</dt><dd>1452</dd></div>
       <div><dt>Páginas conservadas, aprox.</dt><dd>7 000</dd></div>
-      <div><dt>Cuerpos diseccionados, según él</dt><dd>+30</dd></div>
-      <div><dt>Pinturas atribuidas</dt><dd>&lt;20</dd></div>
+      <div><dt>Cuerpos diseccionados, según él (más de)</dt><dd>30</dd></div>
+      <div><dt>Pinturas atribuidas (menos de)</dt><dd>20</dd></div>
     </dl>
   </section>
 
   <!-- Encargos -->
-  <section class="encargos envoltura" id="encargos" aria-labelledby="t-encargos">
+  <section class="encargos" id="encargos" data-tono="azul" aria-labelledby="t-encargos">
+   <div class="encargos-in envoltura">
     <p class="rotulo">Encargos</p>
     <h2 id="t-encargos">¿Una máquina <em>imposible</em>?</h2>
     <p>La bottega cerró en Amboise el 2 de mayo de 1519. Esta página es una pieza de diseño: los encargos de hoy los recibe su autor.</p>
-    <a class="boton" href="https://miguelbenito.es" rel="noopener">Ir a miguelbenito.es <span aria-hidden="true">→</span></a>
+    <a class="boton boton-oro" href="https://miguelbenito.es" rel="noopener">Ir a miguelbenito.es <span aria-hidden="true">→</span></a>
+   </div>
   </section>
 </main>
 

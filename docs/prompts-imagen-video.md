@@ -6,7 +6,7 @@ La web funciona completa sin estos archivos: los bocetos son SVG propios y el in
 
 | Regla | Motivo |
 |---|---|
-| Paleta cerrada: papel `#efe6d2`, tinta sepia `#2b1e14`, sanguina `#b2442a`, sombra `#1f1610` | Las imágenes deben parecer de la misma sesión que la web |
+| Paleta cerrada: lapislázuli `#1b2d9e`, lapislázuli hondo `#101b6b`, papel `#f1e9d8`, tinta azul-negra `#191633`, pan de oro `#d6a640` | Las imágenes deben parecer de la misma sesión que la web |
 | Siempre «sin texto, sin letras, sin marcas de agua, sin firmas» | El texto de la web es HTML real; letras generadas salen deformes |
 | Nunca pedir «reproduce el dibujo de Leonardo» ni citar artistas vivos | Se piden reinterpretaciones originales «en el espíritu de un cuaderno renacentista» |
 | Zona tranquila indicada en cada prompt | Ahí va el texto de la web |
@@ -28,7 +28,7 @@ La web funciona completa sin estos archivos: los bocetos son SVG propios y el in
 
 **Prompt:**
 
-> Fotografía cinematográfica de un taller renacentista florentino de finales del siglo XV, de noche, iluminado por una sola vela a la derecha del encuadre. Sobre una mesa de madera de nogal gastada: un cuaderno abierto de papel verjurado color crema con dibujos a tinta sepia de engranajes y alas, una pluma de ganso apoyada en un tintero de vidrio, un compás de latón, un trozo de sanguina roja y una maqueta pequeña de madera de un ala articulada con tela de lino. Al fondo, en penumbra, estanterías con rollos de papel y frascos de pigmento. Luz cálida y baja (temperatura 2200 K), sombras profundas color sepia oscuro (#1f1610), reflejos suaves en el latón, polvo flotando en el haz de luz. Objetivo de 50 mm, f/2, profundidad de campo corta con el cuaderno nítido. **Toda la mitad izquierda y el tercio inferior en sombra casi negra y sin objetos, para colocar texto encima.** Grano de película fino, color sobrio, sin saturar. 16:9, sin personas, sin texto, sin letras legibles, sin marcas de agua.
+> Fotografía cinematográfica de un taller renacentista florentino de finales del siglo XV, de noche, iluminado por una sola vela a la derecha del encuadre. Sobre una mesa de madera de nogal gastada: un cuaderno abierto de papel verjurado color crema con dibujos a tinta sepia de engranajes y alas, una pluma de ganso apoyada en un tintero de vidrio, un compás de latón, un trozo de sanguina roja y una maqueta pequeña de madera de un ala articulada con tela de lino. Al fondo, en penumbra, estanterías con rollos de papel y frascos de pigmento. Luz cálida y baja (temperatura 2200 K), sombras profundas de un azul ultramar muy oscuro (#101b6b), con el polvo de lapislázuli molido en un mortero sobre la mesa como único punto de color frío, reflejos suaves en el latón, polvo flotando en el haz de luz. Objetivo de 50 mm, f/2, profundidad de campo corta con el cuaderno nítido. **Toda la mitad izquierda y el tercio inferior en sombra casi negra y sin objetos, para colocar texto encima.** Grano de película fino, color sobrio, sin saturar. 16:9, sin personas, sin texto, sin letras legibles, sin marcas de agua.
 
 **Variante móvil (opcional, 4:5):** el mismo prompt cambiando el final por «encuadre vertical, la mesa ocupa el tercio superior y la mitad inferior queda en sombra para el texto».
 
@@ -42,17 +42,17 @@ La web funciona completa sin estos archivos: los bocetos son SVG propios y el in
 
 ## 3 · Imagen para compartir (og.jpg)
 
-> Composición minimalista sobre papel verjurado color crema (#efe6d2) con fibras visibles y bordes levemente oscurecidos: en el tercio derecho, un dibujo a pluma y tinta sepia (#2b1e14) de un tornillo aéreo helicoidal sobre una plataforma circular de madera, con sombreado de líneas cruzadas, y una pequeña línea de cota en sanguina roja (#b2442a). Trazo seguro, en el espíritu de un cuaderno de ingeniería renacentista, reinterpretación original. **Los dos tercios izquierdos vacíos**, solo papel. Luz plana y uniforme de escáner, sin sombras de objetos. 1200 × 630, sin texto, sin letras, sin marcas de agua.
+> Composición minimalista sobre papel teñido de azul ultramar profundo (#1b2d9e), como el papel preparado renacentista, con fibras visibles: en el tercio derecho, un dibujo a tiza blanca marfil (#f3ecdc) de un tornillo aéreo helicoidal sobre una plataforma circular de madera, con sombreado de líneas cruzadas, y una pequeña línea de cota en pan de oro (#d6a640). Trazo seguro, en el espíritu de un cuaderno de ingeniería renacentista, reinterpretación original. **Los dos tercios izquierdos vacíos**, solo papel. Luz plana y uniforme de escáner, sin sombras de objetos. 1200 × 630, sin texto, sin letras, sin marcas de agua.
 
-Después, en Canva o similar, añadir a la izquierda «Saber *ver*.» en Cardo (con «ver» en cursiva y sanguina) y «Bottega Leonardo» en Manrope pequeña.
+Después, en Canva o similar, añadir a la izquierda «Saber *ver*.» en Bodoni Moda (con «ver.» en Bodoni Moda cursiva 900 y pan de oro (#d6a640)) y «Bottega Leonardo» en Manrope pequeña.
 
 ## 4 · Vídeo vertical «el trazo» (redes)
 
-> Macro cenital sobre papel verjurado color crema: una pluma de ganso con punta de metal mojada en tinta sepia dibuja, en tiempo real, una espiral de agua que se enrosca hacia dentro, con trazo fino que se ensancha al apoyar. La tinta se absorbe en las fibras del papel y deja un borde ligeramente más oscuro. Luz lateral cálida de ventana, sombra suave de la mano fuera de cuadro (solo se ve la pluma). Cámara fija, foco en la punta, profundidad de campo muy corta. Al final, un trazo rápido de sanguina roja subraya la espiral. 9:16, 6–8 segundos, sin texto, sin marcas de agua.
+> Macro cenital sobre papel verjurado color crema: una pluma de ganso con punta de metal mojada en tinta sepia dibuja, en tiempo real, una espiral de agua que se enrosca hacia dentro, con trazo fino que se ensancha al apoyar. La tinta se absorbe en las fibras del papel y deja un borde ligeramente más oscuro. Luz lateral cálida de ventana, sombra suave de la mano fuera de cuadro (solo se ve la pluma). Cámara fija, foco en la punta, profundidad de campo muy corta. Al final, un trazo rápido de tinta azul ultramar subraya la espiral. 9:16, 6–8 segundos, sin texto, sin marcas de agua.
 
 ## 5 · Vídeo cuadrado «ornitóptero» (caso de estudio)
 
-> Maqueta física de un ornitóptero renacentista hecha a mano con listones de madera de tilo, juntas de cuero y alas de lino encerado color marfil, con costillas que imitan el ala de un murciélago, suspendida con hilos invisibles sobre un fondo de papel crema liso (#efe6d2). Las alas baten lentamente hacia abajo, los dedos de las alas se despliegan al bajar y se pliegan al subir. Luz de estudio suave y difusa desde arriba a la izquierda, sombra de contacto tenue en el fondo. Cámara fija frontal, ligeramente contrapicada. Bucle perfecto de 6 segundos. 1:1, sin personas, sin texto, sin marcas de agua.
+> Maqueta física de un ornitóptero renacentista hecha a mano con listones de madera de tilo, juntas de cuero y alas de lino encerado color marfil, con costillas que imitan el ala de un murciélago, suspendida con hilos invisibles sobre un fondo liso azul lapislázuli (#1b2d9e). Las alas baten lentamente hacia abajo, los dedos de las alas se despliegan al bajar y se pliegan al subir. Luz de estudio suave y difusa desde arriba a la izquierda, sombra de contacto tenue en el fondo. Cámara fija frontal, ligeramente contrapicada. Bucle perfecto de 6 segundos. 1:1, sin personas, sin texto, sin marcas de agua.
 
 ---
 

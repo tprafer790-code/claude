@@ -7,10 +7,17 @@
   const clamp = (v) => Math.min(1, Math.max(0, v));
   const suavizar = (t) => 1 - Math.pow(1 - t, 3);
 
-  // Barra de progreso de lectura (también con movimiento reducido: no anima, solo indica)
+  // Barra de progreso de lectura y tono de la navegación según la sección que tiene debajo
+  const nav = document.querySelector('.nav');
   const leer = () => {
     const max = document.documentElement.scrollHeight - innerHeight;
     if (barra) barra.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+    if (!nav) return;
+    const bajo = document.elementFromPoint(innerWidth / 2, nav.getBoundingClientRect().bottom + 2);
+    const azul = !!(bajo && bajo.closest('[data-tono="azul"]'));
+    if (azul !== (nav.dataset.tono === 'azul')) {
+      if (azul) nav.dataset.tono = 'azul'; else delete nav.dataset.tono;
+    }
   };
 
   // Vídeo del interludio: solo si existe el archivo y el usuario no reduce el movimiento
