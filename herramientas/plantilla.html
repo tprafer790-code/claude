@@ -66,7 +66,7 @@
   <!-- Manifiesto -->
   <section class="manifiesto envoltura" aria-labelledby="t-manifiesto">
     <h2 class="rotulo" id="t-manifiesto">La bottega</h2>
-    <p class="manifiesto-txt">Inscrito en la compañía de pintores de San Lucas en 1472, a los veinte años. Desde entonces, <em>pintor, sí</em>; también ingeniero militar, arquitecto, anatomista, escenógrafo y estudioso del agua. Aquí se dibuja hasta entender.</p>
+    <p class="manifiesto-txt entintar">Inscrito en la compañía de pintores de San Lucas en 1472, a los veinte años. Desde entonces, <em>pintor, sí</em>; también ingeniero militar, arquitecto, anatomista, escenógrafo y estudioso del agua. Aquí se dibuja hasta entender.</p>
     <p class="manifiesto-nota">Desliza despacio: cada boceto se traza mientras avanzas, como en sus cuadernos, sobre el dibujo preparatorio.</p>
   </section>
 
@@ -74,13 +74,16 @@
   <section class="obras" id="obras" aria-labelledby="t-obras">
     <div class="envoltura obras-cab">
       <h2 id="t-obras">Obras <em>seleccionadas</em></h2>
-      <p>Cuatro encargos de un catálogo de más de siete mil páginas conservadas.</p>
+      <p class="entintar">Cuatro encargos de un catálogo de más de siete mil páginas conservadas.</p>
     </div>
 
-    <article class="obra envoltura">
+    <article class="obra obra-scrub envoltura">
       <figure class="obra-fig">
-        {{ornitoptero}}
-        <figcaption class="pie"><span>Máquina voladora de alas batientes</span><span>Manuscrito B · c. 1487–1490</span></figcaption>
+        <div class="scrub-marco">
+          <video class="scrub" muted playsinline preload="none" width="960" height="540" poster="assets/img/ornitoptero-poster.webp" data-src="assets/video/ornitoptero.mp4" aria-label="Maqueta de madera y lino del ornitóptero: las alas baten a medida que se desplaza la página"></video>
+          <span class="scrub-barra" aria-hidden="true"></span>
+        </div>
+        <figcaption class="pie"><span>Máquina voladora de alas batientes · maqueta</span><span>Manuscrito B · c. 1487–1490</span></figcaption>
       </figure>
       <div class="obra-txt">
         <p class="obra-n"><span>Obra</span>I</p>
@@ -90,10 +93,6 @@
           <div><dt>Proceso</dt><dd>Estudio de murciélagos y aves; alas con dedos que se pliegan al subir y se abren al bajar para empujar el aire.</dd></div>
           <div><dt>Resultado</dt><dd>No voló: la fuerza humana no alcanza. La conclusión llevó a estudiar el planeo en el <em>Códice sobre el vuelo de los pájaros</em> (1505).</dd></div>
         </dl>
-        <figure class="obra-video">
-          <video muted loop playsinline preload="none" width="1280" height="720" poster="assets/img/ornitoptero-poster.webp" data-src="assets/video/ornitoptero.mp4" aria-label="Maqueta de madera y lino del ornitóptero batiendo las alas"></video>
-          <figcaption class="pie"><span>La maqueta en movimiento</span><span>Recreación en vídeo</span></figcaption>
-        </figure>
       </div>
     </article>
 
@@ -113,10 +112,13 @@
       </div>
     </article>
 
-    <article class="obra envoltura">
+    <article class="obra obra-scrub obra-scrub-v envoltura">
       <figure class="obra-fig">
-        {{agua}}
-        <figcaption class="pie"><span>Caída de agua en un estanque</span><span>Royal Collection, Windsor · c. 1510–1513</span></figcaption>
+        <div class="scrub-marco">
+          <video class="scrub" muted playsinline preload="none" width="540" height="960" poster="assets/img/trazo-poster.webp" data-src="assets/video/trazo.mp4" aria-label="Una plumilla traza con tinta un remolino en espiral a medida que se desplaza la página"></video>
+          <span class="scrub-barra" aria-hidden="true"></span>
+        </div>
+        <figcaption class="pie"><span>Un remolino trazado a pluma</span><span>Royal Collection, Windsor · c. 1510–1513</span></figcaption>
       </figure>
       <div class="obra-txt">
         <p class="obra-n"><span>Obra</span>III</p>
@@ -126,10 +128,6 @@
           <div><dt>Proceso</dt><dd>Observar un chorro que cae en un estanque y dibujar cada remolino, comparándolos con rizos de cabello.</dd></div>
           <div><dt>Resultado</dt><dd>Una de las primeras descripciones sistemáticas de la turbulencia, siglos antes de la mecánica de fluidos.</dd></div>
         </dl>
-        <figure class="obra-video obra-video-v">
-          <video muted loop playsinline preload="none" width="720" height="1280" poster="assets/img/trazo-poster.webp" data-src="assets/video/trazo.mp4" aria-label="Una plumilla traza con tinta un remolino en espiral sobre papel"></video>
-          <figcaption class="pie"><span>Un remolino a pluma</span><span>Recreación en vídeo</span></figcaption>
-        </figure>
       </div>
     </article>
     <article class="obra obra-inv envoltura">
@@ -151,17 +149,19 @@
 
   <!-- Interludio con imagen o vídeo -->
   <section class="taller" data-tono="azul" aria-labelledby="t-taller">
+   <div class="taller-fijo">
     <div class="taller-medio" aria-hidden="true">
       <img src="assets/img/taller-poster.webp" width="1600" height="900" alt="" loading="lazy" decoding="async">
-      <video muted loop playsinline preload="none" poster="assets/img/taller-poster.webp" data-src="assets/video/taller.mp4"></video>
+      <video class="scrub" muted playsinline preload="none" poster="assets/img/taller-poster.webp" data-src="assets/video/taller.mp4"></video>
     </div>
     <div class="envoltura taller-in">
       <h2 class="rotulo" id="t-taller">Principio</h2>
       <blockquote>
-        <p>«Toda nuestra comprensión tiene su origen en los sentidos.»</p>
+        <p class="cita entintar">«Toda nuestra comprensión tiene su origen en los sentidos.»</p>
         <footer><span lang="it">Ogni nostra cognizione principia da' sentimenti</span> · Códice Trivulziano</footer>
       </blockquote>
     </div>
+   </div>
   </section>
 
   <!-- Método: retícula vitruviana fija -->
@@ -189,7 +189,7 @@
   <section class="servicios envoltura" id="servicios" aria-labelledby="t-servicios">
     <div class="servicios-cab">
       <h2 id="t-servicios">Servicios</h2>
-      <p>Así se presentó Leonardo, con unos treinta años, por carta al duque de Milán Ludovico Sforza, hacia 1482. La pintura aparece al final.</p>
+      <p class="entintar">Así se presentó Leonardo, con unos treinta años, por carta al duque de Milán Ludovico Sforza, hacia 1482. La pintura aparece al final.</p>
     </div>
     <ol class="carta">
       <li>Puentes ligerísimos y fuertes, fáciles de llevar, para perseguir o huir del enemigo.</li>
@@ -221,7 +221,7 @@
    <div class="encargos-in envoltura">
     <p class="rotulo">Encargos</p>
     <h2 id="t-encargos">¿Una máquina <em>imposible</em>?</h2>
-    <p>La bottega cerró en Amboise el 2 de mayo de 1519. Esta página es una pieza de diseño: los encargos de hoy los recibe su autor.</p>
+    <p class="entintar">La bottega cerró en Amboise el 2 de mayo de 1519. Esta página es una pieza de diseño: los encargos de hoy los recibe su autor.</p>
     <a class="boton boton-oro" href="https://miguelbenito.es" rel="noopener">Ir a miguelbenito.es <span aria-hidden="true">→</span></a>
    </div>
   </section>
