@@ -62,3 +62,19 @@ Después, en Canva o similar, añadir a la izquierda «Saber *ver*.» en Bodoni 
 2. No hay que tocar el HTML: el interludio muestra la imagen si existe y el vídeo si existe (el vídeo solo se reproduce si el visitante no ha pedido reducir el movimiento).
 3. Comprueba el contraste: la cita blanca debe leerse sobre la zona oscura. Si la imagen es demasiado clara, oscurécela en origen; no hace falta tocar el código.
 4. Los vídeos 4 y 5 no están enlazados en la página: son piezas para presentar el proyecto en el portfolio o en redes.
+
+---
+
+## 6 · Cráneo en sección (Obra IV) · imagen y vídeo para recorrer con el scroll
+
+Mismo estilo que la portada: tiza marfil sobre papel azul, cotas en oro. El vídeo sustituirá al boceto de la Obra IV y avanzará con el scroll, como el puente y el ornitóptero.
+
+**Imagen (fotograma inicial), 16:9:**
+
+> Lámina anatómica renacentista dibujada con tiza blanca marfil (#f3ecdc) y lápiz sobre papel artesanal teñido de azul lapislázuli profundo (#1b2d9e), con fibras y motas visibles: un cráneo humano de perfil mirando a la izquierda, seccionado en vertical para mostrar el interior de la bóveda, el grosor del hueso, la órbita del ojo, los senos frontales y la base del cráneo. Sombreado con rayado fino y cruzado, trazo seguro de dibujante del siglo XV, reinterpretación original en el espíritu de un cuaderno de anatomía. Dos finas líneas de construcción en pan de oro (#d6a640), una horizontal y otra vertical, se cruzan en el centro del cerebro con un pequeño círculo; pequeñas líneas de cota con flechas en oro en los márgenes. El cráneo ocupa el centro-derecha; tercio izquierdo vacío, solo papel. Luz plana de escáner. 16:9, sin texto, sin letras, sin marcas de agua, sin colores adicionales.
+
+**Vídeo (imagen a vídeo, partiendo de la imagen anterior), 8 s:**
+
+> Plano fijo sobre la lámina. El dibujo se completa poco a poco: primero el contorno exterior del cráneo aparece trazado en tiza, después el rayado del interior se va rellenando, y al final las dos líneas de oro se dibujan desde los márgenes hasta cruzarse en el centro del cerebro, donde aparece el pequeño círculo. Sin movimiento de cámara, sin manos, sin cortes, sin texto. El último fotograma muestra la lámina completa. 8 segundos, 24 fps, 16:9.
+
+**Exportar como** `craneo.mp4` (y la imagen como `craneo.webp`). Al recibirlos los recodifico para el avance con scroll.
