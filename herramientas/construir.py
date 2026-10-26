@@ -13,7 +13,6 @@ import bocetos
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 
 html = (RAIZ / "herramientas" / "plantilla.html").read_text(encoding="utf-8")
-html = html.replace("{{tornillo}}", bocetos.svg("tornillo", "Boceto del tornillo aéreo: una vela helicoidal alrededor de un mástil sobre una plataforma"))
 html = html.replace("{{ornitoptero}}", bocetos.svg("ornitoptero", "Boceto del ornitóptero: dos alas articuladas como las de un murciélago unidas a un armazón"))
 html = html.replace("{{puente}}", bocetos.svg("puente", "Boceto del puente: un único arco rebajado sobre el agua, con un velero pasando por debajo"))
 html = html.replace("{{agua}}", bocetos.svg("agua", "Boceto de un chorro de agua que cae en un estanque y forma remolinos en espiral"))

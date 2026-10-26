@@ -20,18 +20,26 @@
     }
   };
 
-  // Vídeo del interludio: solo si existe el archivo y el usuario no reduce el movimiento
-  const video = document.querySelector('.taller video[data-src]');
-  if (video && !reducido) {
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) { if (video.src) video.pause(); return; }
-      if (!video.src) {
-        video.addEventListener('error', () => video.remove(), { once: true });
-        video.src = video.dataset.src;
+  // Vídeos: se cargan al acercarse a la pantalla y se pausan al salir.
+  // Con movimiento reducido no se reproducen solos: muestran el cartel y los controles.
+  const videos = [...document.querySelectorAll('video[data-src]')];
+  const cargar = (v) => {
+    if (v.src) return;
+    v.addEventListener('error', () => { v.removeAttribute('src'); v.hidden = true; }, { once: true });
+    v.src = v.dataset.src;
+  };
+  if (reducido) {
+    videos.forEach((v) => { v.controls = true; cargar(v); });
+  } else if (videos.length) {
+    const io = new IntersectionObserver((entradas) => {
+      for (const e of entradas) {
+        const v = e.target;
+        if (!e.isIntersecting) { if (v.src) v.pause(); continue; }
+        cargar(v);
+        v.play().catch(() => {});
       }
-      video.play().catch(() => {});
     }, { rootMargin: '200px' });
-    io.observe(video);
+    videos.forEach((v) => io.observe(v));
   }
 
   if (reducido) { addEventListener('scroll', leer, { passive: true }); leer(); return; }

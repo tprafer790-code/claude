@@ -8,7 +8,11 @@
 <meta name="description" content="Bottega Leonardo: el taller de Leonardo da Vinci contado como un estudio de diseño. Pieza conceptual de portfolio de miguelbenito.es.">
 <meta property="og:title" content="Bottega Leonardo">
 <meta property="og:description" content="Ingeniería, anatomía, pintura y vuelo. Saber ver.">
-<meta property="og:image" content="assets/img/og.jpg">
+<meta property="og:image" content="https://miguelbenito.es/assets/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" as="image" href="assets/img/portada.webp" media="(min-width: 900px)">
 <meta name="theme-color" content="#1b2d9e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,12 +53,14 @@
         <a class="enlace" href="#servicios">Leer la carta de servicios</a>
       </div>
     </div>
+    </div>
     <figure class="portada-fig">
-      {{tornillo}}
-      <p class="espejo" aria-hidden="true">farà la sua femina nell'aria e monterà in alto</p>
+      <picture>
+        <source media="(max-width: 899px)" srcset="assets/img/portada-movil.webp" width="960" height="1116">
+        <img src="assets/img/portada.webp" width="2000" height="1116" fetchpriority="high" decoding="async" alt="Dibujo en tiza marfil del tornillo aéreo de Leonardo sobre papel azul: una vela helicoidal de lino alrededor de un mástil, sobre una plataforma de madera con engranajes, con líneas de cota en oro.">
+      </picture>
       <figcaption class="pie"><span>Tornillo aéreo</span><span>Manuscrito B, f. 83v · c. 1489</span></figcaption>
     </figure>
-    </div>
   </section>
 
   <!-- Manifiesto -->
@@ -84,6 +90,10 @@
           <div><dt>Proceso</dt><dd>Estudio de murciélagos y aves; alas con dedos que se pliegan al subir y se abren al bajar para empujar el aire.</dd></div>
           <div><dt>Resultado</dt><dd>No voló: la fuerza humana no alcanza. La conclusión llevó a estudiar el planeo en el <em>Códice sobre el vuelo de los pájaros</em> (1505).</dd></div>
         </dl>
+        <figure class="obra-video">
+          <video muted loop playsinline preload="none" width="1280" height="720" poster="assets/img/ornitoptero-poster.webp" data-src="assets/video/ornitoptero.mp4" aria-label="Maqueta de madera y lino del ornitóptero batiendo las alas"></video>
+          <figcaption class="pie"><span>La maqueta en movimiento</span><span>Recreación en vídeo</span></figcaption>
+        </figure>
       </div>
     </article>
 
@@ -116,6 +126,10 @@
           <div><dt>Proceso</dt><dd>Observar un chorro que cae en un estanque y dibujar cada remolino, comparándolos con rizos de cabello.</dd></div>
           <div><dt>Resultado</dt><dd>Una de las primeras descripciones sistemáticas de la turbulencia, siglos antes de la mecánica de fluidos.</dd></div>
         </dl>
+        <figure class="obra-video obra-video-v">
+          <video muted loop playsinline preload="none" width="720" height="1280" poster="assets/img/trazo-poster.webp" data-src="assets/video/trazo.mp4" aria-label="Una plumilla traza con tinta un remolino en espiral sobre papel"></video>
+          <figcaption class="pie"><span>Un remolino a pluma</span><span>Recreación en vídeo</span></figcaption>
+        </figure>
       </div>
     </article>
     <article class="obra obra-inv envoltura">
@@ -138,8 +152,8 @@
   <!-- Interludio con imagen o vídeo -->
   <section class="taller" data-tono="azul" aria-labelledby="t-taller">
     <div class="taller-medio" aria-hidden="true">
-      <img src="assets/img/taller.webp" width="2400" height="1350" alt="" loading="lazy" decoding="async" onerror="this.remove()">
-      <video muted loop playsinline preload="none" data-src="assets/video/taller.mp4"></video>
+      <img src="assets/img/taller-poster.webp" width="1600" height="900" alt="" loading="lazy" decoding="async">
+      <video muted loop playsinline preload="none" poster="assets/img/taller-poster.webp" data-src="assets/video/taller.mp4"></video>
     </div>
     <div class="envoltura taller-in">
       <h2 class="rotulo" id="t-taller">Principio</h2>
