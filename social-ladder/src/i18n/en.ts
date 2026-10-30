@@ -185,4 +185,8 @@ export const en = {
   fxCritMode: 'CRITICAL MODE',
   fxUnmute: 'Turn sound on',
   screenShake: 'Screen shake on critical hits',
+  fxAchievement: 'ACHIEVEMENT',
+  fxSecret: 'SECRET FOUND',
+  fxComboLegend: 'CLICK LEGEND',
+  fxComboKicker: 'COMBO',
 };

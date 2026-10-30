@@ -9,9 +9,13 @@ import { fx } from '../../fx/FxLayer';
 import { FX, reducedMotion, shakeAllowed, TIER_FX, tierForStage } from '../../fx/intensity';
 import { shake } from '../../fx/shake';
 import { useEngine } from '../hooks';
+import { celebrate } from './Celebration';
+import { flyToCash } from './FxOverlay';
 import { Icon } from './Icon';
 
-const COMBO_MILESTONES = [10, 25, 50];
+/** Combo milestones: 5 small, 10 burst, 25 aura, 50 arcade spectacle, 100 celebration. */
+const COMBO_MILESTONES = [5, 10, 25, 50, 100];
+const RAINBOW = [FX.red, FX.orange, FX.gold, FX.green, FX.cyan, FX.electric, FX.violet, FX.pink];
 
 export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
   const engine = useEngine();
@@ -53,7 +57,9 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
       const ringColors = [FX.orange, FX.red, FX.gold];
       for (let i = 0; i < (rapid ? 1 : T.critRings + (exceptional ? 1 : 0)); i++) fx.ring(cx, cy, ringColors[i % 3], (btn?.width ?? 300) * 0.35 + i * 30, 0.28 + i * 0.07, 5 - i);
       fx.text(x, y - 18, `${t('crit')} +${base}`, { size: Math.round(T.critSize * (exceptional ? 1.2 : 1)), color: exceptional ? FX.red : FX.orange, shadow: FX.ink, life: 1.1, rise: 70, pop: 1.9, key: 'crit' });
-      if (exceptional && tier >= 2) fx.flash(FX.orange, 0.12, 120);
+      // Brief screen flash on every crit (skipped for rapid repeats, off with reduced motion).
+      if (!rapid) fx.flash(exceptional ? FX.red : FX.orange, exceptional ? 0.2 : 0.11, exceptional ? 140 : 90);
+      flyToCash(cx, cy, exceptional ? 8 : 5);
       if (faceRef.current && !reduced) {
         flare.current?.cancel();
         flare.current = faceRef.current.animate([{ filter: 'brightness(1.9) saturate(1.6)' }, { filter: 'brightness(1)' }], { duration: exceptional ? 220 : 160, easing: 'ease-out' });
@@ -62,6 +68,8 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
       const colors = tier === 0 ? [FX.gold, FX.goldLight] : tier === 1 ? [FX.gold, FX.goldLight, stage.accent] : [FX.gold, FX.goldLight, stage.accent, FX.cyan, FX.violet];
       fx.burst(x, y, { count: T.clickParticles, colors, speed: [70, 190], angle: [-155, -25], size: T.particleSize, glow: T.glow, stars: T.sparkle ? 0.25 : 0, life: 0.55, gravity: 520 });
       fx.text(x + (Math.random() * 24 - 12), y - 12, `+${base}`, { size: T.floatSize, color: FX.gold, life: 0.85, rise: 55 + tier * 8 });
+      // Every few clicks a coin flies to the wallet: a steady trickle, not a flood.
+      if (r.combo % 3 === 1) flyToCash(x, y, 1);
     }
     if (r.lucky) {
       fx.burst(x, y, { count: 14, colors: [FX.cyan, FX.violet, FX.white], speed: [60, 160], size: T.particleSize, glow: 0.7, stars: 0.6, life: 0.9, gravity: 60 });
@@ -69,19 +77,33 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
     }
 
     // Combo milestones.
-    const milestone = COMBO_MILESTONES.indexOf(r.combo);
-    if (milestone >= 0 || r.combo === d.comboMax + 1) {
-      const level = milestone >= 0 ? milestone : COMBO_MILESTONES.length;
-      fx.ring(cx, cy, FX.cyan, (btn?.width ?? 300) * 0.4, 0.4, 4);
-      fx.burst(cx, (btn?.top ?? cy) + 4, { count: 12 + level * 8, colors: [FX.cyan, FX.electric, FX.violet, FX.white], speed: [100, 260], angle: [-170, -10], size: T.particleSize, glow: 0.6, stars: 0.5, life: 0.8, gravity: 260 });
-      fx.text(cx, (btn?.top ?? cy) - 6, r.combo === d.comboMax + 1 ? t('fxComboMax') : t('fxComboHit', { n: r.combo }), { size: 13 + level * 2, color: FX.cyan, life: 1.1, rise: 30, pop: 1.6 });
+    const level = COMBO_MILESTONES.indexOf(r.combo);
+    if (level >= 0) {
+      const top = (btn?.top ?? cy) + 4;
+      const w = btn?.width ?? 300;
+      if (level === 0) {
+        fx.text(cx, top - 6, t('fxComboHit', { n: r.combo }), { size: 11, color: FX.cyan, life: 0.7, rise: 24 });
+      } else {
+        const colors = level >= 3 ? RAINBOW : [FX.cyan, FX.electric, FX.violet, FX.white];
+        fx.ring(cx, cy, FX.cyan, w * 0.4, 0.4, 4);
+        fx.burst(cx, top, { count: 10 + level * 12, colors, speed: [100, 240 + level * 30], angle: [-170, -10], size: T.particleSize, glow: 0.6, stars: 0.5, life: 0.8, gravity: 260 });
+        fx.text(cx, top - 6, t('fxComboHit', { n: r.combo }), { size: 12 + level * 3, color: level >= 3 ? FX.gold : FX.cyan, life: 1.1, rise: 30, pop: 1.6 });
+      }
+      if (level >= 3) {
+        // 50 and 100: arcade-style rainbow rings, a flash and side fountains.
+        RAINBOW.forEach((c, i) => fx.ring(cx, cy, c, w * 0.3 + i * 18, 0.45 + i * 0.04, 4));
+        fx.flash(FX.cyan, 0.14, 160);
+        fx.burst(btn?.left ?? cx, cy, { count: 30, colors: RAINBOW, speed: [150, 320], angle: [-120, -60], size: T.particleSize + 1, glow: 0.7, stars: 0.4, life: 1, gravity: 300 });
+        fx.burst(btn?.right ?? cx, cy, { count: 30, colors: RAINBOW, speed: [150, 320], angle: [-120, -60], size: T.particleSize + 1, glow: 0.7, stars: 0.4, life: 1, gravity: 300 });
+      }
+      if (level === 4) celebrate({ kind: 'combo', kicker: t('fxComboKicker'), title: `×${r.combo}`, sub: t('fxComboLegend'), still: reduced });
       audio.comboMilestone(level);
     }
 
     // Viewport shake: every crit, and every click while critical mode is on.
     if (shakeAllowed(st)) {
       const play = buttonRef.current?.closest('.play') ?? null;
-      if (r.crit) shake(play, exceptional ? 7 : 4, exceptional ? 100 : 75);
+      if (r.crit) shake(play, exceptional ? 8 : 5, exceptional ? 100 : 75);
       else if (critMode) shake(play, 2, 60);
     }
 
@@ -130,7 +152,7 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
       <div className="click-zone">
         <button
           ref={buttonRef}
-          className={`big-button ${pressed ? 'pressed' : ''} ${critMode ? 'crit-mode' : ''}`}
+          className={`big-button ${pressed ? 'pressed' : ''} ${critMode ? 'crit-mode' : ''} ${live >= 25 ? 'combo-aura' : ''} ${live >= 50 ? 'combo-50' : ''}`}
           onPointerDown={(e) => {
             setPressed(true);
             doClick(e.clientX, e.clientY);
@@ -155,7 +177,7 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
         </button>
       </div>
 
-      <div className="combo" data-tip={t('comboTip')}>
+      <div className={`combo ${live >= 25 ? 'hot' : ''}`} data-tip={t('comboTip')}>
         <span className="combo-label">
           {t('combo')} {comboActive ? `×${decimal(1 + comboSteps * ECONOMY.click.comboStep, 2)}` : ''}
         </span>
@@ -170,7 +192,12 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
           {engine.availableAbilities().map((a) => {
             const cd = engine.abilityCooldown(a.id);
             return (
-              <button key={a.id} className={`ability ${cd > 0 ? 'cooling' : 'ready'}`} disabled={cd > 0} onClick={() => engine.useAbility(a.id)} title={a.desc}>
+              <button key={a.id} className={`ability ${cd > 0 ? 'cooling' : 'ready'}`} disabled={cd > 0} onClick={(ev) => {
+                  if (!engine.useAbility(a.id) || reducedMotion(s.settings)) return;
+                  ev.currentTarget.querySelector('img')?.animate([{ transform: 'scale(1) rotate(0)' }, { transform: 'scale(1.5) rotate(-20deg)' }, { transform: 'scale(0.9) rotate(10deg)' }, { transform: 'none' }], { duration: 320, easing: 'ease-out' });
+                  const r = ev.currentTarget.getBoundingClientRect();
+                  fx.burst(r.left + r.width / 2, r.top + r.height / 2, { count: 16, colors: [FX.gold, FX.cyan, FX.white], speed: [80, 200], size: 3, glow: 0.5, stars: 0.5, life: 0.6, gravity: 120 });
+                }} title={a.desc}>
                 <Icon id={a.icon} size={20} />
                 <span className="ability-name">{a.name}</span>
                 <span className="ability-cd">{cd > 0 ? fmtDuration(cd) : t('ready')}</span>

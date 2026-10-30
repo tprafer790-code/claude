@@ -187,4 +187,8 @@ export const es: Partial<Record<keyof typeof en, string>> = {
   fxCritMode: 'MODO CRÍTICO',
   fxUnmute: 'Activar el sonido',
   screenShake: 'Sacudida de pantalla en los críticos',
+  fxAchievement: 'LOGRO',
+  fxSecret: 'SECRETO DESCUBIERTO',
+  fxComboLegend: 'LEYENDA DEL CLIC',
+  fxComboKicker: 'COMBO',
 };

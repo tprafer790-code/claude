@@ -75,7 +75,7 @@ export function LegacyPanel() {
           const cost = maxed ? 0 : p.cost(level);
           const afford = !maxed && s.prestige.legacy >= cost;
           return (
-            <li key={p.id} className="card perk">
+            <li key={p.id} data-fx={`perk:${p.id}`} className="card perk">
               <div className="card-main">
                 <Icon id={p.icon} size={28} />
                 <div className="card-info">

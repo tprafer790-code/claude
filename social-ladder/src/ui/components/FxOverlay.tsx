@@ -5,8 +5,34 @@ import { fx } from '../../fx/FxLayer';
 import { FX, reducedMotion, TIER_FX, tierForStage } from '../../fx/intensity';
 import { t } from '../../i18n';
 import { useEngineStatic } from '../hooks';
+import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
+import { COMBO_BY_ID } from '../../data/combos';
+import { RANKS } from '../../data/ranks';
+import { SECRET_BY_ID } from '../../data/secrets';
+import { ECONOMY } from '../../config/economy';
+import { resetUnlocked, trackUnlocked } from '../../fx/fresh';
+import { celebrate } from './Celebration';
 
 const RAINBOW = [FX.red, FX.orange, FX.gold, FX.green, FX.cyan, FX.electric, FX.violet, FX.pink];
+
+/** Pops the shop card of something just bought (cards carry data-fx="kind:id"). */
+function popCard(key: string) {
+  const el = document.querySelector(`[data-fx="${key}"]`) as HTMLElement | null;
+  el?.animate(
+    [
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+      { transform: 'scale(1.04)', filter: 'brightness(1.6) saturate(1.4)', offset: 0.35 },
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+    ],
+    { duration: 260, easing: 'ease-out' },
+  );
+}
+
+/** Coins fly from a point to the money counter. */
+export function flyToCash(x: number, y: number, count: number) {
+  const [tx, ty] = centerOf('.cash .px-icon');
+  fx.fly(x, y, tx, ty, count);
+}
 
 function centerOf(selector: string): [number, number] {
   const r = document.querySelector(selector)?.getBoundingClientRect();
@@ -25,7 +51,17 @@ export function FxOverlay() {
   useEffect(() => {
     if (!ref.current) return;
     fx.attach(ref.current);
-    return () => fx.detach();
+    let lastPulse = 0;
+    fx.onArrive = () => {
+      const now = performance.now();
+      if (now - lastPulse < 90 || fx.reduced) return;
+      lastPulse = now;
+      document.querySelector('.cash .px-icon')?.animate([{ transform: 'scale(1) rotate(0)' }, { transform: 'scale(1.35) rotate(-15deg)' }, { transform: 'scale(1) rotate(0)' }], { duration: 160 });
+    };
+    return () => {
+      fx.onArrive = null;
+      fx.detach();
+    };
   }, []);
 
   useEffect(() => {
@@ -41,6 +77,19 @@ export function FxOverlay() {
       timers.add(id);
     };
 
+    // Newly unlocked shop entries flash once (checked a few times per second, not every tick).
+    const scan = () => {
+      const s = engine.state;
+      const keys = [
+        ...engine.visibleBusinesses().map((b) => `business:${b.id}`),
+        ...engine.availableUpgrades().map((u) => `upgrade:${u.id}`),
+        ...engine.shopItems().filter((it) => it.rankReq <= s.rankIndex).map((it) => `item:${it.id}`),
+      ];
+      trackUnlocked(keys);
+    };
+    scan();
+    const scanTimer = window.setInterval(scan, 400);
+
     const off = engine.onEvent((e) => {
       const stage = STAGE_BY_ID[engine.rank.stage];
       const tier = tierForStage(stage.index);
@@ -55,6 +104,7 @@ export function FxOverlay() {
           const colors = special ? [FX.gold, FX.goldLight, FX.white] : e.kind === 'perk' ? [FX.violet, FX.cyan, FX.white] : [FX.green, '#a6ffc4', FX.gold];
           fx.burst(x, y, { count: 10 + tier * 6 + (special ? 20 : 0), colors, speed: [60, 180 + tier * 40], size: T.particleSize, glow: T.glow, stars: T.sparkle ? 0.3 : 0, life: 0.6, gravity: 300 });
           if (tier >= 1) fx.ring(x, y, special ? FX.gold : FX.green, 40 + tier * 10, 0.3, 3);
+          popCard(`${e.kind}:${e.id}`);
           fx.text(x, y - 14, special ? t('fxLegendary') : t('fxBought'), { size: 10 + tier, color: special ? FX.gold : FX.green, life: 0.8, rise: 34 });
           break;
         }
@@ -72,12 +122,13 @@ export function FxOverlay() {
                 fx.ring(fxX, fxY, accent, 90 + tier * 20, 0.5, 4);
               });
             }
-            fx.text(x, y - 10, stage.name.toUpperCase(), { size: 18 + tier * 2, color: FX.white, shadow: FX.ink, life: 1.8, rise: 30, pop: 1.8 });
+
           } else {
             fx.burst(x, y, { count: 18 + tier * 10, colors: [FX.gold, FX.goldLight, accent, FX.white], speed: [80, 240], size: T.particleSize, glow: T.glow, stars: 0.3, life: 0.9, gravity: 200 });
             fx.ring(x, y, FX.gold, 80 + tier * 15, 0.45, 4);
             if (tier >= 2) fx.flash(FX.gold, 0.12, 180);
-            fx.text(x, y - 20, t('promoted'), { size: 16 + tier * 2, color: FX.gold, life: 1.3, rise: 40, pop: 1.6 });
+            const r = RANKS[e.to];
+            celebrate({ kind: 'rank', kicker: t('promoted'), title: r.name, sub: r.bonusText ?? t('rankIncome', { pct: Math.round(ECONOMY.rankIncomeBonus * 100) }), still: fx.reduced });
           }
           break;
         }
@@ -92,9 +143,11 @@ export function FxOverlay() {
           }
           fx.ring(x, y, FX.cyan, 70 + tier * 15, 0.5, 3);
           fx.ring(x, y, FX.violet, 45 + tier * 10, 0.4, 2);
-          if (e.type !== 'opportunityCollect') {
+          if (e.type === 'opportunityCollect') flyToCash(x, y, 8);
+          else {
             fx.flash(FX.violet, 0.15, 260);
-            fx.text(x, y - 24, t('fxRare'), { size: 14 + tier, color: FX.cyan, life: 1.4, rise: 40, pop: 1.5 });
+            const name = e.type === 'secret' ? SECRET_BY_ID[e.id]?.name : COMBO_BY_ID[e.id]?.name;
+            celebrate({ kind: 'rare', kicker: t(e.type === 'secret' ? 'fxSecret' : 'fxRare'), title: name ?? t('fxRare'), still: fx.reduced });
           }
           break;
         }
@@ -103,15 +156,23 @@ export function FxOverlay() {
           const count = Object.keys(engine.state.achievements).length;
           const major = count % 10 === 0;
           fx.burst(x, y, { count: (major ? 30 : 10) + tier * 6, colors: [FX.gold, FX.goldLight, FX.orange, FX.white], speed: [60, 200], size: T.particleSize, glow: T.glow, stars: 0.5, life: 0.8, gravity: 160 });
+          const [cx, cy] = centerOf('.scene-frame');
+          fx.burst(cx, cy, { count: (major ? 40 : 18) + tier * 6, colors: [FX.gold, FX.goldLight, FX.orange, FX.pink, FX.cyan], speed: [100, 280], size: T.particleSize, glow: T.glow, stars: 0.4, life: 1, gravity: 240 });
           if (major) {
             fx.ring(x, y, FX.gold, 90, 0.5, 4);
-            const [cx, cy] = centerOf('.scene-frame');
-            fx.text(cx, cy, t('fxMajorAchievement', { n: count }), { size: 14 + tier * 2, color: FX.gold, life: 1.8, rise: 30, pop: 1.8 });
             if (tier >= 2) fx.flash(FX.gold, 0.18, 300);
           }
+          const a = ACHIEVEMENT_BY_ID[e.id];
+          celebrate({ kind: 'achievement', kicker: major ? t('fxMajorAchievement', { n: count }) : t('fxAchievement'), title: a?.name ?? '', sub: t('rankIncome', { pct: Math.round(ECONOMY.achievementIncomeBonus * 100) }), still: fx.reduced });
+          break;
+        }
+        case 'mission': {
+          const [x, y] = centerOf('.tabs');
+          flyToCash(x, y, 8);
           break;
         }
         case 'prestige': {
+          resetUnlocked();
           const [x, y] = centerOf('.scene-frame');
           fx.flash(FX.white, 0.85, 1100);
           for (let i = 0; i < 5; i++) later(i * 140, () => fx.ring(x, y, RAINBOW[(i * 2) % RAINBOW.length], 200 + i * 60, 0.9, 6));
@@ -125,6 +186,7 @@ export function FxOverlay() {
     return () => {
       off();
       timers.forEach((id) => window.clearTimeout(id));
+      window.clearInterval(scanTimer);
       window.removeEventListener('pointerdown', onPointer, { capture: true });
     };
   }, [engine]);

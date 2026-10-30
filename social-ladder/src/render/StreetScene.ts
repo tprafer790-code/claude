@@ -88,6 +88,29 @@ export class StreetScene extends Phaser.Scene {
       ctx.fillRect(0, 0, 2, 2);
       this.textures.addCanvas('confetti', c);
     }
+    if (!this.textures.exists('drift_cloud')) {
+      // Same stepped cloud silhouette as the baked skies, as a sprite that can drift.
+      const c = document.createElement('canvas');
+      c.width = 24;
+      c.height = 8;
+      const ctx = c.getContext('2d')!;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 3, 22, 4);
+      ctx.fillRect(4, 1, 9, 4);
+      ctx.fillRect(11, 0, 7, 4);
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(0, 6, 22, 1);
+      this.textures.addCanvas('drift_cloud', c);
+    }
+    if (!this.textures.exists('bird')) {
+      const c = document.createElement('canvas');
+      c.width = 10;
+      c.height = 3;
+      const ctx = c.getContext('2d')!;
+      ctx.fillStyle = '#10152e';
+      for (const [x, y] of [[0, 0], [1, 1], [2, 2], [3, 1], [4, 2], [5, 2], [6, 1], [7, 2], [8, 1], [9, 0]]) ctx.fillRect(x, y, 1, 1);
+      this.textures.addCanvas('bird', c);
+    }
     if (!this.textures.exists('puff')) {
       const c = document.createElement('canvas');
       c.width = 4;
@@ -169,7 +192,10 @@ export class StreetScene extends Phaser.Scene {
       } else old.destroy();
     }
 
-    this.stageObjects.forEach((o) => o.destroy());
+    this.stageObjects.forEach((o) => {
+      this.tweens.killTweensOf(o);
+      o.destroy();
+    });
     this.stageObjects = [];
     this.pigeon = undefined;
 
@@ -226,6 +252,23 @@ export class StreetScene extends Phaser.Scene {
    */
   private addStageAtmosphere(index: number) {
     const rm = this.reducedMotion();
+    // Drifting clouds keep the sky from being a still picture.
+    // Only where the sky is open: in the tower stages a cloud would pass in front of the buildings.
+    if ([0, 1, 3, 6].includes(index) && !rm) {
+      const night = index === 0;
+      for (let i = 0; i < 3; i++) {
+        const scale = i === 0 ? 2 : 1;
+        const cl = this.add.image(Math.random() * WORLD_W, 3 + i * 7 + Math.random() * 4, 'drift_cloud').setOrigin(0, 0).setScale(scale).setDepth(1)
+          .setAlpha(night ? 0.22 : 0.75 - i * 0.12).setTint(night ? 0xa855f7 : index >= 5 ? 0xfff6c8 : 0xffffff);
+        const speed = 3 + i * 2 + Math.random() * 2;
+        const travel = () => {
+          const dist = WORLD_W + 60 - cl.x;
+          this.tweens.add({ targets: cl, x: WORLD_W + 10, duration: (dist / speed) * 1000, onComplete: () => { if (!cl.active) return; cl.x = -24 * scale - 10; travel(); } });
+        };
+        travel();
+        this.stageObjects.push(cl);
+      }
+    }
     const looks: Record<number, { tint: number[]; up: boolean; freq: number; speed: number } | undefined> = {
       3: { tint: [0xffffff, 0x9fe8ff], up: true, freq: 900, speed: 6 },
       4: { tint: [0xc59bff, 0xffd23f], up: true, freq: 420, speed: 8 },
@@ -259,6 +302,17 @@ export class StreetScene extends Phaser.Scene {
   }
 
   private ambient() {
+    // A small flock now and then in the daytime classes.
+    const st = this.stageIndex;
+    if (st >= 1 && st <= 6 && !this.reducedMotion() && Math.random() < 0.18) {
+      const y = 10 + Math.random() * 30;
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      for (let i = 0; i < 3; i++) {
+        const b = this.add.image(dir > 0 ? -12 - i * 9 : WORLD_W + 12 + i * 9, y + (i % 2) * 4, 'bird').setDepth(4).setFlipX(dir < 0);
+        this.tweens.add({ targets: b, x: b.x + dir * (WORLD_W + 60), duration: 6000, onComplete: () => { this.tweens.killTweensOf(b); b.destroy(); } });
+        this.tweens.add({ targets: b, scaleY: 0.4, duration: 180, yoyo: true, repeat: -1 });
+      }
+    }
     if (this.pigeon && Math.random() < 0.5) {
       this.pigeon.setTexture(this.pigeon.texture.key === 'pigeon' ? 'pigeon2' : 'pigeon');
       if (Math.random() < 0.3) this.pigeon.setFlipX(!this.pigeon.flipX);

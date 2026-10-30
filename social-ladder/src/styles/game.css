@@ -1,32 +1,36 @@
 /* THE SOCIAL LADDER — interface styles. Pixel-UI built on the "Ladder 40" palette. */
 :root {
-  /* Arcade palette: saturated colours with strong contrast. */
-  --ink: #120a24;
-  --night: #1f1340;
-  --plum: #3a2670;
-  --dusk: #5b2f86;
-  --cream: #fff4c2;
+  /* Arcade palette. Each colour has one job:
+     yellow = money/rewards, green = purchases/success, cyan/purple/blue = special effects,
+     orange/red = critical events, pink = rare/secret. */
+  --navy: #10152e;
+  --ink: #0b0f22;
+  --night: #182050;
+  --plum: #2c2f78;
+  --dusk: #4a2f9a;
+  --cream: #fff6c8;
   --white: #ffffff;
-  --gold: #ffd23f;
-  --gold-dark: #c98a00;
-  --sun: #ffe066;
-  --pink: #ff4fa3;
-  --teal: #2ee6c8;
-  --red: #ff3d3d;
-  --green: #3dff7a;
-  --orange: #ff8c1a;
-  --cyan: #29f0ff;
-  --electric: #2f8bff;
-  --violet: #a259ff;
-  --muted: #c0b3e6;
-  --accent: #c8a165;
-  --accent-dark: #6b4f2a;
+  --gold: #ffe44d;
+  --gold-dark: #c79a00;
+  --sun: #ffe44d;
+  --pink: #ff3dad;
+  --teal: #22e6e0;
+  --red: #ff3b3b;
+  --green: #39f56a;
+  --orange: #ff7a18;
+  --cyan: #22e6e0;
+  --electric: #168bff;
+  --violet: #a855f7;
+  --muted: #b8c0ee;
+  --accent: #ff9f43;
+  --accent-dark: #8a3f0a;
   /* Per-class backdrop, overridden by .stage-* below. */
-  --bg-a: #1b1430;
-  --bg-b: #2a1d4a;
-  --panel: color-mix(in srgb, var(--accent) 10%, #22174a);
-  --panel-2: color-mix(in srgb, var(--accent) 14%, #2e2060);
-  --line: color-mix(in srgb, var(--accent) 45%, #5a44b0);
+  --bg-a: #10152e;
+  --bg-b: #2a2f78;
+  --panel: linear-gradient(160deg, color-mix(in srgb, var(--accent) 14%, #1a2156), #141a40);
+  --panel-solid: color-mix(in srgb, var(--accent) 10%, #18204e);
+  --panel-2: color-mix(in srgb, var(--accent) 12%, #232c6a);
+  --line: color-mix(in srgb, var(--accent) 40%, #3d4bb8);
   --font-pixel: 'Press Start 2P', ui-monospace, monospace;
   --font-body: 'Pixelify Sans', system-ui, sans-serif;
   --px: 2px;
@@ -80,15 +84,39 @@ h3 { font-size: 10px; margin: 14px 0 8px; color: var(--cream); }
     linear-gradient(180deg, var(--bg-b), var(--bg-a) 60%);
   background-attachment: fixed;
 }
-/* Each social class has its own world colour: grey-brown poverty up to cosmic cyan. */
-.app.stage-survival { --bg-a: #1a1612; --bg-b: #3a3028; }
-.app.stage-working { --bg-a: #161c30; --bg-b: #2d3a63; }
-.app.stage-lowerMiddle { --bg-a: #10261c; --bg-b: #1f5a45; }
-.app.stage-middle { --bg-a: #0f2240; --bg-b: #1f5a9a; }
-.app.stage-wealth { --bg-a: #1d1038; --bg-b: #4a2a8a; }
-.app.stage-extreme { --bg-a: #231806; --bg-b: #6a4a0c; }
-.app.stage-absurd { --bg-a: #2a0a22; --bg-b: #7a1d5c; }
-.app.stage-cosmic { --bg-a: #04141f; --bg-b: #0d4a5e; }
+/* Each social class has its own world colour: modest dusk up to cosmic. */
+.app.stage-survival { --bg-a: #161a3a; --bg-b: #5a3550; }
+.app.stage-working { --bg-a: #10152e; --bg-b: #1d4fa8; }
+.app.stage-lowerMiddle { --bg-a: #0d2238; --bg-b: #17806a; }
+.app.stage-middle { --bg-a: #0e2350; --bg-b: #1a8ab8; }
+.app.stage-wealth { --bg-a: #1f0f52; --bg-b: #7a35d0; }
+.app.stage-extreme { --bg-a: #2a1a08; --bg-b: #b8860b; }
+.app.stage-absurd { --bg-a: #300a3a; --bg-b: #c4207e; }
+.app.stage-cosmic { --bg-a: #050d2a; --bg-b: #127a9a; }
+
+/* Living backdrop: slow colour blobs and rising pixel dust on two composited layers (transform-only). */
+.app { position: relative; isolation: isolate; }
+.app::before, .app::after { content: ''; position: fixed; pointer-events: none; z-index: -1; }
+.app::before {
+  inset: -25%;
+  background:
+    radial-gradient(closest-side, color-mix(in srgb, var(--accent) 38%, transparent), transparent) 10% 20% / 45% 45% no-repeat,
+    radial-gradient(closest-side, rgba(168, 85, 247, 0.28), transparent) 85% 30% / 50% 50% no-repeat,
+    radial-gradient(closest-side, rgba(22, 139, 255, 0.25), transparent) 40% 85% / 55% 55% no-repeat;
+  animation: drift 38s ease-in-out infinite alternate;
+}
+.app::after {
+  left: 0; top: 0; width: 3px; height: 3px; background: transparent;
+  box-shadow:
+    5vw 20vh rgba(255, 228, 77, 0.5), 14vw 70vh rgba(34, 230, 224, 0.45), 23vw 40vh rgba(255, 61, 173, 0.4), 31vw 90vh rgba(255, 255, 255, 0.35),
+    39vw 15vh rgba(168, 85, 247, 0.45), 47vw 60vh rgba(255, 228, 77, 0.4), 56vw 35vh rgba(34, 230, 224, 0.4), 64vw 80vh rgba(255, 255, 255, 0.3),
+    72vw 25vh rgba(255, 122, 24, 0.45), 81vw 55vh rgba(57, 245, 106, 0.4), 89vw 10vh rgba(255, 255, 255, 0.35), 96vw 75vh rgba(168, 85, 247, 0.4),
+    9vw 120vh rgba(255, 228, 77, 0.5), 27vw 150vh rgba(34, 230, 224, 0.45), 44vw 130vh rgba(255, 61, 173, 0.4), 60vw 170vh rgba(255, 255, 255, 0.35),
+    76vw 140vh rgba(168, 85, 247, 0.45), 92vw 160vh rgba(57, 245, 106, 0.4);
+  animation: dust 60s linear infinite;
+}
+@keyframes drift { from { transform: translate(-4%, -3%) rotate(0deg); } to { transform: translate(4%, 3%) rotate(8deg); } }
+@keyframes dust { from { transform: translateY(0); } to { transform: translateY(-100vh); } }
 
 .fx-layer { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 90; image-rendering: pixelated; }
 
@@ -238,7 +266,7 @@ h3 { font-size: 10px; margin: 14px 0 8px; color: var(--cream); }
 .ability-name { font-size: 13px; font-weight: 600; }
 .ability-cd { font-family: var(--font-pixel); font-size: 8px; color: var(--teal); }
 .ability.cooling .ability-cd { color: var(--muted); }
-.ability.ready { background: color-mix(in srgb, var(--accent) 45%, var(--plum)); box-shadow: 0 4px 0 var(--ink), 0 0 0 2px var(--gold); }
+.ability.ready { background: color-mix(in srgb, var(--accent) 28%, #232c6a); box-shadow: 0 4px 0 var(--ink), 0 0 0 2px var(--gold); }
 .ability.ready:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
 .ability-shade { position: absolute; right: 0; top: 0; bottom: 0; background: rgba(0, 0, 0, 0.35); }
 
@@ -503,3 +531,79 @@ button.card-main:not(:disabled):active { transform: translateY(1px); }
   .toast { padding: 6px 10px; }
   .toast-text { display: none; }
 }
+
+/* ——— Living interface ——— */
+/* Progress bars: a light sweep runs along the fill and its leading edge glows. */
+.progress-fill, .combo-fill { position: relative; overflow: hidden; }
+.progress-fill::after, .combo-fill::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 24px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: sweep 1.6s steps(16) infinite;
+}
+.progress-fill { box-shadow: inset 0 -3px 0 var(--gold-dark), 2px 0 8px rgba(255, 228, 77, 0.6); transition: width 0.25s ease-out; }
+@keyframes sweep { from { transform: translateX(-30px); } to { transform: translateX(600px); } }
+
+/* Newly unlocked cards flash once; bought cards pop (the pop itself is a Web Animation). */
+.fresh { animation: freshReveal 0.9s steps(6); }
+@keyframes freshReveal {
+  0% { filter: brightness(2.2) saturate(1.6); transform: scale(0.96); }
+  30% { filter: brightness(1.5); transform: scale(1.02); }
+  100% { filter: none; transform: none; }
+}
+.card.fresh, .upgrade.fresh { box-shadow: 0 0 0 2px var(--cyan), 0 0 16px rgba(34, 230, 224, 0.6); }
+
+/* Tabs: icon pops when a tab becomes active. */
+.tab.active img { animation: iconPop 0.25s ease-out; }
+.tab:active img { transform: scale(0.85); }
+@keyframes iconPop { 0% { transform: scale(0.7) rotate(-12deg); } 60% { transform: scale(1.25) rotate(6deg); } 100% { transform: none; } }
+
+/* Combo ≥ 25: the button gets a pulsing cyan aura. */
+.big-button.combo-aura::after {
+  content: ''; position: absolute; inset: -10px; pointer-events: none;
+  box-shadow: 0 0 0 3px var(--cyan), 0 0 24px 6px rgba(34, 230, 224, 0.65);
+  animation: auraPulse 0.6s ease-in-out infinite alternate;
+}
+.big-button.combo-aura.combo-50::after { box-shadow: 0 0 0 3px var(--pink), 0 0 0 6px var(--cyan), 0 0 34px 10px rgba(168, 85, 247, 0.75); }
+@keyframes auraPulse { from { opacity: 0.55; } to { opacity: 1; } }
+.combo.hot .combo-label { color: var(--gold); animation: blink 0.4s steps(2) infinite; }
+
+/* Toasts slide in and out. */
+.toast.leaving { animation: slideOut 0.2s ease-in forwards; }
+@keyframes slideOut { to { transform: translateX(40px); opacity: 0; } }
+
+/* Short full-screen celebration band (promotions, achievements, secrets, big combos). Never blocks input. */
+.celebration { position: fixed; inset: 0; z-index: 85; pointer-events: none; display: grid; place-items: center; overflow: hidden; }
+.celebration-tint { position: absolute; inset: 0; background: var(--cel-a); opacity: 0; animation: celTint 1.1s ease-out forwards; }
+.celebration-band {
+  position: relative; width: 100%; padding: 18px 16px; text-align: center;
+  background: linear-gradient(90deg, transparent, var(--cel-a) 12%, var(--cel-b) 50%, var(--cel-a) 88%, transparent);
+  box-shadow: 0 -4px 0 var(--ink), 0 4px 0 var(--ink);
+  animation: celBand 1.1s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+.celebration.short .celebration-band, .celebration.short .celebration-tint { animation-duration: 0.85s; }
+.celebration-kicker { font-family: var(--font-pixel); font-size: 10px; color: var(--ink); letter-spacing: 3px; }
+.celebration-title {
+  font-family: var(--font-pixel); font-size: clamp(16px, 4.2vw, 34px); color: var(--white); margin-top: 8px; line-height: 1.2;
+  text-shadow: 3px 3px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink);
+  animation: celTitle 1.1s ease-out forwards;
+}
+.celebration-sub { font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 6px; }
+.celebration.rank { --cel-a: #ff7a18; --cel-b: #ffe44d; }
+.celebration.achievement { --cel-a: #c79a00; --cel-b: #ffe44d; }
+.celebration.rare { --cel-a: #a855f7; --cel-b: #ff3dad; }
+.celebration.rare .celebration-kicker, .celebration.rare .celebration-sub { color: var(--white); }
+.celebration.combo { --cel-a: #168bff; --cel-b: #22e6e0; }
+@keyframes celTint { 0% { opacity: 0; } 15% { opacity: 0.22; } 100% { opacity: 0; } }
+@keyframes celBand {
+  0% { transform: scaleY(0) translateX(-30%); opacity: 0; }
+  18% { transform: scaleY(1.1) translateX(0); opacity: 1; }
+  28% { transform: scaleY(1); }
+  80% { transform: none; opacity: 1; }
+  100% { transform: translateX(30%) scaleY(0.6); opacity: 0; }
+}
+@keyframes celTitle { 0% { transform: scale(2.2); } 22% { transform: scale(0.94); } 32% { transform: scale(1.04); } 45%, 100% { transform: none; } }
+
+.app.reduced-motion::before, .app.reduced-motion::after { animation: none; }
+@media (prefers-reduced-motion: reduce) { .app::before, .app::after { animation: none; } }
+.celebration.static .celebration-band, .celebration.static .celebration-title { animation: none !important; }
+.celebration.static .celebration-tint { display: none; }

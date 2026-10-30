@@ -44,18 +44,18 @@ export const TIER_FX: Record<Tier, TierFx> = {
 
 /** Arcade colours shared by the canvas effects and the stylesheet. */
 export const FX = {
-  gold: '#ffd23f',
-  goldLight: '#fff3a3',
-  goldDark: '#c98a00',
-  orange: '#ff8c1a',
-  red: '#ff3d3d',
-  green: '#3dff7a',
-  cyan: '#29f0ff',
-  electric: '#2f8bff',
-  violet: '#a259ff',
-  pink: '#ff4fa3',
+  gold: '#ffe44d',
+  goldLight: '#fff6b0',
+  goldDark: '#c79a00',
+  orange: '#ff7a18',
+  red: '#ff3b3b',
+  green: '#39f56a',
+  cyan: '#22e6e0',
+  electric: '#168bff',
+  violet: '#a855f7',
+  pink: '#ff3dad',
   white: '#ffffff',
-  ink: '#120a24',
+  ink: '#10152e',
 } as const;
 
 const prefersReduced = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

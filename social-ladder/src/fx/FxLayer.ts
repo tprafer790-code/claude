@@ -36,6 +36,20 @@ interface FloatText {
   key?: string;
 }
 
+/** A reward coin travelling along a curve to a counter (e.g. the money display). */
+interface Flyer {
+  sx: number;
+  sy: number;
+  cx: number;
+  cy: number;
+  tx: number;
+  ty: number;
+  age: number;
+  life: number;
+  color: string;
+  size: number;
+}
+
 interface Ring {
   x: number;
   y: number;
@@ -83,6 +97,7 @@ export interface TextOptions {
 
 const MAX_TEXTS = 28;
 const MAX_RINGS = 20;
+const MAX_FLYERS = 40;
 
 export class FxLayer {
   private canvas: HTMLCanvasElement | null = null;
@@ -94,6 +109,9 @@ export class FxLayer {
   private texts: FloatText[] = [];
   private rings: Ring[] = [];
   private flashes: Flash[] = [];
+  private flyers: Flyer[] = [];
+  /** Called when a flying coin reaches its target (used to pulse the counter). */
+  onArrive: (() => void) | null = null;
   private raf = 0;
   private last = 0;
   private maxParticles = 700;
@@ -122,6 +140,7 @@ export class FxLayer {
     this.texts.length = 0;
     this.rings.length = 0;
     this.flashes.length = 0;
+    this.flyers.length = 0;
   }
 
   private resize = () => {
@@ -154,6 +173,29 @@ export class FxLayer {
         gravity: o.gravity ?? 420,
         drag: o.drag ?? 1.5,
         star: Math.random() < (o.stars ?? 0),
+      });
+    }
+    this.start();
+  }
+
+  /** Sends `count` coins from (x, y) to (tx, ty) along staggered arcs. */
+  fly(x: number, y: number, tx: number, ty: number, count = 1, color = '#ffe44d', size = 5) {
+    if (!this.ctx) return;
+    for (let i = 0; i < count && this.flyers.length < MAX_FLYERS; i++) {
+      const sx = x + (Math.random() - 0.5) * 30;
+      const sy = y + (Math.random() - 0.5) * 20;
+      this.flyers.push({
+        sx,
+        sy,
+        // Control point bulges sideways so coins swoop rather than slide.
+        cx: (sx + tx) / 2 + (Math.random() - 0.5) * 220,
+        cy: Math.min(sy, ty) - 40 - Math.random() * 80,
+        tx,
+        ty,
+        age: -i * 0.04,
+        life: this.reduced ? 0.25 : 0.5 + Math.random() * 0.15,
+        color,
+        size,
       });
     }
     this.start();
@@ -289,6 +331,31 @@ export class FxLayer {
     }
     ps.length = n;
 
+    // Coins flying to a counter.
+    for (let i = this.flyers.length - 1; i >= 0; i--) {
+      const f = this.flyers[i];
+      f.age += dt;
+      if (f.age < 0) continue;
+      const k = f.age / f.life;
+      if (k >= 1) {
+        this.flyers.splice(i, 1);
+        this.onArrive?.();
+        continue;
+      }
+      const e = k * k * (3 - 2 * k);
+      const u = 1 - e;
+      const x = Math.round(u * u * f.sx + 2 * u * e * f.cx + e * e * f.tx);
+      const y = Math.round(u * u * f.sy + 2 * u * e * f.cy + e * e * f.ty);
+      const s = Math.max(2, Math.round(f.size * (1 - k * 0.4)));
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = FX.goldDark;
+      ctx.fillRect(x - s / 2 + 1, y - s / 2 + 1, s, s);
+      ctx.fillStyle = f.color;
+      ctx.fillRect(x - s / 2, y - s / 2, s, s);
+      ctx.fillStyle = FX.white;
+      ctx.fillRect(x - s / 2, y - s / 2, Math.max(1, s / 3), Math.max(1, s / 3));
+    }
+
     // Floating text.
     for (let i = this.texts.length - 1; i >= 0; i--) {
       const t = this.texts[i];
@@ -323,7 +390,7 @@ export class FxLayer {
     }
     ctx.globalAlpha = 1;
 
-    if (ps.length || this.texts.length || this.rings.length || this.flashes.length) this.raf = requestAnimationFrame(this.frame);
+    if (ps.length || this.texts.length || this.rings.length || this.flashes.length || this.flyers.length) this.raf = requestAnimationFrame(this.frame);
     else {
       ctx.clearRect(0, 0, this.w, this.h);
       this.raf = 0;
@@ -332,7 +399,7 @@ export class FxLayer {
 
   /** For tests and diagnostics. */
   stats() {
-    return { particles: this.particles.length, texts: this.texts.length, rings: this.rings.length, running: this.raf !== 0 };
+    return { particles: this.particles.length, texts: this.texts.length, rings: this.rings.length, flyers: this.flyers.length, running: this.raf !== 0 };
   }
 }
 

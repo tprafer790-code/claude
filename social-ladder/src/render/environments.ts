@@ -213,7 +213,7 @@ function survival(ctx: Ctx, r: () => number): StageScene {
 }
 
 function working(ctx: Ctx, r: () => number): StageScene {
-  sky(ctx, [P.concreteLight, P.steel, P.sky2, P.cream], 0, 80);
+  sky(ctx, [P.sky1, P.sky2, '#ffd9a8', P.cream], 0, 80); // morning shift: bright dawn instead of grey smog
   sunDisc(ctx, 34, 22, 6, P.cream, P.sky2);
   cloud(ctx, 70, 14, 1, P.white);
   cloud(ctx, 150, 26, 1, P.steel);

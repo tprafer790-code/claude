@@ -5,6 +5,8 @@
 type Wave = OscillatorType;
 
 const NOTE = (semitonesFromA4: number) => 440 * Math.pow(2, semitonesFromA4 / 12);
+/** Small random pitch drift (±3%) so repeated effects never sound identical. */
+const vary = () => 1 + (Math.random() - 0.5) * 0.06;
 // Semitone offsets from A4
 const N: Record<string, number> = { C4: -9, D4: -7, E4: -5, F4: -4, G4: -2, A4: 0, B4: 2, C5: 3, D5: 5, E5: 7, F5: 8, G5: 10, A5: 12, B5: 14, C6: 15, E6: 19, G6: 22 };
 
@@ -113,8 +115,9 @@ export class AudioManager {
     if (t - this.lastClick < 0.03) return;
     this.lastClick = t;
     const semis = Math.min(combo, 48) / 4; // rises with the combo
-    this.tone(NOTE(N.C5 + semis), t, 0.05, 'square', 0.12);
-    this.tone(NOTE(N.C5 + semis + 12), t + 0.01, 0.03, 'triangle', 0.08);
+    const v = vary();
+    this.tone(NOTE(N.C5 + semis) * v, t, 0.05, 'square', 0.12);
+    this.tone(NOTE(N.C5 + semis + 12) * v, t + 0.01, 0.03, 'triangle', 0.08);
   }
 
   /**
@@ -129,10 +132,11 @@ export class AudioManager {
     this.lastClick = t;
     const soft = since < 0.25 ? 0.5 : 1;
     const p = Math.min(1.5, power);
-    if (soft === 1) this.tone(160 * p, t, 0.14, 'sine', 0.35, undefined, 45);
+    const v = vary();
+    if (soft === 1) this.tone(160 * p * v, t, 0.14, 'sine', 0.35, undefined, 45);
     this.noise(t, 0.07, 0.22 * soft * p, 1800);
-    this.tone(NOTE(N.E6), t + 0.005, 0.06, 'square', 0.12 * soft);
-    this.tone(NOTE(N.B5), t + 0.04, 0.09, 'square', 0.1 * soft, undefined, NOTE(N.E6 + 5));
+    this.tone(NOTE(N.E6) * v, t + 0.005, 0.06, 'square', 0.12 * soft);
+    this.tone(NOTE(N.B5) * v, t + 0.04, 0.09, 'square', 0.1 * soft, undefined, NOTE(N.E6 + 5) * v);
     if (p > 1 && soft === 1) [0, 7, 12].forEach((s, i) => this.tone(NOTE(N.E5 + s + 12), t + 0.07 + i * 0.03, 0.07, 'triangle', 0.1));
   }
 
@@ -140,7 +144,16 @@ export class AudioManager {
   comboMilestone(level: number) {
     if (!this.ctx) return;
     const t = this.now;
+    if (level === 0) {
+      this.tone(NOTE(N.G5), t, 0.05, 'triangle', 0.1);
+      return;
+    }
     [0, 4, 7, 12].forEach((s, i) => this.tone(NOTE(N.C5 + level * 2 + s), t + i * 0.04, 0.08, 'square', 0.1));
+    if (level >= 3) {
+      [12, 16, 19, 24].forEach((s, i) => this.tone(NOTE(N.C5 + level * 2 + s), t + 0.16 + i * 0.04, 0.1, 'triangle', 0.1));
+      this.noise(t + 0.16, 0.25, 0.05, 8000);
+    }
+    if (level >= 4) this.fanfare();
   }
 
   /** Major achievement fanfare. */
@@ -166,9 +179,10 @@ export class AudioManager {
   purchase(tier = 0) {
     if (!this.ctx) return;
     const t = this.now;
+    const v = vary();
     this.noise(t, 0.05, 0.15, 4000);
-    this.tone(NOTE(N.G5), t + 0.02, 0.06, 'square', 0.13);
-    this.tone(NOTE(N.C6), t + 0.08, 0.14, 'square', 0.13);
+    this.tone(NOTE(N.G5) * v, t + 0.02, 0.06, 'square', 0.13);
+    this.tone(NOTE(N.C6) * v, t + 0.08, 0.14, 'square', 0.13);
     if (tier >= 2) this.tone(NOTE(N.G6), t + 0.14, 0.12, 'triangle', 0.1);
     if (tier >= 3) this.tone(NOTE(N.C6 + 12), t + 0.2, 0.16, 'triangle', 0.08);
   }
