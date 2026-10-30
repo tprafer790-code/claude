@@ -28,6 +28,8 @@ export interface Settings {
   language: 'en' | 'es';
   playerName: string;
   reducedMotion: boolean;
+  /** Brief viewport shake on critical clicks (also disabled by reduced motion). */
+  screenShake: boolean;
 }
 
 export interface Stats {
@@ -156,7 +158,7 @@ export function createInitialState(now = Date.now()): GameState {
 
     createdAt: now,
     lastSavedAt: now,
-    settings: { sfxVolume: 0.7, musicVolume: 0.35, muted: false, language: detectLanguage(), playerName: '', reducedMotion: false },
+    settings: { sfxVolume: 0.7, musicVolume: 0.35, muted: false, language: detectLanguage(), playerName: '', reducedMotion: false, screenShake: true },
     tutorialDone: false,
     seenEvents: {},
   };

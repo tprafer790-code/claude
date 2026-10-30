@@ -4,6 +4,7 @@ import { STAGE_BY_ID } from '../data/stages';
 import { applyEquipment, buildHeroSheet, HERO_FRAMES, HERO_H, HERO_W, STAGE_LOOKS } from './hero';
 import { buildProp, buildStage, GROUND_Y, WORLD_H, WORLD_W, type PropId, type StageScene } from './environments';
 import { P } from './palette';
+import { reducedMotion, shakeAllowed } from '../fx/intensity';
 
 const HERO_X = 84;
 const GROUND_RIDES: PropId[] = ['chainless_bicycle', 'secondhand_bicycle', 'motorcycle', 'used_car', 'sports_car'];
@@ -15,7 +16,7 @@ const GROUND_RIDES: PropId[] = ['chainless_bicycle', 'secondhand_bicycle', 'moto
  */
 export class StreetScene extends Phaser.Scene {
   private engine!: GameEngine;
-  private reducedMotion = () => this.engine.state.settings.reducedMotion;
+  private reducedMotion = () => reducedMotion(this.engine.state.settings);
   private stageIndex = -1;
   private lookKey = '';
   private rideKey = '';
@@ -216,6 +217,45 @@ export class StreetScene extends Phaser.Scene {
       this.tweens.add({ targets: star, alpha: { from: 0, to: 1 }, duration: 600, yoyo: true, repeat: -1, delay: Math.random() * 1500, repeatDelay: 1200 });
       this.stageObjects.push(star);
     }
+    this.addStageAtmosphere(index);
+  }
+
+  /**
+   * Richer classes get richer air: drifting motes, falling gold glints, cosmic
+   * dust, and a glowing aura behind the hero from Wealth upwards.
+   */
+  private addStageAtmosphere(index: number) {
+    const rm = this.reducedMotion();
+    const looks: Record<number, { tint: number[]; up: boolean; freq: number; speed: number } | undefined> = {
+      3: { tint: [0xffffff, 0x9fe8ff], up: true, freq: 900, speed: 6 },
+      4: { tint: [0xc59bff, 0xffd23f], up: true, freq: 420, speed: 8 },
+      5: { tint: [0xffd23f, 0xfff3a3, 0xffffff], up: false, freq: 260, speed: 22 },
+      6: { tint: [0xff4fa3, 0xffd23f, 0xa259ff], up: true, freq: 220, speed: 14 },
+      7: { tint: [0x29f0ff, 0xffffff, 0xa259ff], up: false, freq: 160, speed: 10 },
+    };
+    const look = looks[index];
+    if (look && !rm) {
+      const em = this.add.particles(0, 0, 'confetti', {
+        x: { min: 0, max: WORLD_W },
+        y: look.up ? { min: GROUND_Y - 10, max: GROUND_Y } : { min: -4, max: 0 },
+        speedY: look.up ? { min: -look.speed * 1.5, max: -look.speed } : { min: look.speed, max: look.speed * 1.6 },
+        speedX: { min: -4, max: 4 },
+        lifespan: look.up ? 5000 : 7000,
+        alpha: { start: 0.9, end: 0 },
+        scale: { min: 0.5, max: 1 },
+        tint: look.tint,
+        frequency: look.freq,
+        blendMode: Phaser.BlendModes.ADD,
+      }).setDepth(6);
+      this.stageObjects.push(em);
+    }
+    if (index >= 4) {
+      const stage = STAGE_BY_ID[this.engine.rank.stage];
+      const color = Phaser.Display.Color.HexStringToColor(stage.accent).color;
+      const aura = this.add.ellipse(HERO_X, GROUND_Y - 16, 34 + (index - 4) * 6, 46 + (index - 4) * 6, color, 0.22).setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
+      if (!rm) this.tweens.add({ targets: aura, alpha: { from: 0.12, to: 0.32 }, scale: { from: 0.95, to: 1.08 }, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      this.stageObjects.push(aura);
+    }
   }
 
   private ambient() {
@@ -240,9 +280,9 @@ export class StreetScene extends Phaser.Scene {
           this.hero.setFrame(3);
           this.workTimer = this.time.delayedCall(110, () => this.hero.setFrame(0));
         });
-        const n = e.crit ? 10 : 1 + Math.min(3, Math.floor(e.combo / 15));
+        const stageIdx = STAGE_BY_ID[this.engine.rank.stage].index;
+        const n = (e.crit ? 10 + stageIdx * 2 : 1 + Math.min(3, Math.floor(e.combo / 15))) + (stageIdx >= 4 ? 1 : 0);
         this.coins.explode(n, HERO_X + 6, GROUND_Y - 22);
-        if (e.crit && !this.reducedMotion()) this.cameras.main.shake(90, 0.008);
         break;
       }
       case 'promotion':
@@ -251,7 +291,7 @@ export class StreetScene extends Phaser.Scene {
         this.confetti.explode(e.stageChanged ? 90 : 30, HERO_X, GROUND_Y - 30);
         if (e.stageChanged && !this.reducedMotion()) {
           this.cameras.main.flash(500, 255, 241, 201);
-          this.cameras.main.shake(300, 0.01);
+          if (shakeAllowed(this.engine.state.settings)) this.cameras.main.shake(300, 0.01);
         }
         break;
       case 'purchase':

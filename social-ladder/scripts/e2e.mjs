@@ -25,6 +25,20 @@ async function run(name, viewport) {
   const money = await page.evaluate(() => window.__socialLadder.engine.state.money.toString());
   if (!(Number(money) > 0)) throw new Error(`[${name}] clicking produced no money (${money})`);
 
+  // Critical click: the play viewport shakes briefly and returns exactly to rest.
+  await page.evaluate(() => { const seq = [0, 0.99]; window.__socialLadder.engine.random = () => (seq.length ? seq.shift() : 0.99); });
+  await page.locator('.big-button').click();
+  const shaking = await page.evaluate(() => document.querySelector('.play').getAnimations().length);
+  await page.waitForTimeout(250);
+  const rest = await page.evaluate(() => getComputedStyle(document.querySelector('.play')).transform);
+  if (shaking < 1 || rest !== 'none') throw new Error(`[${name}] crit shake wrong (running=${shaking}, after=${rest})`);
+  // Reduced motion: no shake.
+  await page.evaluate(() => { const e = window.__socialLadder.engine; e.state.settings.reducedMotion = true; e.random = () => 0; e.changed(); });
+  await page.locator('.big-button').click();
+  const reduced = await page.evaluate(() => document.querySelector('.play').getAnimations().length);
+  if (reduced !== 0) throw new Error(`[${name}] shake ran with reduced motion on`);
+  await page.evaluate(() => { const e = window.__socialLadder.engine; e.state.settings.reducedMotion = false; e.random = Math.random; e.changed(); });
+
   // Buy the first business.
   await page.evaluate(() => window.__socialLadder.engine.buyBusiness('cans', 1));
   const owned = await page.evaluate(() => Object.values(window.__socialLadder.engine.state.businesses).reduce((a, b) => a + b, 0));
