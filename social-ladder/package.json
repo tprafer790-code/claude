@@ -1,18 +1,23 @@
 {
   "name": "the-social-ladder",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "THE SOCIAL LADDER — From Nothing to Everything. A 16-bit incremental social-climbing game.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:family": "tsc -b && vite build --mode family --outDir dist-family",
+    "build:crazygames": "tsc -b && vite build --mode crazygames --outDir dist-crazygames && node scripts/package-crazygames.mjs",
     "preview": "vite preview",
+    "preview:family": "vite preview --outDir dist-family",
     "typecheck": "tsc -b",
-    "test": "vitest run",
+    "test": "vitest run && vitest run --mode family && vitest run --mode crazygames tests/portal.test.ts",
     "test:watch": "vitest",
     "simulate": "vite-node scripts/simulate.ts",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "test:classic": "vitest run",
+    "test:family": "vitest run --mode family"
   },
   "dependencies": {
     "@fontsource/pixelify-sans": "^5.3.0",

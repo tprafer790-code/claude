@@ -1,4 +1,5 @@
 import type { Effect } from './types';
+import { FAMILY } from '../edition';
 
 /**
  * Parody political parties. The player votes when a life starts and again
@@ -76,7 +77,7 @@ export interface PartyDef {
   happenings: PartyHappening[];
 }
 
-export const PARTIES: PartyDef[] = [
+const CLASSIC_PARTIES: PartyDef[] = [
   {
     id: 'pesoe', name: 'PESOE', color: '#e3262f',
     desc: 'A social shield for everyone. The bill, too.',
@@ -196,6 +197,16 @@ export const PARTIES: PartyDef[] = [
     ],
   },
 ];
+
+/**
+ * The family edition keeps four parties with the same rules, renamed as
+ * fictional archetypes (their texts are in i18n/family.ts): the spender who
+ * hands out aid and raises prices (pesoe), the budget cutter (pox), the
+ * steady and slightly corrupt one (pepe) and the naive reformer (d22).
+ */
+export const FAMILY_PARTY_IDS = ['pesoe', 'pox', 'pepe', 'd22'];
+
+export const PARTIES: PartyDef[] = FAMILY ? CLASSIC_PARTIES.filter((p) => FAMILY_PARTY_IDS.includes(p.id)) : CLASSIC_PARTIES;
 
 export const PARTY_BY_ID: Record<string, PartyDef> = Object.fromEntries(PARTIES.map((p) => [p.id, p]));
 

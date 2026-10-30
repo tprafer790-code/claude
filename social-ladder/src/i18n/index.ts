@@ -2,11 +2,13 @@ import { en } from './en';
 import { es } from './es';
 import { applyContentLanguage } from './content';
 import { setNumberStyle } from '../core/bignum';
+import { FAMILY } from '../edition';
+import { FAMILY_UI_EN, FAMILY_UI_ES } from './family';
 
 export type Lang = 'en' | 'es';
 export type StringKey = keyof typeof en;
 
-const DICTS: Record<Lang, Partial<Record<StringKey, string>>> = { en, es };
+const DICTS: Record<Lang, Partial<Record<StringKey, string>>> = FAMILY ? { en: { ...en, ...FAMILY_UI_EN }, es: { ...es, ...FAMILY_UI_ES } } : { en, es };
 let current: Lang = 'en';
 
 export function setLanguage(lang: Lang) {
@@ -30,7 +32,7 @@ export function detectLanguage(): Lang {
  * Game content (ranks, objects, events...) is translated separately in content.ts.
  */
 export function t(key: StringKey, vars?: Record<string, string | number>): string {
-  let s = DICTS[current][key] ?? en[key] ?? key;
+  let s = DICTS[current][key] ?? DICTS.en[key] ?? key;
   if (vars) for (const k in vars) s = s.replaceAll(`{${k}}`, String(vars[k]));
   return s;
 }

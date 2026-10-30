@@ -2,6 +2,7 @@ import { ECONOMY } from '../config/economy';
 import { GameEngine, type OfflineSummary } from './engine';
 import { importSave, loadFrom, saveTo, SAVE_KEY, BACKUP_KEY, type KeyValueStore } from './persistence';
 import { createInitialState, type GameState } from './state';
+import { portal } from '../portal';
 
 /** Gap after which a frozen/background tab is treated as "time away". */
 const AWAY_THRESHOLD_MS = 5000;
@@ -19,13 +20,37 @@ function safeStorage(): KeyValueStore {
 }
 
 /**
+ * On a portal with cloud saves (the CrazyGames Data module), progress follows
+ * the player's account; if that store fails, the browser's storage takes over.
+ */
+function gameStorage(): KeyValueStore {
+  const local = safeStorage();
+  const cloud = portal.storage;
+  if (!cloud) return local;
+  const tryBoth = <T>(fn: (s: KeyValueStore) => T): T => {
+    try {
+      return fn(cloud);
+    } catch {
+      return fn(local);
+    }
+  };
+  return {
+    getItem: (k) => tryBoth((s) => s.getItem(k)),
+    setItem: (k, v) => tryBoth((s) => s.setItem(k, v)),
+    removeItem: (k) => tryBoth((s) => s.removeItem(k)),
+  };
+}
+
+/**
  * Browser runtime: owns the engine, the fixed-rate game loop, autosave and
  * offline/away detection. Kept separate from the engine so the engine stays
  * pure and testable.
  */
 export class Runtime {
   engine: GameEngine;
-  readonly store = safeStorage();
+  readonly store = gameStorage();
+  /** While true (an ad is playing) the game does not advance. */
+  paused = false;
   recoveredFromBackup = false;
   private lastTick = Date.now();
   private sinceSave = 0;
@@ -66,6 +91,7 @@ export class Runtime {
     const now = Date.now();
     const gap = now - this.lastTick;
     this.lastTick = now;
+    if (this.paused) return;
     if (gap > AWAY_THRESHOLD_MS) {
       // Tab was frozen or in background: credit it as offline time (with the same rules).
       const summary = this.engine.applyOffline(now - gap);

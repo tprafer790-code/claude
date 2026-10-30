@@ -42,6 +42,7 @@ import { nextHelp } from './help';
 import { LoginModal } from './modals/LoginModal';
 import { ChestModal } from './modals/ChestModal';
 import { LeagueResultModal } from './modals/LeagueResultModal';
+import { portal } from '../portal';
 import { flyToCash } from './components/FxOverlay';
 
 type Tab = 'business' | 'upgrades' | 'objects' | 'casino' | 'ladder' | 'goals' | 'legacy' | 'ranking';
@@ -76,6 +77,8 @@ function Game({ runtime }: { runtime: Runtime }) {
   const [jailed, setJailed] = useState<'status' | 'tax' | null>(null);
   const [fade, setFade] = useState(false);
   const [chestsOpen, setChestsOpen] = useState(false);
+  // The portal counts gameplay from the player's first input, not from load.
+  const [started, setStarted] = useState(false);
   const openMenu = (to?: Tab) => {
     if (to) setTab(to);
     setMenuOpen(true);
@@ -103,6 +106,17 @@ function Game({ runtime }: { runtime: Runtime }) {
     audio.setVolumes(s.settings.sfxVolume, s.settings.musicVolume, s.settings.muted);
   }, [s.settings.sfxVolume, s.settings.musicVolume, s.settings.muted]);
 
+  // The portal's mute setting wins over ours, and ads play in silence.
+  useEffect(() => {
+    audio.silence('portal', portal.muteAudio);
+    const offMute = portal.onMuteChange((m) => audio.silence('portal', m));
+    const offPause = portal.onPause((p) => audio.silence('ad', p));
+    return () => {
+      offMute();
+      offPause();
+    };
+  }, []);
+
   useEffect(() => {
     audio.setStage(STAGE_BY_ID[engine.rank.stage].index);
   }, [engine.rank.stage]);
@@ -118,7 +132,10 @@ function Game({ runtime }: { runtime: Runtime }) {
         case 'promotion': {
                     audio.promotion(e.stageChanged);
           // Ordinary promotions get the full-screen celebration band (FxOverlay); a new social class opens its modal.
-          if (e.stageChanged) setMajorPromo(e.to);
+          if (e.stageChanged) {
+            setMajorPromo(e.to);
+            portal.happytime();
+          }
           break;
         }
         case 'achievement': {
@@ -145,7 +162,7 @@ function Game({ runtime }: { runtime: Runtime }) {
         case 'opportunitySpawn': audio.opportunity(); break;
         case 'opportunityCollect': audio.coin(); pushToast({ icon: 'gem', title: t('opportunityTitle'), text: e.text, tone: 'good' }); break;
         case 'mission': audio.coin(); pushToast({ icon: 'scroll', title: t('missionComplete'), text: `+${money(e.reward)}`, tone: 'good' }); break;
-        case 'prestige': audio.prestige(); pushToast({ icon: 'crown', title: t('newLifeTitle'), text: t('newLifeText', { n: e.gained }), tone: 'rare' }); break;
+        case 'prestige': void portal.midgame(); audio.prestige(); pushToast({ icon: 'crown', title: t('newLifeTitle'), text: t('newLifeText', { n: e.gained }), tone: 'rare' }); break;
         case 'ability': audio.coin(); break;
         case 'toast': pushToast({ icon: 'star', title: e.text, text: '', tone: e.tone === 'bad' ? 'info' : e.tone === 'rare' ? 'rare' : 'good' }); break;
         case 'vote': audio.fanfare(); break;
@@ -229,10 +246,17 @@ function Game({ runtime }: { runtime: Runtime }) {
   const busy = !!offline || majorPromo !== null || settingsOpen || eventOpen || chestsOpen;
   const leagueResult = s.league.lastResult && !s.flags[`league_${s.league.lastResult.week}`];
   const modal = busy ? null : jailed ? 'jail' : s.pendingVote ? 'vote' : s.login.pendingDay ? 'login' : leagueResult ? 'league' : s.family.pending ? 'romance' : s.pendingDilemma ? 'dilemma' : help ? 'help' : null;
-  const unlockAudio = () => audio.unlock();
+  const unlockAudio = () => {
+    audio.unlock();
+    setStarted(true);
+  };
+  const playing = started && !menuOpen && !busy && !modal && !fade;
+  useEffect(() => portal.setPlaying(playing), [playing]);
+  // Natural breaks for a mid-game ad: after a new social class, jail or a new life.
+  const breakAd = () => void portal.midgame();
 
   return (
-    <div className={`app stage-${stage.id} ${reducedMotion(s.settings) ? 'reduced-motion' : ''}`} data-tier={tierForStage(stage.index)} style={{ ['--accent' as string]: stage.accent, ['--accent-dark' as string]: stage.accentDark }} onPointerDown={unlockAudio}>
+    <div className={`app stage-${stage.id} ${reducedMotion(s.settings) ? 'reduced-motion' : ''}`} data-tier={tierForStage(stage.index)} style={{ ['--accent' as string]: stage.accent, ['--accent-dark' as string]: stage.accentDark }} onPointerDown={unlockAudio} onKeyDown={() => setStarted(true)}>
       <TopBar onSettings={() => setSettingsOpen(true)} onMenu={() => setMenuOpen((o) => !o)} menuOpen={menuOpen} menuAlert={menuAlert} />
       <main className="layout">
         <section className="play">
@@ -269,11 +293,11 @@ function Game({ runtime }: { runtime: Runtime }) {
       <FxOverlay />
       <Celebration />
       {offline && <OfflineModal summary={offline} onClose={() => setOffline(null)} />}
-      {majorPromo !== null && <PromotionModal rankIndex={majorPromo} onClose={() => setMajorPromo(null)} />}
+      {majorPromo !== null && <PromotionModal rankIndex={majorPromo} onClose={() => { setMajorPromo(null); breakAd(); }} />}
       {eventOpen && s.pendingEvent && <EventModal onClose={() => setEventOpen(false)} />}
       {settingsOpen && <SettingsModal runtime={runtime} onClose={() => setSettingsOpen(false)} />}
       {fade && <div className="fade-black" onAnimationEnd={() => setFade(false)}><span>{t('fadeText')}</span></div>}
-      {modal === 'jail' && <JailModal reason={jailed ?? 'status'} onClose={() => setJailed(null)} />}
+      {modal === 'jail' && <JailModal reason={jailed ?? 'status'} onClose={() => { setJailed(null); breakAd(); }} />}
       {chestsOpen && <ChestModal onClose={() => setChestsOpen(false)} />}
       {modal === 'vote' && <VoteModal />}
       {modal === 'login' && <LoginModal />}

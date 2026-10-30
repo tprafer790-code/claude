@@ -25,6 +25,8 @@ export class AudioManager {
   sfxVolume = 0.7;
   musicVolume = 0.35;
   muted = false;
+  /** Muted from outside the game: while an ad plays, or by the portal's setting. */
+  private silenced = new Set<string>();
 
   /** Must be called from a user gesture (browsers block autoplay). */
   unlock() {
@@ -55,10 +57,17 @@ export class AudioManager {
     this.applyVolumes();
   }
 
+  /** Silences all audio for a reason (e.g. 'ad'), until released. */
+  silence(reason: string, on: boolean) {
+    if (on) this.silenced.add(reason);
+    else this.silenced.delete(reason);
+    this.applyVolumes();
+  }
+
   private applyVolumes() {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this.master.gain.setTargetAtTime(this.muted ? 0 : 1, t, 0.02);
+    this.master.gain.setTargetAtTime(this.muted || this.silenced.size ? 0 : 1, t, 0.02);
     this.sfxGain.gain.setTargetAtTime(this.sfxVolume * 0.5, t, 0.02);
     this.musicGain.gain.setTargetAtTime(this.musicVolume * 0.22, t, 0.05);
   }

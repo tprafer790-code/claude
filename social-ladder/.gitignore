@@ -1,5 +1,8 @@
 node_modules
 dist
+dist-family
+dist-crazygames
+release
 .env
 .env.local
 *.log

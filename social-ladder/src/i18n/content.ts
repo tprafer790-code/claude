@@ -18,6 +18,8 @@ import { PARTNERS } from '../data/romance';
 import { QUIPS } from '../data/quips';
 import type { Lang } from './index';
 import { CONTENT_ES, PERK_DESC_ES, BUSINESS_UPGRADE_ES } from './content.es';
+import { FAMILY } from '../edition';
+import { FAMILY_CONTENT_EN, FAMILY_CONTENT_ES } from './family';
 
 /**
  * Content translation. Game data stays authored in English; every translatable
@@ -73,7 +75,12 @@ function walk(node: unknown, path: string, out: Map<string, Slot>) {
   if (!node || typeof node !== 'object') return;
   const obj = node as Record<string, unknown>;
   for (const [k, v] of Object.entries(obj)) {
-    if (typeof v === 'string' && TEXT_KEYS.has(k)) out.set(`${path}.${k}`, { owner: obj, key: k, original: v });
+    if (typeof v === 'string' && TEXT_KEYS.has(k)) {
+      // In the family edition its English replaces the classic text as the source.
+      const original = (FAMILY && FAMILY_CONTENT_EN[`${path}.${k}`]) || v;
+      obj[k] = original;
+      out.set(`${path}.${k}`, { owner: obj, key: k, original });
+    }
     else if (k === 'upgradeNames' && Array.isArray(v)) v.forEach((s, i) => out.set(`${path}.${k}.${i}`, { owner: v as Node, key: i, original: s as string }));
     else if (v && typeof v === 'object') walk(v, `${path}.${k}`, out);
   }
@@ -97,7 +104,7 @@ let applied: Lang = 'en';
 export function applyContentLanguage(lang: Lang) {
   if (lang === applied) return;
   contentPaths();
-  const dict = lang === 'es' ? CONTENT_ES : {};
+  const dict = lang === 'es' ? (FAMILY ? { ...CONTENT_ES, ...FAMILY_CONTENT_ES } : CONTENT_ES) : {};
   for (const [path, s] of slots!) (s.owner as Record<string | number, unknown>)[s.key] = dict[path] ?? s.original;
 
   // Amounts depend on the number style, so they are filled in after translation.
@@ -123,3 +130,6 @@ export function applyContentLanguage(lang: Lang) {
   }
   applied = lang;
 }
+
+// The family edition's English is in place before anything reads the data.
+if (FAMILY) contentPaths();

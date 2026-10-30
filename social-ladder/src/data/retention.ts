@@ -1,3 +1,5 @@
+import { FAMILY } from '../edition';
+
 /**
  * Reasons to come back: daily login streak, random chests and the weekly
  * league. Balance lives here; the engine applies it.
@@ -84,12 +86,22 @@ export const LEAGUE = {
   refFloor: 100,
 };
 
-const BOT_NAMES = [
+const CLASSIC_BOT_NAMES = [
   'PacoTiburón', 'LaDuquesa', 'ElBrokerDeVallecas', 'Marisa_Inversora', 'Chema1975', 'TíoGilito_ES', 'LaReinaDelBizum', 'ToniCriptos',
   'Concha_Lujo', 'Ramiro_Okupa', 'ElDelYate', 'Paquita_Influencer', 'JuanjoPelotazo', 'Merche_Mercadona', 'FranCuñado', 'LaLoliDeMarbella',
   'Borja_Mari', 'Cayetana_Real', 'ElNotas', 'Pili_Pilates', 'DonDinero', 'Manolo_Bombo', 'SoniaStartup', 'RafaRascas',
   'Encarni_Ahorra', 'ElPocero', 'Nachete_VIP', 'Vane_Viajes', 'Kiko_Tasador', 'Lupe_Lotería',
 ];
+
+/** International handles for the family edition. */
+const FAMILY_BOT_NAMES = [
+  'SharkTank_Sam', 'TheDuchess', 'BrokerBob', 'Maria_Invests', 'Chad1999', 'PennyPincher', 'QueenOfCoupons', 'CryptoKev',
+  'LuxuryLuna', 'Couchsurf_Ray', 'YachtGuy', 'InfluencerIvy', 'DealMaker_Dan', 'BargainBeth', 'UncleKnowItAll', 'MoneyMoe',
+  'Lord_Lambo', 'Lady_Pearls', 'TheBigNotes', 'PilatesPia', 'MrDollar', 'BudgetBen', 'StartupSara', 'ScratchyRalph',
+  'SavingsSue', 'PlumberPete', 'VIP_Vinnie', 'WanderlustVal', 'AppraiserAl', 'LuckyLou',
+];
+
+const BOT_NAMES = FAMILY ? FAMILY_BOT_NAMES : CLASSIC_BOT_NAMES;
 
 /** Monday (local date, YYYY-MM-DD) of the week that contains `date`. */
 export function weekOf(date: string): string {

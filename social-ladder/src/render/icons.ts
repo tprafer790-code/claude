@@ -1,5 +1,6 @@
 import type { IconId } from '../data/types';
 import { P } from './palette';
+import { FAMILY } from '../edition';
 
 /**
  * 10×10 pixel icons for the interface, using the master palette.
@@ -44,7 +45,10 @@ export const ICONS: Record<IconId, string[]> = {
   cap: ['..kkkkkk..', '.kekeekek.', 'keekkkkeek', 'kekyyyykek', 'kekyrrykek', 'kekyrrykek', 'kekyyyykek', 'keekkkkeek', '.kekeekek.', '..kkkkkk..'],
   book: ['..........', '.kkkkkkkk.', '.kbbbbbbmk', '.kbyyyybmk', '.kbbbbbbmk', '.kbbbbbbmk', '.kbbbbbbmk', '.kbbbbbbmk', '.kkkkkkkkk', '..........'],
   suit: ['..kk..kk..', '.kBBkkBBk.', 'kBBBkwkBBk', 'kBBkwrwkBk', 'kBBkwrwkBk', 'kBBkwrwkBk', 'kBBBkrkBBk', 'kBBBBkBBBk', 'kBBBBkBBBk', 'kkkkkkkkkk'],
-  wine: ['....kk....', '....kk....', '....kk....', '...kRRk...', '..kRRRRk..', '..kRiRRk..', '..kRRRRk..', '..kRRRRk..', '..kRRRRk..', '..kkkkkk..'],
+  // The family edition swaps the wine bottle for a wedge of cheese.
+  wine: FAMILY
+    ? ['..........', '......kk..', '....kksyk.', '..kksyyyk.', 'kksyyyyyyk', 'kyyyyyyyyk', 'kyYyyyyYyk', 'kyyyyYyyyk', 'kYYYYYYYYk', 'kkkkkkkkkk']
+    : ['....kk....', '....kk....', '....kk....', '...kRRk...', '..kRRRRk..', '..kRiRRk..', '..kRRRRk..', '..kRRRRk..', '..kRRRRk..', '..kkkkkk..'],
   jet: ['..........', 'k.........', 'kk........', 'kwk.......', 'kwwkkkkkk.', 'kwwwlwlwwk', '.kkwwwwwwk', '....kwwk..', '....kkk...', '..........'],
   yacht: ['....k.....', '....kk....', '...kwwk...', '..kwlwlk..', '.kkkkkkkk.', 'kwwwwwwwwk', '.kBBBBBBk.', '..kkkkkk..', 'llllllllll', '.l..l..l..'],
   art: ['kkkkkkkkkk', 'kyyyyyyyyk', 'kylllllsyk', 'kylllllllk', 'kygllllllk', 'kyggglllyk', 'kygggggyyk', 'kyyyyyyyyk', 'kkkkkkkkkk', '..........'],

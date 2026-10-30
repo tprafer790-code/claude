@@ -426,4 +426,5 @@ export const es: Partial<Record<keyof typeof en, string>> = {
   help_happenings_t: "La vida con cada Gobierno",
   help_happenings: "Cada par de minutos el Gobierno hace algo absurdo: a veces te paga, a veces te cuesta dinero. Cada partido tiene los suyos, y todos tienen momentos buenos y malos.",
   voteTax: "🏛 IRPF {rate} % · inspectores ×{zeal}",
+  adDouble: '▶ Ver un anuncio: duplicarlo',
 };

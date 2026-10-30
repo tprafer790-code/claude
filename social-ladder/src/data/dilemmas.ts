@@ -1,4 +1,5 @@
 import type { EventAction, EventChoice, EventOutcome } from './events';
+import { FAMILY } from '../edition';
 
 /**
  * Moral dilemmas: dark-humour yes/no pop-ups that interrupt play. Most trade
@@ -22,7 +23,7 @@ const ok = (text: string, ...actions: EventAction[]): EventOutcome => ({ chance:
 const odds = (chance: number, text: string, ...actions: EventAction[]): EventOutcome => ({ chance, text, actions });
 const status = (add: number): EventAction => ({ type: 'status', add });
 
-export const DILEMMAS: DilemmaDef[] = [
+const CLASSIC_DILEMMAS: DilemmaDef[] = [
   {
     id: 'kidnap', title: 'Kidnap a Child?', minRank: 0, maxRank: 37, weight: 10,
     text: 'A posh kid is lost in the park. His watch is worth more than your whole life. A man in sunglasses whispers: "His parents would pay anything."',
@@ -144,5 +145,37 @@ export const DILEMMAS: DilemmaDef[] = [
     no: { label: 'NO, one of me is enough', hint: 'Nothing happens.', outcomes: [ok('The world sighs with relief.')] },
   },
 ];
+
+/**
+ * Family edition: the kidnapping and the organ sale are replaced by dilemmas
+ * with the same timing, odds and rewards.
+ */
+const FAMILY_REPLACEMENTS: Record<string, DilemmaDef> = {
+  kidnap: {
+    id: 'fat_wallet', title: 'Keep the Fat Wallet?', minRank: 0, maxRank: 37, weight: 10,
+    text: 'A wallet bursting with cash lies on a park bench. The ID inside belongs to a man with a yacht, three surnames and no idea it is gone.',
+    yes: { label: 'YES, keep it', hint: 'Lots of cash. -3 status: every promotion will cost much more.', outcomes: [
+      odds(3, 'Nobody saw you. The man buys another wallet. And another yacht.', { type: 'money', seconds: 900, capFraction: 0.3 }, status(-3)),
+      odds(1, 'Nobody saw you... except the wallet. It had a GPS tracker.', { type: 'money', seconds: 900, capFraction: 0.3 }, status(-3), { type: 'delayed', seconds: 60, label: 'Police investigation', outcomes: [
+        odds(1, 'The police follow the beeping straight to your sofa. The fine is not cheap.', { type: 'money', fraction: -0.35 }),
+        odds(1, 'The tracker battery dies first. You walk free.'),
+      ] }),
+    ] },
+    no: { label: 'NO, return it', hint: '+1 status. Maybe a tip.', outcomes: [
+      odds(3, 'You return it. The owner thanks you and gives you an expired yoghurt.', status(1), { type: 'money', seconds: 30 }),
+      odds(1, 'He is a millionaire! A reward, and your photo in the newspaper.', status(2), { type: 'money', seconds: 300 }),
+    ] },
+  },
+  kidney: {
+    id: 'chicken_suit', title: 'Wear the Chicken Suit Forever?', minRank: 0, maxRank: 22, weight: 7, once: true,
+    text: 'A fast-food chain offers good money if you wear its giant chicken costume. Everywhere. For the rest of this life.',
+    yes: { label: 'YES, cluck cluck', hint: 'Lots of money now. Clicks -15% for the rest of this life.', outcomes: [
+      ok('You are rich and covered in yellow feathers. The wings are terrible for clicking.', { type: 'money', seconds: 600, capFraction: 0.2 }, { type: 'permanent', effect: { kind: 'clickMult', value: 0.85 }, label: 'Chicken wings' }),
+    ] },
+    no: { label: 'NO, keep my dignity', hint: 'Nothing happens. Your dignity thanks you.', outcomes: [ok('You keep your dignity. It sends you a thank-you card.')] },
+  },
+};
+
+export const DILEMMAS: DilemmaDef[] = FAMILY ? CLASSIC_DILEMMAS.map((d) => FAMILY_REPLACEMENTS[d.id] ?? d) : CLASSIC_DILEMMAS;
 
 export const DILEMMA_BY_ID: Record<string, DilemmaDef> = Object.fromEntries(DILEMMAS.map((d) => [d.id, d]));
