@@ -1,8 +1,14 @@
 import { Decimal } from '../core/bignum';
+import { FAMILY } from '../edition';
+import { PARTY_BY_ID } from '../data/parties';
+import { DILEMMA_BY_ID } from '../data/dilemmas';
+import { PARTNER_BY_ID } from '../data/romance';
 import { createInitialState, SAVE_VERSION, type GameState } from './state';
 
-export const SAVE_KEY = 'the-social-ladder:save';
-export const BACKUP_KEY = 'the-social-ladder:save-backup';
+// Each edition keeps its own save: their parties and dilemmas differ.
+const PREFIX = FAMILY ? 'the-social-ladder-family' : 'the-social-ladder';
+export const SAVE_KEY = `${PREFIX}:save`;
+export const BACKUP_KEY = `${PREFIX}:save-backup`;
 
 const DECIMAL_PATHS: ReadonlyArray<readonly string[]> = [['money'], ['earnedThisLife'], ['lifetimeEarned'], ['stats', 'bestLifeEarned'], ['rival', 'worth'], ['league', 'earned'], ['league', 'ref'], ['tax', 'hidden'], ['tax', 'paid']];
 
@@ -42,6 +48,10 @@ export function deserialize(json: string): GameState {
   }
   merged.version = SAVE_VERSION;
   if (!Number.isFinite(merged.rankIndex) || merged.rankIndex < 0) merged.rankIndex = 0;
+  // A save imported from the other edition may name content this one lacks.
+  if (merged.government.party && !PARTY_BY_ID[merged.government.party]) merged.government.party = null;
+  if (merged.pendingDilemma && !DILEMMA_BY_ID[merged.pendingDilemma]) merged.pendingDilemma = null;
+  if (merged.family.pending && !PARTNER_BY_ID[merged.family.pending]) merged.family.pending = null;
   return merged;
 }
 

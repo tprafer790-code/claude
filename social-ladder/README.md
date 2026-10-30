@@ -24,6 +24,8 @@ npm run dev          # http://localhost:5173
 | `npm test` | Tests unitarios (motor, contenido, guardado, validación de puntuaciones) |
 | `npm run typecheck` | Solo comprobación de tipos |
 | `npm run simulate -- <horas> <clics/s> [rangoPrestigio]` | Bot de equilibrado: juega de forma voraz y muestra cuándo alcanza cada rango |
+| `npm run build:family` | Build de la **edición familiar internacional** en `dist-family/` |
+| `npm run test:classic` / `npm run test:family` | Tests de una sola edición (`npm test` ejecuta las dos) |
 | `npm run e2e` | Prueba de humo en navegador (Playwright) contra `npm run preview` |
 
 El juego funciona **completo en modo local** sin configurar nada: guardado en `localStorage`, progreso offline, prestigio, etc. Las funciones online (ranking, nube) solo aparecen activas si se configura Supabase.
@@ -100,6 +102,22 @@ Todo el equilibrado está en `src/data/retention.ts`.
 **Ritmo aproximado** (simulador, 1 clic/s, sin prestigio): Millonario ≈ 21 min, Multimillonario ≈ 43 min, Isla privada ≈ 1 h 50 min, Dueño de un país ≈ 5 h. Las etapas absurda y cósmica están pensadas para alcanzarse con varias reinvenciones. Todo es ajustable en `src/config/economy.ts`.
 
 ---
+
+### 2.4 Dos ediciones: clásica y familiar
+
+El mismo código genera dos juegos. La edición se fija al compilar (`src/edition.ts`, `vite --mode family`).
+
+| | Clásica (`npm run build`) | Familiar internacional (`npm run build:family`) |
+|---|---|---|
+| Público | España, itch.io o web propia | Poki, CrazyGames (todas las edades) |
+| Partidos | PESOE, Podremos, POX, PEPE, RESTAR, Democracia 22 | 4 arquetipos ficticios con las mismas reglas: Plenty Party (ayudas e inflación), Scissors Party (recortes), Same Old Party (sobres), Fresh Broom Party (reformista) |
+| Dilemas | Todos | «Secuestrar a un niño» y «Vender un riñón» se sustituyen por «Quedarte la cartera gorda» y «Disfraz de pollo para siempre», con las mismas probabilidades y premios |
+| Citas e hijos | Sí | No existen |
+| Casino | Rasca y gana y ruleta | «Buscavidas»: caja sorpresa del rastro y presentación de startups, con las mismas probabilidades |
+| Otros | Vino, rivales con guiños a personas reales | Queso en lugar de vino, rivales genéricos, sin palabrotas |
+| Guardado | `the-social-ladder:save` | `the-social-ladder-family:save` |
+
+Los textos propios de la edición familiar están en `src/i18n/family.ts` (inglés y español). `tests/family.test.ts` comprueba que cada texto tiene traducción y que ninguna palabra vetada (partidos reales, casino, secuestro, vino…) llega al jugador en ningún idioma.
 
 ## 3. Supabase (opcional): ranking, cuentas y guardado en la nube
 
@@ -197,6 +215,8 @@ Principios: el motor es determinista e independiente del DOM (reloj y aleatoried
 - Música: un bucle chiptune procedural por etapa; no hay pistas compuestas.
 - Equilibrado de las etapas absurda/cósmica validado solo con el simulador, no con jugadores.
 - Sin PWA/instalación offline ni notificaciones push.
+- Edición familiar: el texto de la edición clásica sigue dentro del paquete JavaScript aunque el jugador nunca lo ve.
+- Edición familiar: falta integrar el SDK de Poki o CrazyGames antes de enviarla (anuncios, eventos de partida).
 - Navegadores probados: Chromium (escritorio y móvil emulado). Safari y Firefox sin verificar.
 - Los efectos se han medido en Chromium sin aceleración gráfica; falta comprobarlos en un móvil real de gama baja.
 

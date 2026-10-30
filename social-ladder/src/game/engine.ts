@@ -441,7 +441,7 @@ export class GameEngine {
     if (ab) cands.push({ kind: 'ability', name: ab.name, icon: ab.icon, rank: ab.rankReq });
     const cls = RANKS.findIndex((r, i) => i > s.rankIndex && r.stage !== this.rank.stage);
     if (cls > 0) cands.push({ kind: 'class', name: STAGE_BY_ID[RANKS[cls].stage].name, icon: 'crown', rank: cls });
-    if (s.rankIndex < ROMANCE.minRank) cands.push({ kind: 'dates', name: '', icon: 'wine', rank: ROMANCE.minRank });
+    if (PARTNERS.length && s.rankIndex < ROMANCE.minRank) cands.push({ kind: 'dates', name: '', icon: 'wine', rank: ROMANCE.minRank });
     if (s.rankIndex < ECONOMY.prestige.minRankIndex && s.prestige.count === 0) cands.push({ kind: 'prestige', name: '', icon: 'star', rank: ECONOMY.prestige.minRankIndex });
     if (!cands.length) return null;
     const next = cands.reduce((a, b) => (b.rank < a.rank ? b : a));
@@ -895,7 +895,7 @@ export class GameEngine {
         this.emit({ type: 'childSupport', amount, children: f.children });
       }
     }
-    if (f.pending || s.pendingVote || s.pendingDilemma || s.rankIndex < ROMANCE.minRank) return;
+    if (!PARTNERS.length || f.pending || s.pendingVote || s.pendingDilemma || s.rankIndex < ROMANCE.minRank) return;
     if (s.status < ROMANCE.minStatus && !s.equipped.ride) return;
     f.encounterIn -= dt;
     if (f.encounterIn > 0) return;
@@ -904,7 +904,8 @@ export class GameEngine {
     f.pending = PARTNERS[Math.floor(this.random() * PARTNERS.length)].id;
     this.emit({ type: 'encounterStart', partner: f.pending });
   }
-  startEncounter(partner = PARTNERS[0].id) {
+  startEncounter(partner = PARTNERS[0]?.id) {
+    if (!partner) return;
     this.state.family.pending = partner;
     this.emit({ type: 'encounterStart', partner });
     this.changed();

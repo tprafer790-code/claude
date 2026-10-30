@@ -7,12 +7,16 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:family": "tsc -b && vite build --mode family --outDir dist-family",
     "preview": "vite preview",
+    "preview:family": "vite preview --outDir dist-family",
     "typecheck": "tsc -b",
-    "test": "vitest run",
+    "test": "vitest run && vitest run --mode family",
     "test:watch": "vitest",
     "simulate": "vite-node scripts/simulate.ts",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "test:classic": "vitest run",
+    "test:family": "vitest run --mode family"
   },
   "dependencies": {
     "@fontsource/pixelify-sans": "^5.3.0",

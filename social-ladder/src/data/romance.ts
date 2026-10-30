@@ -1,3 +1,5 @@
+import { FAMILY } from '../edition';
+
 /**
  * Romantic encounters: an adult you meet invites you home. The night itself
  * fades to black; only the consequences are shown. Protection is the safe
@@ -33,7 +35,8 @@ export interface PartnerDef {
   text: string;
 }
 
-export const PARTNERS: PartnerDef[] = [
+/** Dates do not exist in the family edition. */
+export const PARTNERS: PartnerDef[] = FAMILY ? [] : [
   { id: 'lucia', name: 'Lucía, 34', text: 'You meet Lucía, a 34-year-old architect, at a charity dinner. She laughs at all your jokes, even the bad ones. At midnight she invites you up for "a last drink".' },
   { id: 'marta', name: 'Marta, 29', text: 'Marta, 29, a firefighter, rescues your cat from a tree. Over coffee there is a spark that is not a fire hazard. She invites you to her place.' },
   { id: 'elena', name: 'Elena, 41', text: 'Elena, 41, a divorce lawyer, sits next to you at the bar. "I know a good investment when I see one," she says, and takes you home.' },

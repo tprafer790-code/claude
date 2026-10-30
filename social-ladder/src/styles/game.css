@@ -705,6 +705,18 @@ button.card-main:not(:disabled):active { transform: translateY(1px); }
 .scratch-cell { width: 64px; height: 64px; border: none; display: grid; place-items: center; font-size: 30px; background: repeating-linear-gradient(45deg, #b8bcc8 0 6px, #9aa0b0 6px 12px); color: var(--ink); font-family: var(--font-pixel); }
 .scratch-cell.open { background: var(--white); animation: popIn 0.2s steps(4); }
 .scratch.done.prize-jackpot { animation: critPulse 0.4s steps(2) 6; }
+.scratch.box { background: linear-gradient(135deg, #c8955a, #8a5a2b); }
+.scratch.box .scratch-cell { background: repeating-linear-gradient(90deg, #d9b07a 0 8px, #c99a60 8px 10px); }
+.scratch.box .scratch-cell.open { background: var(--white); }
+.pitch-chart { position: relative; align-self: stretch; height: 90px; display: flex; align-items: flex-end; gap: 4px; padding: 6px; background: #0f1426; box-shadow: 0 0 0 2px var(--line); }
+.pitch-chart span { flex: 1; background: var(--teal, #2bb3a8); transition: height 0.3s steps(3); }
+.pitch-chart.pending span { animation: pitchBar 0.6s steps(3) infinite alternate; }
+.pitch-chart.up span { background: var(--green); }
+.pitch-chart.down span { background: var(--pink); height: 15% !important; }
+.pitch-verdict { position: absolute; inset: 0; display: grid; place-items: center; font-size: 40px; }
+@keyframes pitchBar { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
+.pitch-chart span { transform-origin: bottom; }
+@media (prefers-reduced-motion: reduce) { .pitch-chart.pending span { animation: none; } }
 .roulette { position: relative; width: 210px; height: 210px; align-self: center; }
 .roulette-wheel { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 6px #6b3f12, 0 0 0 9px var(--gold), 0 6px 0 9px var(--ink); }
 .roulette-num { position: absolute; left: 50%; top: 50%; width: 18px; margin-left: -9px; margin-top: -7px; text-align: center; font-size: 9px; font-weight: 700; color: var(--white); transform-origin: 50% 50%; }

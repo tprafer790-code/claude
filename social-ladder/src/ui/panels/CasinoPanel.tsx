@@ -10,6 +10,7 @@ import { t, type StringKey } from '../../i18n';
 import { celebrate } from '../components/Celebration';
 import { flyToCash } from '../components/FxOverlay';
 import { useEngine } from '../hooks';
+import { FAMILY } from '../../edition';
 
 /** European wheel order, clockwise from 0. */
 const WHEEL = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
@@ -65,7 +66,7 @@ export function CasinoPanel() {
       {!open ? <p className="casino-banned">{t('casinoBanned', { min: STATUS_MIN })}</p> : (
         <>
           <ScratchCard reduced={reduced} />
-          <Roulette reduced={reduced} />
+          {FAMILY ? <Pitch reduced={reduced} /> : <Roulette reduced={reduced} />}
         </>
       )}
     </div>
@@ -110,7 +111,7 @@ function ScratchCard({ reduced }: { reduced: boolean }) {
       <h3>{t('scratchTitle')}</h3>
       <p className="hint">{t('scratchDesc', { price: money(price) })}</p>
       {card && (
-        <div ref={ref} className={`scratch ${done ? `done prize-${card.prize}` : ''}`} onPointerDown={() => (scratching.current = true)} onPointerUp={() => (scratching.current = false)} onPointerLeave={() => (scratching.current = false)}>
+        <div ref={ref} className={`scratch ${FAMILY ? 'box' : ''} ${done ? `done prize-${card.prize}` : ''}`} onPointerDown={() => (scratching.current = true)} onPointerUp={() => (scratching.current = false)} onPointerLeave={() => (scratching.current = false)}>
           {card.grid.map((sym, i) => (
             <button key={i} className={`scratch-cell ${revealed[i] ? 'open' : ''}`} onPointerDown={() => reveal(i)} onPointerEnter={() => scratching.current && reveal(i)} aria-label={revealed[i] ? sym : '?'}>
               <span>{revealed[i] ? sym : '?'}</span>
@@ -192,6 +193,63 @@ function Roulette({ reduced }: { reduced: boolean }) {
         ))}
       </div>
       <button className="btn primary" disabled={spinning || stake.lt(1)} onClick={spin}>{t('spin', { stake: money(stake) })}</button>
+    </section>
+  );
+}
+
+/**
+ * Family edition: the roulette's odds behind a startup pitch. "Solid" and
+ * "trendy" are the two colours (×2), a moonshot is a random number (×36) and
+ * the zero is a market crash. A little market chart plays while it resolves.
+ */
+function Pitch({ reduced }: { reduced: boolean }) {
+  const engine = useEngine();
+  const [bet, setBet] = useState<'red' | 'black' | 'moon'>('red');
+  const [stakeIdx, setStakeIdx] = useState(0);
+  const [pending, setPending] = useState(false);
+  const [result, setResult] = useState<RouletteResult | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const fraction = CASINO.stakes[stakeIdx];
+  const stake = engine.rouletteStake(fraction);
+
+  const invest = () => {
+    const r = engine.spinRoulette(bet === 'moon' ? 1 + Math.floor(Math.random() * 36) : bet, fraction);
+    if (!r) return;
+    setResult(null);
+    setPending(true);
+    window.setTimeout(() => {
+      setPending(false);
+      setResult(r);
+      engine.settleCasino();
+      casinoFx(ref.current, r.win, r.win && bet === 'moon', t('rouletteWin', { n: r.n, amount: money(r.payout) }), reduced);
+    }, reduced ? 200 : 1800);
+    audio.event();
+  };
+
+  const crash = result && !result.win && result.n === 0 && bet !== 'moon';
+  const resultText = result ? (result.win ? t('rouletteWin', { n: result.n, amount: money(result.payout) }) : t('rouletteLose', { n: result.n, stake: money(result.stake) }) + (crash ? ` ${t('rouletteZero')}` : '')) : '';
+
+  return (
+    <section className="casino-game">
+      <h3>{t('rouletteTitle')}</h3>
+      <p className="hint">{t('rouletteDesc')}</p>
+      <div ref={ref} className={`pitch-chart ${pending ? 'pending' : ''} ${result ? (result.win ? 'up' : 'down') : ''}`} aria-hidden="true">
+        {Array.from({ length: 12 }, (_, i) => <span key={i} style={{ animationDelay: `${(i * 0.13) % 0.6}s`, height: `${20 + ((i * 37) % 60)}%` }} />)}
+        {result && !pending && <b className="pitch-verdict">{result.win ? '📈' : crash ? '💥' : '📉'}</b>}
+      </div>
+      {result && <p className={`casino-result ${result.win ? 'win' : 'lose'}`}>{resultText}</p>}
+      <div className="roulette-bets subtabs">
+        <button className={bet === 'red' ? 'on' : ''} onClick={() => setBet('red')}>{t('red')} ×2</button>
+        <button className={bet === 'black' ? 'on' : ''} onClick={() => setBet('black')}>{t('black')} ×2</button>
+        <button className={bet === 'moon' ? 'on' : ''} onClick={() => setBet('moon')}>{t('number')} ×36</button>
+      </div>
+      <div className="roulette-bets subtabs">
+        <span className="muted">{t('stake')}:</span>
+        {CASINO.stakes.map((f, i) => (
+          <button key={f} className={stakeIdx === i ? 'on' : ''} onClick={() => setStakeIdx(i)}>{Math.round(f * 100)}%</button>
+        ))}
+      </div>
+      <button className="btn primary" disabled={pending || stake.lt(1)} onClick={invest}>{t('spin', { stake: money(stake) })}</button>
     </section>
   );
 }
