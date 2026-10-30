@@ -12,6 +12,9 @@ import { useEngine } from '../hooks';
 import { celebrate } from './Celebration';
 import { flyToCash } from './FxOverlay';
 import { Icon } from './Icon';
+import { PARTY_BY_ID, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../../data/parties';
+import { Decimal } from '../../core/bignum';
+import { HEALTH } from '../../data/social';
 
 /** Combo milestones: 5 small, 10 burst, 25 aura, 50 arcade spectacle, 100 celebration. */
 const COMBO_MILESTONES = [5, 10, 25, 50, 100];
@@ -149,6 +152,8 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
         ))}
       </div>
 
+      <ClimbHooks />
+
       <div className="click-zone">
         <button
           ref={buttonRef}
@@ -207,6 +212,64 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Government, rival and mystery safe: what is happening around the climb. */
+function ClimbHooks() {
+  const engine = useEngine();
+  const s = engine.state;
+  const g = s.government;
+  const party = g.party ? PARTY_BY_ID[g.party] : null;
+  const rival = engine.rivalDef();
+  const gap = s.rival.worth.sub(s.earnedThisLife);
+  const rivalFrac = s.rival.worth.gt(0) ? Math.min(1, s.earnedThisLife.div(s.rival.worth).toNumber()) : 0;
+  const [vc, vn] = engine.vaultProgress();
+  const notices = party?.notices?.length ?? 0;
+  const aidCd = engine.aidCooldown();
+  const healCost = engine.healCost();
+  return (
+    <div className="climb-hooks">
+      {party && (
+        <div className="gov-pill" style={{ ['--party' as string]: party.color }} title={party.phases[engine.phase()].text}>
+          <b>{t('governs', { name: party.name })}</b> · {party.phases[engine.phase()].title}
+          {g.okupa && <span className="gov-extra">{t('okupaPill', { n: g.notices, max: notices })}</span>}
+          {g.subsidies > 0 && <span className="gov-extra">{t('inflationPill', { pct: Math.round(SUBSIDY_INFLATION * Math.min(g.subsidies, SUBSIDY_INFLATION_CAP) * 100) })}</span>}
+          <span className="gov-timer">{t('electionIn', { t: fmtDuration(Math.max(0, g.electionIn)) })}</span>
+          {party.aid && (
+            <button className="aid-btn" disabled={aidCd > 0} onClick={() => engine.requestAid()}>
+              {aidCd > 0 ? t('aidWait', { s: Math.ceil(aidCd) }) : `${t('aidButton')} · ${party.aid.label}`}
+            </button>
+          )}
+        </div>
+      )}
+      {(engine.inDanger() || s.health < HEALTH.max) && (
+        <div className={`health ${engine.inDanger() ? 'danger' : ''}`}>
+          <span className="health-label">♥ {t('health')}</span>
+          <div className="health-bar">
+            <div className="health-fill" style={{ width: `${s.health}%` }} />
+            <span>{Math.round(s.health)}/{HEALTH.max}</span>
+          </div>
+          <button className="aid-btn heal-btn" disabled={s.money.lt(healCost)} onClick={() => engine.heal()}>{t('healButton', { cost: money(healCost) })}</button>
+        </div>
+      )}
+      <div className="rival" title={rival.desc}>
+        <span className="rival-tag">{t('rival')}</span>
+        <span className="rival-name">{rival.name}</span>
+        <div className="rival-bar">
+          <div className="rival-fill" style={{ width: `${(rivalFrac * 100).toFixed(1)}%` }} />
+          <span>{money(s.rival.worth)} · {t('rivalAhead', { amount: money(Decimal.max(gap, 0)) })}</span>
+        </div>
+      </div>
+      <div className={`vault ${vc / vn > 0.85 ? 'near' : ''}`} data-tip={t('vaultTip')}>
+        <span className="vault-icon" aria-hidden="true">🔒</span>
+        <span className="vault-label">{t('vault')}</span>
+        <div className="vault-bar">
+          <div className="vault-fill" style={{ width: `${((vc / vn) * 100).toFixed(1)}%` }} />
+        </div>
+        <span className="vault-count">{vc}/{vn}</span>
+      </div>
     </div>
   );
 }

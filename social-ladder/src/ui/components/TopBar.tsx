@@ -1,4 +1,4 @@
-import { money } from '../../core/bignum';
+import { decimal, money } from '../../core/bignum';
 import { ITEM_BY_ID } from '../../data/items';
 import { STAGE_BY_ID } from '../../data/stages';
 import { t } from '../../i18n';
@@ -6,8 +6,9 @@ import { useEngine } from '../hooks';
 import { Icon } from './Icon';
 import { AnimatedMoney } from './AnimatedMoney';
 import { reducedMotion, TIER_FX, tierForStage } from '../../fx/intensity';
+import { statusTitle } from '../../data/social';
 
-export function TopBar({ onSettings }: { onSettings: () => void }) {
+export function TopBar({ onSettings, onMenu, menuOpen, menuAlert }: { onSettings: () => void; onMenu: () => void; menuOpen: boolean; menuAlert: boolean }) {
   const engine = useEngine();
   const s = engine.state;
   const d = engine.derived;
@@ -46,13 +47,16 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
           <span className="stage-chip">{stage.name}</span>
           <span className="rank-name">{rank.name}</span>
           <span className="rank-num">#{s.rankIndex + 1}</span>
+          <span className={`status-chip ${s.status > 0 ? 'up' : s.status < 0 ? 'down' : ''}`} data-tip={t('statusTip', { mult: decimal(engine.statusMult(), 2) })}>
+            {t('status')} {s.status > 0 ? '+' : ''}{Number.isInteger(s.status) ? s.status : decimal(s.status, 1)} · {statusTitle(s.status).name}
+          </span>
         </div>
         <div className="progress" data-tip={t('netWorthTip')}>
           <div className="progress-fill" style={{ width: `${(prog.fraction * 100).toFixed(1)}%` }} />
           <span className="progress-label">
             {next ? (
               <>
-                {t('netWorth')} {money(s.earnedThisLife)} / {money(next.req)} → <b>{next.name}</b>
+                {t('netWorth')} {money(s.earnedThisLife)} / {money(engine.rankReq(s.rankIndex + 1))} → <b>{next.name}</b>
               </>
             ) : (
               t('topOfLadder')
@@ -81,6 +85,10 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
         </button>
         <button className="icon-btn settings-btn" onClick={onSettings} aria-label={t('settings')}>
           <Icon id="tools" size={22} />
+        </button>
+        <button className={`icon-btn menu-btn ${menuOpen ? 'open' : ''}`} onClick={onMenu} aria-label={menuOpen ? t('menuClose') : t('menuOpen')} aria-expanded={menuOpen} title={t('shop')}>
+          <span className="burger" aria-hidden="true"><i /><i /><i /></span>
+          {menuAlert && !menuOpen && <i className="menu-dot" />}
         </button>
       </div>
     </header>

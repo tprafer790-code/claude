@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export type CelebrationKind = 'rank' | 'achievement' | 'rare' | 'combo';
+export type CelebrationKind = 'rank' | 'achievement' | 'rare' | 'combo' | 'evil' | 'vote';
 
 interface CelebrationData {
   kind: CelebrationKind;
@@ -12,7 +12,7 @@ interface CelebrationData {
 }
 
 // A bigger moment is never cut short by a smaller one that arrives right after it.
-const PRIORITY: Record<CelebrationKind, number> = { achievement: 1, combo: 2, rare: 3, rank: 4 };
+const PRIORITY: Record<CelebrationKind, number> = { achievement: 1, combo: 2, rare: 3, evil: 3, vote: 4, rank: 4 };
 const listeners = new Set<(c: CelebrationData) => void>();
 
 /** Shows a short, non-blocking full-screen celebration band. */

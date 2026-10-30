@@ -55,7 +55,7 @@ export function LadderPanel() {
                         {visible && <div className="rung-desc">{r.desc}</div>}
                         {visible && (
                           <div className="rung-meta">
-                            {t('netWorth')} {money(r.req)}
+                            {t('netWorth')} {money(engine.rankReq(i))}
                             {r.requiresItem && ` · ${t('needs')} ${ITEM_BY_ID[r.requiresItem].name}`}
                             {' · '}{t('rankIncome', { pct: Math.round(ECONOMY.rankIncomeBonus * 100) })}{r.bonusText ? ` · ${r.bonusText}` : ''}
                             {unlocks.length > 0 && <div className="rung-unlocks">{unlocks.join(' · ')}</div>}

@@ -40,7 +40,8 @@ export function ObjectsPanel() {
         <ul className="cards">
           {shop.map((it) => {
             const lockedByRank = s.rankIndex < it.rankReq;
-            const afford = s.money.gte(it.price);
+            const price = engine.itemPrice(it.id);
+            const afford = s.money.gte(price);
             const req = REQUIRED_FOR[it.id];
             return (
               <li key={it.id} data-fx={`item:${it.id}`} className={`card item rarity-${it.rarity} ${missing === it.id ? 'needed' : ''} ${afford && !lockedByRank ? 'afford' : ''} ${isFresh(`item:${it.id}`) ? 'fresh' : ''}`}>
@@ -54,7 +55,7 @@ export function ObjectsPanel() {
                     {!lockedByRank && <div className="card-meta">{it.effects.map((e) => effectText(e, true)).join(' · ')}{req ? ` · ${t('requiredFor', { rank: req })}` : ''}</div>}
                   </div>
                   <div className="card-side">
-                    <div className={`price ${afford ? '' : 'no'}`}>{money(it.price)}</div>
+                    <div className={`price ${afford ? '' : 'no'}`}>{money(price)}</div>
                   </div>
                 </button>
               </li>

@@ -19,5 +19,6 @@ export function effectText(e: Effect, additive = false): string {
     case 'opportunityRate': return t('fxOpp', { v: Math.round((1 - e.value) * 100) });
     case 'clickIpsPercent': return t('fxClickIps', { v: Math.round(e.value * 100) });
     case 'costDiscount': return t('fxDiscount', { v: Math.round((1 - e.value) * 100) });
+    case 'priceMult': return t(e.value >= 1 ? 'fxPriceUp' : 'fxPriceDown', { v: Math.abs(Math.round((e.value - 1) * 100)) });
   }
 }

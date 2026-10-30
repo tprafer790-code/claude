@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { ITEM_BY_ID } from '../../data/items';
 import { STAGE_BY_ID } from '../../data/stages';
 import { fx } from '../../fx/FxLayer';
-import { FX, reducedMotion, TIER_FX, tierForStage } from '../../fx/intensity';
+import { FX, reducedMotion, shakeAllowed, TIER_FX, tierForStage } from '../../fx/intensity';
 import { t } from '../../i18n';
 import { useEngineStatic } from '../hooks';
 import { ACHIEVEMENT_BY_ID } from '../../data/achievements';
@@ -12,6 +12,9 @@ import { SECRET_BY_ID } from '../../data/secrets';
 import { ECONOMY } from '../../config/economy';
 import { resetUnlocked, trackUnlocked } from '../../fx/fresh';
 import { celebrate } from './Celebration';
+import { PARTY_BY_ID } from '../../data/parties';
+import { shake } from '../../fx/shake';
+import { money } from '../../core/bignum';
 
 const RAINBOW = [FX.red, FX.orange, FX.gold, FX.green, FX.cyan, FX.electric, FX.violet, FX.pink];
 
@@ -164,6 +167,90 @@ export function FxOverlay() {
           }
           const a = ACHIEVEMENT_BY_ID[e.id];
           celebrate({ kind: 'achievement', kicker: major ? t('fxMajorAchievement', { n: count }) : t('fxAchievement'), title: a?.name ?? '', sub: t('rankIncome', { pct: Math.round(ECONOMY.achievementIncomeBonus * 100) }), still: fx.reduced });
+          break;
+        }
+        case 'vote': {
+          const party = PARTY_BY_ID[e.party];
+          const colors = [party.color, FX.white, FX.gold];
+          fx.flash(party.color, 0.3, 380);
+          // Confetti rains across the whole width.
+          for (let i = 0; i < 8; i++) later(i * 90, () => fx.burst(window.innerWidth * (0.1 + 0.8 * Math.random()), window.innerHeight * 0.15, { count: 26 + tier * 6, colors, speed: [80, 260], angle: [30, 150], size: T.particleSize + 1, glow: 0.4, stars: 0.3, life: 1.6, gravity: 260 }));
+          celebrate({ kind: 'vote', kicker: t('voteDone'), title: party.name, sub: party.phases[engine.phase()].title, still: fx.reduced });
+          break;
+        }
+        case 'partyPerk': {
+          const [x, y] = centerOf('.gov-pill');
+          const party = PARTY_BY_ID[e.party];
+          fx.burst(x, y, { count: 16 + tier * 4, colors: e.tone === 'good' ? [party?.color ?? FX.gold, FX.gold, FX.white] : ['#555a7a', FX.red], speed: [60, 180], size: T.particleSize, glow: 0.4, life: 0.8, gravity: 160 });
+          if (e.tone === 'good' && e.summary.length) flyToCash(x, y, 6);
+          break;
+        }
+        case 'dilemmaResult': {
+          const [x, y] = centerOf('.scene-frame');
+          if (e.statusDelta < 0) {
+            fx.flash(FX.red, 0.45, 500);
+            for (let i = 0; i < 4; i++) later(i * 110, () => fx.burst(x + (Math.random() - 0.5) * 300, y + (Math.random() - 0.5) * 120, { count: 30 + tier * 8, colors: [FX.red, '#5a0d1a', '#16101e', FX.orange], speed: [100, 300], size: T.particleSize + 1, glow: 0.5, life: 1.1, gravity: 140 }));
+            fx.ring(x, y, FX.red, 160, 0.6, 6);
+            if (shakeAllowed(engine.state.settings)) shake(document.querySelector('.play'), 10, 420);
+            celebrate({ kind: 'evil', kicker: t('fxEvil'), title: t('fxStatus', { v: String(e.statusDelta) }), sub: e.title, still: fx.reduced });
+          } else if (e.statusDelta > 0) {
+            fx.flash(FX.goldLight, 0.3, 380);
+            for (let i = 0; i < 4; i++) later(i * 120, () => fx.ring(x, y - 30, i % 2 ? FX.white : FX.gold, 60 + i * 40, 0.6, 4));
+            fx.burst(x, y, { count: 50 + tier * 10, colors: [FX.gold, FX.goldLight, FX.white, FX.cyan], speed: [80, 260], size: T.particleSize + 1, glow: 0.8, stars: 0.7, life: 1.3, gravity: -40, drag: 1.5 });
+            celebrate({ kind: 'rank', kicker: t('fxSaint'), title: t('fxStatus', { v: `+${e.statusDelta}` }), sub: e.title, still: fx.reduced });
+          }
+          if (e.summary.some((x) => x.startsWith('+$'))) flyToCash(x, y, 10);
+          break;
+        }
+        case 'status': {
+          const [x, y] = centerOf('.status-chip');
+          fx.text(x, y + 18, t('fxStatus', { v: `${e.delta > 0 ? '+' : ''}${e.delta}` }), { size: 14, color: e.delta > 0 ? FX.green : FX.red, life: 1.4, rise: -30, pop: 1.8 });
+          fx.burst(x, y, { count: 14, colors: e.delta > 0 ? [FX.green, FX.gold, FX.white] : [FX.red, '#5a0d1a'], speed: [50, 150], size: 3, glow: 0.5, life: 0.7, gravity: 120 });
+          if (e.payout.gt(0)) flyToCash(x, y, 10);
+          document.querySelector('.status-chip')?.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', filter: 'brightness(1.8)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+          break;
+        }
+        case 'rivalBeaten': {
+          const [rx, ry] = centerOf('.rival');
+          const [x, y] = centerOf('.scene-frame');
+          fx.flash(FX.cyan, 0.25, 320);
+          for (let i = 0; i < 6; i++) later(i * 140, () => {
+            const fxX = x + (Math.random() - 0.5) * 420;
+            const fxY = y + (Math.random() - 0.7) * 160;
+            fx.burst(fxX, fxY, { count: 34 + tier * 8, colors: RAINBOW, speed: [90, 280], size: T.particleSize + 1, glow: 0.7, stars: 0.5, life: 1.2, gravity: 150 });
+            fx.ring(fxX, fxY, RAINBOW[i % RAINBOW.length], 80, 0.5, 4);
+          });
+          flyToCash(rx, ry, 10);
+          celebrate({ kind: 'rank', kicker: t('rivalBeaten'), title: e.name, sub: t('rivalBeatenSub', { amount: money(e.reward), next: engine.rivalDef().name }), still: fx.reduced });
+          break;
+        }
+        case 'aid': {
+          const [x, y] = centerOf('.aid-btn');
+          fx.burst(x, y, { count: 24, colors: [FX.gold, FX.green, FX.white], speed: [60, 200], size: T.particleSize, glow: 0.5, life: 0.8, gravity: 180 });
+          flyToCash(x, y, 8);
+          fx.text(x, y - 16, `+${money(e.amount)}`, { size: 13, color: FX.gold, life: 1, rise: 40 });
+          break;
+        }
+        case 'attack': {
+          const [x, y] = centerOf('.scene-frame');
+          fx.flash(FX.red, 0.35, 220);
+          fx.burst(x, y + 20, { count: 30, colors: [FX.red, '#ffffff', '#ffd23f'], speed: [120, 300], size: 4, glow: 0.4, life: 0.6, gravity: 200 });
+          fx.ring(x, y + 20, FX.red, 70, 0.3, 6);
+          fx.text(x, y - 10, t('fxHit'), { size: 26, color: FX.white, shadow: FX.red, life: 0.9, rise: 30, pop: 2 });
+          if (shakeAllowed(engine.state.settings)) shake(document.querySelector('.play'), 12, 260);
+          break;
+        }
+        case 'jail': {
+          fx.flash('#000000', 0.8, 900);
+          break;
+        }
+        case 'vault': {
+          const [x, y] = centerOf('.vault');
+          fx.flash(FX.gold, 0.4, 450);
+          fx.burst(x, y, { count: 80 + tier * 10, colors: [FX.gold, FX.goldLight, FX.orange, FX.white], speed: [120, 380], size: T.particleSize + 1, glow: 0.8, stars: 0.6, life: 1.3, gravity: 240 });
+          for (let i = 0; i < 3; i++) later(i * 120, () => fx.ring(x, y, FX.gold, 70 + i * 50, 0.5, 5));
+          flyToCash(x, y, 14);
+          celebrate({ kind: 'rare', kicker: t('vaultOpened'), title: e.text, still: fx.reduced });
           break;
         }
         case 'mission': {
