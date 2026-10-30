@@ -9,7 +9,7 @@ export type SecretTrigger =
   /** Click a scene object `count` times. */
   | { type: 'interact'; target: string; count: number }
   /** Type a word on the keyboard (anywhere in the game). */
-  | { type: 'typed'; word: string }
+  | { type: 'typed'; word: string; /** Alternative spellings (e.g. other languages). */ aliases?: string[] }
   /** Evaluated by name in game/secrets.ts (time, inventory, behaviour...). */
   | { type: 'custom'; check: string };
 
@@ -32,8 +32,8 @@ export const SECRETS: SecretDef[] = [
   { id: 'sky_gazer', name: 'Sky Gazer', trigger: { type: 'interact', target: 'sky', count: 10 }, effects: [{ kind: 'incomeMult', value: 1.05 }], desc: 'You stopped to look at the sky. Ten times. Perspective: +5% income forever.', hint: 'Look up once in a while.' },
   { id: 'personal_space', name: 'Personal Space', trigger: { type: 'interact', target: 'hero', count: 25 }, effects: [{ kind: 'clickMult', value: 1.05 }], desc: 'Stop poking him. Fine, have +5% click power. Forever.', hint: 'He is ticklish.' },
   { id: 'cat_person', name: 'Cat Person', trigger: { type: 'interact', target: 'cat', count: 20 }, effects: [{ kind: 'critChance', value: 0.01 }], desc: 'You petted the cat twenty times. She tolerated it. +1% crit forever.', hint: 'Some companions want attention. Lots of it.' },
-  { id: 'spelled_it_out', name: 'Spelled It Out', trigger: { type: 'typed', word: 'ladder' }, effects: [{ kind: 'clickMult', value: 1.1 }], desc: 'You typed the name of the game. Clicks ×1.1 forever.', hint: 'Say the magic word. Type it, actually.' },
-  { id: 'manifesting', name: 'Manifesting', trigger: { type: 'typed', word: 'rich' }, rewardSeconds: 0, desc: 'You typed "rich" and received exactly $50. Manifesting works. Slightly.', hint: 'Just say what you want. Type it.' },
+  { id: 'spelled_it_out', name: 'Spelled It Out', trigger: { type: 'typed', word: 'ladder', aliases: ['escalera'] }, effects: [{ kind: 'clickMult', value: 1.1 }], desc: 'You typed the name of the game. Clicks ×1.1 forever.', hint: 'Say the magic word. Type it, actually.' },
+  { id: 'manifesting', name: 'Manifesting', trigger: { type: 'typed', word: 'rich', aliases: ['rico', 'rica'] }, rewardSeconds: 0, desc: 'You typed "rich" and received exactly $50. Manifesting works. Slightly.', hint: 'Just say what you want. Type it.' },
   { id: 'night_thoughts', name: '3 A.M. Thoughts', trigger: { type: 'custom', check: 'nightOwl' }, effects: [{ kind: 'offlineEfficiency', value: 0.05 }], desc: 'Playing at 3 a.m.? Sleep is for people without empires. +5 points offline efficiency.', hint: 'Some things only happen in the small hours.' },
   { id: 'patience', name: 'Patience Pays', trigger: { type: 'custom', check: 'patience' }, effects: [{ kind: 'incomeMult', value: 1.05 }], desc: 'Ten minutes without clicking, game open. Your money worked while you watched. +5% income forever.', hint: 'Sometimes the best move is no move.' },
   { id: 'jackpot', name: 'Jackpot, Kind Of', trigger: { type: 'custom', check: 'lucky777' }, effects: [{ kind: 'critChance', value: 0.01 }], desc: 'You clicked with exactly $777 in your pocket. +1% crit forever.', hint: 'Three lucky digits in your pocket.' },

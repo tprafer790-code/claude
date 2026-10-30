@@ -32,8 +32,8 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
     const rect = zoneRef.current?.getBoundingClientRect();
     const x = rect && clientX !== undefined ? clientX - rect.left : (rect?.width ?? 200) / 2;
     const y = rect && clientY !== undefined ? clientY - rect.top : 40;
-    const items: Floater[] = [{ id: ++floaterSeq, x: x + (Math.random() * 30 - 15), y, text: `+${money(r.amount.sub(r.lucky ?? 0), 1)}${r.crit ? ' CRIT!' : ''}`, kind: r.crit ? 'crit' : 'normal' }];
-    if (r.lucky) items.push({ id: ++floaterSeq, x, y: y - 24, text: `LUCKY +${money(r.lucky)}`, kind: 'lucky' });
+    const items: Floater[] = [{ id: ++floaterSeq, x: x + (Math.random() * 30 - 15), y, text: `+${money(r.amount.sub(r.lucky ?? 0), 1)}${r.crit ? ' ' + t('crit') : ''}`, kind: r.crit ? 'crit' : 'normal' }];
+    if (r.lucky) items.push({ id: ++floaterSeq, x, y: y - 24, text: `${t('lucky')} +${money(r.lucky)}`, kind: 'lucky' });
     setFloaters((f) => [...f.slice(-24), ...items]);
     window.setTimeout(() => setFloaters((f) => f.filter((fl) => !items.includes(fl))), 1000);
     if (r.crit && !s.settings.reducedMotion) setShake((n) => n + 1);
@@ -102,7 +102,7 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
         <div className="combo-bar">
           <div className="combo-fill" style={{ width: `${(comboSteps / d.comboMax) * 100}%` }} />
         </div>
-        <span className="combo-crit">{t('clicks')}: crit {(d.critChance * 100).toFixed(0)}% ×{ECONOMY.click.critMultiplier}</span>
+        <span className="combo-crit">{t('critLine', { pct: (d.critChance * 100).toFixed(0), mult: ECONOMY.click.critMultiplier })}</span>
       </div>
 
       {engine.availableAbilities().length > 0 && (

@@ -47,10 +47,10 @@ export function ObjectsPanel() {
                   <Icon id={lockedByRank ? 'lock' : it.icon} size={36} />
                   <div className="card-info">
                     <div className="card-title">
-                      {lockedByRank ? '???' : it.name} {it.slot && <span className="tag">{it.slot}</span>} {req && <span className="tag status">{t('statusSymbol')}</span>}
+                      {lockedByRank ? '???' : it.name} {it.slot && <span className="tag">{SLOTS.find((x) => x.id === it.slot)?.name}</span>} {req && <span className="tag status">{t('statusSymbol')}</span>}
                     </div>
                     <div className="card-desc">{lockedByRank ? t('unlocksAt', { rank: RANKS[it.rankReq].name }) : it.desc}</div>
-                    {!lockedByRank && <div className="card-meta">{it.effects.map((e) => effectText(e, true)).join(' · ')}{req ? ` · Required for ${req}` : ''}</div>}
+                    {!lockedByRank && <div className="card-meta">{it.effects.map((e) => effectText(e, true)).join(' · ')}{req ? ` · ${t('requiredFor', { rank: req })}` : ''}</div>}
                   </div>
                   <div className="card-side">
                     <div className={`price ${afford ? '' : 'no'}`}>{money(it.price)}</div>
@@ -87,7 +87,7 @@ export function ObjectsPanel() {
                     <Icon id={it.icon} size={30} />
                     <div className="card-info">
                       <div className="card-title">
-                        {it.name} {it.unobtainableInShop && <span className="tag rare">heirloom</span>}
+                        {it.name} {it.unobtainableInShop && <span className="tag rare">{t('tagHeirloom')}</span>}
                       </div>
                       <div className="card-meta">{it.effects.map((e) => effectText(e, true)).join(' · ')}</div>
                     </div>
@@ -115,7 +115,7 @@ export function ObjectsPanel() {
                   <Icon id={found ? 'star' : 'lock'} size={30} />
                   <div className="card-info">
                     <div className="card-title">
-                      {found ? c.name : '???'} {found && !active && <span className="tag">inactive</span>}
+                      {found ? c.name : '???'} {found && !active && <span className="tag">{t('tagInactive')}</span>}
                     </div>
                     <div className="card-desc">{found ? c.desc : `“${c.hint}”`}</div>
                     {found && <div className="card-meta">{c.items.map((i) => ITEM_BY_ID[i]?.name).join(' + ')}</div>}

@@ -26,7 +26,7 @@ export function LegacyPanel() {
           <Icon id="crown" size={26} />
           <span>{t('reputation')}</span>
           <b>{s.prestige.reputation.toLocaleString('en-US')}</b>
-          <small>+{Math.round(s.prestige.reputation * ECONOMY.prestige.reputationBonus * 100)}% income & clicks</small>
+          <small>{t('repBonus', { pct: Math.round(s.prestige.reputation * ECONOMY.prestige.reputationBonus * 100) })}</small>
         </div>
         <div>
           <Icon id="gem" size={26} />

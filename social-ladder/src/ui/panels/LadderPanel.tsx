@@ -11,9 +11,9 @@ import { useEngine } from '../hooks';
 
 function unlocksFor(i: number): string[] {
   return [
-    ...BUSINESSES.filter((b) => !b.secret && b.rankReq === i).map((b) => `Business: ${b.name}`),
-    ...ABILITIES.filter((a) => a.rankReq === i).map((a) => `Ability: ${a.name}`),
-    ...ITEMS.filter((it) => !it.unobtainableInShop && it.rankReq === i).map((it) => `Object: ${it.name}`),
+    ...BUSINESSES.filter((b) => !b.secret && b.rankReq === i).map((b) => t('unlockBusiness', { name: b.name })),
+    ...ABILITIES.filter((a) => a.rankReq === i).map((a) => t('unlockAbility', { name: a.name })),
+    ...ITEMS.filter((it) => !it.unobtainableInShop && it.rankReq === i).map((it) => t('unlockObject', { name: it.name })),
   ];
 }
 
@@ -57,7 +57,7 @@ export function LadderPanel() {
                           <div className="rung-meta">
                             {t('netWorth')} {money(r.req)}
                             {r.requiresItem && ` · ${t('needs')} ${ITEM_BY_ID[r.requiresItem].name}`}
-                            {' · '}+{Math.round(ECONOMY.rankIncomeBonus * 100)}% income{r.bonusText ? ` · ${r.bonusText}` : ''}
+                            {' · '}{t('rankIncome', { pct: Math.round(ECONOMY.rankIncomeBonus * 100) })}{r.bonusText ? ` · ${r.bonusText}` : ''}
                             {unlocks.length > 0 && <div className="rung-unlocks">{unlocks.join(' · ')}</div>}
                           </div>
                         )}

@@ -1,3 +1,4 @@
+import { detectLanguage } from '../i18n';
 import { Decimal } from '../core/bignum';
 import type { Effect, Slot } from '../data/types';
 import type { EventOutcome } from '../data/events';
@@ -155,7 +156,7 @@ export function createInitialState(now = Date.now()): GameState {
 
     createdAt: now,
     lastSavedAt: now,
-    settings: { sfxVolume: 0.7, musicVolume: 0.35, muted: false, language: 'en', playerName: '', reducedMotion: false },
+    settings: { sfxVolume: 0.7, musicVolume: 0.35, muted: false, language: detectLanguage(), playerName: '', reducedMotion: false },
     tutorialDone: false,
     seenEvents: {},
   };

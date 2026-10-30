@@ -2,7 +2,7 @@
 
 Juego incremental (clicker + idle + tycoon + simulador de ascenso social) en pixel art 16‑bit para navegador de escritorio y móvil. Empiezas en una caja de cartón y subes 58 rangos hasta poseer conceptos abstractos del universo.
 
-> Interfaz y contenido en inglés; arquitectura preparada para español (`src/i18n/`, la interfaz ya está traducida; los textos de contenido aún no).
+> Disponible en **español e inglés** (interfaz y todo el contenido). Se elige en *Ajustes → Idioma*; en la primera partida se usa el idioma del navegador.
 
 ---
 
@@ -47,8 +47,9 @@ El juego funciona **completo en modo local** sin configurar nada: guardado en `l
 | Persistencia | Autoguardado cada 10 s, copia de seguridad, exportar/importar código, migración de versiones |
 | Presentación | Pixel art procedural, 8 escenarios, personaje que cambia según etapa y equipo, partículas, audio chiptune sintetizado (WebAudio) |
 | Accesibilidad | Movimiento reducido, volumen/silencio, teclado (Espacio/Enter), diseño responsive |
+| Idiomas | Español e inglés; ~1.000 textos de contenido traducidos por identificador (`src/i18n/content.ts`), con test de cobertura |
 
-**Pruebas realizadas:** 32 tests unitarios en verde; build de producción sin errores; prueba en Chromium (escritorio 1366×800 y móvil 390×844): clics, compra, todas las pestañas, persistencia tras recargar, sin errores de consola ni desbordamiento horizontal.
+**Pruebas realizadas:** 36 tests unitarios en verde (incluida la cobertura completa de la traducción); build de producción sin errores; prueba en Chromium (escritorio 1366×800 y móvil 390×844): clics, compra, todas las pestañas, persistencia tras recargar, sin errores de consola ni desbordamiento horizontal.
 
 **Ritmo aproximado** (simulador, 1 clic/s, sin prestigio): Millonario ≈ 21 min, Multimillonario ≈ 43 min, Isla privada ≈ 1 h 50 min, Dueño de un país ≈ 5 h. Las etapas absurda y cósmica están pensadas para alcanzarse con varias reinvenciones. Todo es ajustable en `src/config/economy.ts`.
 
@@ -130,7 +131,7 @@ src/
   ui/                   Interfaz React (paneles, ventanas, notificaciones)
   online/               Capa Supabase opcional (carga diferida)
   monetization/         Interfaz inerte (ver abajo)
-  i18n/                 Textos de interfaz en/es
+  i18n/                 Textos de interfaz en/es y traducción del contenido (es/*.json)
 supabase/               Migración SQL y Edge Function
 scripts/                Simulador de equilibrado y prueba e2e
 tests/                  Tests unitarios
@@ -144,7 +145,8 @@ Principios: el motor es determinista e independiente del DOM (reloj y aleatoried
 
 ## 6. Pendiente / limitaciones conocidas
 
-- Traducción al español de los **textos de contenido** (rangos, objetos, eventos). La interfaz ya está traducida.
+- Los sufijos de cantidades usan la escala corta anglosajona (K, M, B = mil millones, T = billón…) también en español.
+- Textos guardados en partidas antiguas (eventos diferidos pendientes, bonificaciones activas) conservan el idioma en que se generaron.
 - Supabase sin probar contra un proyecto real (ver 3.2). El antitrampas es básico.
 - Música: un bucle chiptune procedural por etapa; no hay pistas compuestas.
 - Equilibrado de las etapas absurda/cósmica validado solo con el simulador, no con jugadores.

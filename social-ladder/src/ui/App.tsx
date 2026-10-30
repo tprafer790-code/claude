@@ -82,39 +82,39 @@ function Game({ runtime }: { runtime: Runtime }) {
   useEffect(() => {
     return engine.onEvent((e) => {
       switch (e.type) {
-        case 'click': audio.click(e.combo, e.crit); if (e.lucky) pushToast({ icon: 'coin', title: 'Lucky find!', text: `You found ${money(e.lucky)} on the floor.`, tone: 'good' }); break;
+        case 'click': audio.click(e.combo, e.crit); if (e.lucky) pushToast({ icon: 'coin', title: t('luckyFindTitle'), text: t('luckyFindText', { amount: money(e.lucky) }), tone: 'good' }); break;
         case 'purchase': audio.purchase(); break;
         case 'promotion': {
           const r = RANKS[e.to];
           audio.promotion(e.stageChanged);
           if (e.stageChanged) setMajorPromo(e.to);
-          else pushToast({ icon: 'trophy', title: t('promoted'), text: r.name, tone: 'rank', sub: r.bonusText ?? `+${Math.round(ECONOMY.rankIncomeBonus * 100)}% income` });
+          else pushToast({ icon: 'trophy', title: t('promoted'), text: r.name, tone: 'rank', sub: r.bonusText ?? t('rankIncome', { pct: Math.round(ECONOMY.rankIncomeBonus * 100) }) });
           break;
         }
         case 'achievement': {
           const a = ACHIEVEMENT_BY_ID[e.id];
           audio.achievement();
-          pushToast({ icon: a.icon, title: `Achievement: ${a.name}`, text: a.desc, tone: 'gold', sub: '+1% income' });
+          pushToast({ icon: a.icon, title: t('achievementToast', { name: a.name }), text: a.desc, tone: 'gold', sub: t('rankIncome', { pct: Math.round(ECONOMY.achievementIncomeBonus * 100) }) });
           break;
         }
         case 'secret': {
           const sec = SECRET_BY_ID[e.id];
           audio.secret();
-          pushToast({ icon: 'key', title: `Secret: ${sec.name}`, text: sec.desc, tone: 'rare' });
+          pushToast({ icon: 'key', title: t('secretToast', { name: sec.name }), text: sec.desc, tone: 'rare' });
           break;
         }
         case 'combo': {
           const c = COMBO_BY_ID[e.id];
           audio.secret();
-          pushToast({ icon: 'star', title: `Combination: ${c.name}`, text: c.desc, tone: 'rare' });
+          pushToast({ icon: 'star', title: t('comboToast', { name: c.name }), text: c.desc, tone: 'rare' });
           break;
         }
         case 'eventStart': audio.event(); break;
         case 'eventResult': pushToast({ icon: 'scroll', title: e.title, text: e.text, tone: 'info', sub: e.summary.join(' · ') }); break;
         case 'opportunitySpawn': audio.opportunity(); break;
-        case 'opportunityCollect': audio.coin(); pushToast({ icon: 'gem', title: 'Opportunity!', text: e.text, tone: 'good' }); break;
-        case 'mission': audio.coin(); pushToast({ icon: 'scroll', title: 'Mission complete', text: `+${money(e.reward)}`, tone: 'good' }); break;
-        case 'prestige': audio.prestige(); pushToast({ icon: 'crown', title: 'A new life begins', text: `+${e.gained} Reputation. The box is just as you left it.`, tone: 'rare' }); break;
+        case 'opportunityCollect': audio.coin(); pushToast({ icon: 'gem', title: t('opportunityTitle'), text: e.text, tone: 'good' }); break;
+        case 'mission': audio.coin(); pushToast({ icon: 'scroll', title: t('missionComplete'), text: `+${money(e.reward)}`, tone: 'good' }); break;
+        case 'prestige': audio.prestige(); pushToast({ icon: 'crown', title: t('newLifeTitle'), text: t('newLifeText', { n: e.gained }), tone: 'rare' }); break;
         case 'ability': audio.coin(); break;
         case 'toast': pushToast({ icon: 'star', title: e.text, text: '', tone: e.tone === 'bad' ? 'info' : e.tone === 'rare' ? 'rare' : 'good' }); break;
       }

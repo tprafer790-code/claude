@@ -43,16 +43,16 @@ export function BusinessPanel() {
                 <Icon id={b.icon} size={36} />
                 <div className="card-info">
                   <div className="card-title">
-                    {b.name} {b.secret && <span className="tag rare">SECRET</span>}
+                    {b.name} {b.secret && <span className="tag rare">{t('tagSecret')}</span>}
                   </div>
                   <div className="card-desc">{b.desc}</div>
                   <div className="card-meta">
                     {owned > 0 ? (
                       <>
-                        <b>{money(income ?? 0, 1)}/s</b> · {money(perUnit ?? 0, 1)}/s each · ×{d.businessMult[b.id]?.toLocaleString('en-US')}
+                        <b>{money(income ?? 0, 1)}/s</b> · {t('eachPerSecond', { amount: money(perUnit ?? 0, 1) })} · ×{d.businessMult[b.id]?.toLocaleString('en-US')}
                       </>
                     ) : (
-                      <>+{money(b.baseIncome * d.incomeMult * (d.businessMult[b.id] ?? 1), 1)}/s each</>
+                      <>{t('eachPerSecond', { amount: '+' + money(b.baseIncome * d.incomeMult * (d.businessMult[b.id] ?? 1), 1) })}</>
                     )}
                     {nextUp !== null && <span className="muted"> · {t('nextUpgradeAt', { n: nextUp })}</span>}
                   </div>

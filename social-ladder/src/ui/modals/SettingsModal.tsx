@@ -49,7 +49,7 @@ export function SettingsModal({ runtime, onClose }: { runtime: Runtime; onClose:
           {t('language')}
           <select value={st.language} onChange={(e) => set({ language: e.target.value as 'en' | 'es' })}>
             <option value="en">English</option>
-            <option value="es">Español (interface)</option>
+            <option value="es">{t('langEs')}</option>
           </select>
         </label>
         <label>
@@ -70,7 +70,7 @@ export function SettingsModal({ runtime, onClose }: { runtime: Runtime; onClose:
         <dt>{t('playTime')}</dt><dd>{fmtDuration(s.stats.playSeconds)}</dd>
         <dt>{t('income')} ×</dt><dd>{d.incomeMult.toFixed(2)} (ranks +{Math.round(d.breakdown.ranks * 100)}%, achievements +{Math.round(d.breakdown.achievements * 100)}%, collection +{Math.round(d.breakdown.collection * 100)}%, {t('lifestyle').toLowerCase()} +{Math.round(d.breakdown.lifestyleIncome * 100)}%)</dd>
         <dt>{t('clicks')} ×</dt><dd>{d.clickMult.toFixed(2)}</dd>
-        <dt>Offline</dt><dd>{Math.round(d.offlineEfficiency * 100)}% · cap {d.offlineCapHours}h</dd>
+        <dt>{t('offline')}</dt><dd>{t('offlineStat', { pct: Math.round(d.offlineEfficiency * 100), hours: d.offlineCapHours })}</dd>
       </dl>
 
       <h3>{t('save')}</h3>
@@ -105,10 +105,10 @@ export function SettingsModal({ runtime, onClose }: { runtime: Runtime; onClose:
 
       <details className="danger-zone">
         <summary>{t('hardReset')}</summary>
-        <p>{t('hardResetConfirm')}</p>
+        <p>{t('hardResetConfirm', { word: t('resetWord') })}</p>
         <div className="row">
-          <input value={resetText} onChange={(e) => setResetText(e.target.value)} placeholder="DELETE" />
-          <button className="btn danger" disabled={resetText !== 'DELETE'} onClick={() => { runtime.hardReset(); onClose(); }}>{t('hardReset')}</button>
+          <input value={resetText} onChange={(e) => setResetText(e.target.value)} placeholder={t('resetWord')} />
+          <button className="btn danger" disabled={resetText.trim().toUpperCase() !== t('resetWord')} onClick={() => { runtime.hardReset(); onClose(); }}>{t('hardReset')}</button>
         </div>
       </details>
 

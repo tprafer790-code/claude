@@ -83,7 +83,7 @@ function OnlineRanking({ runtime }: { runtime: Runtime }) {
     try {
       await fn();
     } catch (e) {
-      pushToast({ icon: 'lock', title: 'Online error', text: (e as Error).message, tone: 'info' });
+      pushToast({ icon: 'lock', title: t('onlineError'), text: (e as Error).message, tone: 'info' });
     } finally {
       setBusy(false);
     }
@@ -131,13 +131,13 @@ function OnlineRanking({ runtime }: { runtime: Runtime }) {
           <button className="btn" disabled={busy} onClick={() => void run(async () => {
             if (engine.state.settings.playerName) await online.upsertProfile(engine.state.settings.playerName);
             const r = await online.submitScore(engine.state);
-            pushToast({ icon: r.ok ? 'trophy' : 'lock', title: r.ok ? t('submitScore') : 'Rejected', text: r.message, tone: r.ok ? 'gold' : 'info' });
+            pushToast({ icon: r.ok ? 'trophy' : 'lock', title: r.ok ? t('submitScore') : t('rejected'), text: r.message, tone: r.ok ? 'gold' : 'info' });
             setRows(await online.fetchBoard(kind));
           })}>{t('submitScore')}</button>
           <button className="btn" disabled={busy} onClick={() => void run(async () => { await online.saveToCloud(serialize(engine.state)); pushToast({ icon: 'cloud', title: t('cloudSave'), text: '✓', tone: 'good' }); })}>{t('cloudSave')}</button>
           <button className="btn" disabled={busy} onClick={() => void run(async () => {
             const data = await online.loadFromCloud();
-            if (!data) throw new Error('No cloud save yet');
+            if (!data) throw new Error(t('noCloudSave'));
             const st = deserialize(data);
             st.lastSavedAt = Date.now();
             runtime.replaceState(st);

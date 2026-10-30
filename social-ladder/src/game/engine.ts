@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { BUSINESS_UPGRADE_TIERS, ECONOMY } from '../config/economy';
 import { Decimal, money } from '../core/bignum';
 import { ABILITIES } from '../data/abilities';
@@ -479,13 +480,13 @@ export class GameEngine {
     if (r < 0.5) {
       const amount = this.reward(o.cashSecondsOfIncome).add(Decimal.min(this.state.money.mul(o.cashMoneyFraction), this.incomeUnit().mul(600)));
       this.earn(amount);
-      text = `Lucky deal! +${money(amount)}`;
+      text = t('oppCash', { amount: money(amount) });
     } else if (r < 0.8) {
       this.addBuff('frenzy', 'Boom Time', 'income', o.frenzyMultiplier, o.frenzySeconds);
-      text = `Boom time! Income ×${o.frenzyMultiplier} for ${o.frenzySeconds}s`;
+      text = t('oppFrenzy', { mult: o.frenzyMultiplier, s: o.frenzySeconds });
     } else {
       this.addBuff('click_frenzy', 'Hot Streak', 'click', o.clickFrenzyMultiplier, o.clickFrenzySeconds);
-      text = `Hot streak! Clicks ×${o.clickFrenzyMultiplier} for ${o.clickFrenzySeconds}s`;
+      text = t('oppClickFrenzy', { mult: o.clickFrenzyMultiplier, s: o.clickFrenzySeconds });
     }
     this.state.stats.opportunitiesClicked++;
     this.emit({ type: 'opportunityCollect', id, text });
@@ -587,16 +588,16 @@ export class GameEngine {
         }
         case 'buff':
           this.addBuff(`ev_${a.label}`, a.label, a.target, a.mult, a.seconds);
-          summary.push(`${a.target === 'income' ? 'Income' : 'Clicks'} ×${a.mult} for ${a.seconds}s`);
+          summary.push(t(a.target === 'income' ? 'evBuffIncome' : 'evBuffClicks', { mult: a.mult, s: a.seconds }));
           break;
         case 'item':
           if (!s.items[a.id]) {
             this.grantItem(a.id);
-            summary.push(`New object: ${ITEM_BY_ID[a.id]?.name ?? a.id}`);
+            summary.push(t('evNewItem', { name: ITEM_BY_ID[a.id]?.name ?? a.id }));
           } else {
             const bonus = this.reward(120);
             this.earn(bonus);
-            summary.push(`Already owned — sold the duplicate: +${money(bonus)}`);
+            summary.push(t('evDuplicate', { amount: money(bonus) }));
           }
           break;
         case 'flag':
@@ -608,11 +609,11 @@ export class GameEngine {
         case 'permanent':
           s.lifeEffects.push({ effect: a.effect, label: a.label });
           this.invalidate();
-          summary.push(`${a.label} (this life)`);
+          summary.push(t('evThisLife', { label: a.label }));
           break;
         case 'delayed':
           s.delayed.push({ id: `${title}_${this.now()}_${Math.floor(this.random() * 1e6)}`, at: this.now() + a.seconds * 1000, label: a.label, eventTitle: title, outcomes: a.outcomes });
-          summary.push(`${a.label} in ${a.seconds}s`);
+          summary.push(t('evDelayed', { label: a.label, s: a.seconds }));
           break;
       }
     }
@@ -664,7 +665,7 @@ export class GameEngine {
     this.typedBuffer = (this.typedBuffer + key.toLowerCase()).slice(-16);
     for (const sec of SECRETS) {
       if (this.state.secrets[sec.id] || sec.trigger.type !== 'typed') continue;
-      if (this.typedBuffer.endsWith(sec.trigger.word)) this.discoverSecret(sec.id);
+      if ([sec.trigger.word, ...(sec.trigger.aliases ?? [])].some((w) => this.typedBuffer.endsWith(w))) this.discoverSecret(sec.id);
     }
   }
   private checkSecret(id: string, condition: boolean) {
@@ -741,7 +742,7 @@ export class GameEngine {
     s.daily.claimed = true;
     const reward = this.reward(600 * Math.min(1 + 0.1 * (s.daily.streak - 1), 2), 100);
     this.earn(reward);
-    this.emit({ type: 'toast', text: `Daily challenge complete! +${money(reward)}`, tone: 'good' });
+    this.emit({ type: 'toast', text: t('dailyDone', { amount: money(reward) }), tone: 'good' });
     this.checkRanks();
     this.changed();
     return true;

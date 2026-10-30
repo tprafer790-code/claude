@@ -1,3 +1,4 @@
+import { fmt } from '../core/bignum';
 import type { GameState } from '../game/state';
 import { COMBOS } from './combos';
 import { ITEMS } from './items';
@@ -28,7 +29,7 @@ const WEALTH_NAMES = [
 
 const wealth: AchievementDef[] = WEALTH_NAMES.map(([n, name], i) => ({
   id: `wealth_${i}`, name, category: 'wealth', icon: 'coin',
-  desc: `Earn $${Number(n).toLocaleString('en-US', { notation: 'compact' })} in total (all lives).`,
+  desc: `Earn $${fmt(n)} in total (all lives).`,
   check: (s) => s.lifetimeEarned.gte(n),
 }));
 

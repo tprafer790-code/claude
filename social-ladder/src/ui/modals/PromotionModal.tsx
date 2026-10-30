@@ -28,9 +28,9 @@ export function PromotionModal({ rankIndex, onClose }: { rankIndex: number; onCl
   }, [stage.index, prevStage.index, engine.state.equipped]);
 
   const unlocks = [
-    ...BUSINESSES.filter((b) => !b.secret && b.rankReq === rankIndex).map((b) => `New business: ${b.name}`),
-    ...ABILITIES.filter((a) => a.rankReq === rankIndex).map((a) => `New ability: ${a.name}`),
-    `New action: ${stage.action}`,
+    ...BUSINESSES.filter((b) => !b.secret && b.rankReq === rankIndex).map((b) => t('newBusiness', { name: b.name })),
+    ...ABILITIES.filter((a) => a.rankReq === rankIndex).map((a) => t('newAbility', { name: a.name })),
+    t('newAction', { name: stage.action }),
   ];
 
   return (
@@ -49,7 +49,7 @@ export function PromotionModal({ rankIndex, onClose }: { rankIndex: number; onCl
       <div className="promo-rewards">
         <b>{t('rewards')}</b>
         <ul>
-          <li>+{Math.round(ECONOMY.rankIncomeBonus * 100)}% income</li>
+          <li>{t('rankIncome', { pct: Math.round(ECONOMY.rankIncomeBonus * 100) })}</li>
           {rank.bonusText && <li>{rank.bonusText}</li>}
           {unlocks.map((u) => (
             <li key={u}>{u}</li>

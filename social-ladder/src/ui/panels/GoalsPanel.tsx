@@ -42,7 +42,7 @@ export function GoalsPanel() {
                         <div style={{ width: `${Math.min(100, (cur / target) * 100)}%` }} />
                       </div>
                       <div className="card-meta">
-                        {Math.min(cur, target).toLocaleString('en-US')} / {target.toLocaleString('en-US')} · Reward {money(engine.missionReward(m.id))}
+                        {Math.min(cur, target).toLocaleString('en-US')} / {target.toLocaleString('en-US')} · {t('reward', { amount: money(engine.missionReward(m.id)) })}
                       </div>
                     </div>
                     <div className="card-side">
