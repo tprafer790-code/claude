@@ -39,6 +39,10 @@ import { RomanceModal } from './modals/RomanceModal';
 import { JailModal } from './modals/JailModal';
 import { HelpModal } from './modals/HelpModal';
 import { nextHelp } from './help';
+import { LoginModal } from './modals/LoginModal';
+import { ChestModal } from './modals/ChestModal';
+import { LeagueResultModal } from './modals/LeagueResultModal';
+import { flyToCash } from './components/FxOverlay';
 
 type Tab = 'business' | 'upgrades' | 'objects' | 'casino' | 'ladder' | 'goals' | 'legacy' | 'ranking';
 const TABS: { id: Tab; label: StringKey; icon: IconId }[] = [
@@ -69,8 +73,9 @@ function Game({ runtime }: { runtime: Runtime }) {
   const [eventOpen, setEventOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [jailed, setJailed] = useState(false);
+  const [jailed, setJailed] = useState<'status' | 'tax' | null>(null);
   const [fade, setFade] = useState(false);
+  const [chestsOpen, setChestsOpen] = useState(false);
   const openMenu = (to?: Tab) => {
     if (to) setTab(to);
     setMenuOpen(true);
@@ -165,7 +170,25 @@ function Game({ runtime }: { runtime: Runtime }) {
           pushToast({ icon: 'scroll', title: t('attackTitle', { n: e.damage }), text: e.knockedOut ? `${e.text} ${t('knockedOut', { amount: money(e.bill) })}` : e.text, tone: 'info' });
           break;
         case 'heal': audio.achievement(); pushToast({ icon: 'star', title: t('healed'), text: `-${money(e.cost)}`, tone: 'good' }); break;
-        case 'jail': audio.prestige(); setMenuOpen(false); setJailed(true); break;
+        case 'jail': audio.prestige(); setMenuOpen(false); setJailed(e.reason); break;
+        case 'happening': {
+          if (e.tone === 'good') audio.coin(); else audio.denied();
+          pushToast({ icon: e.tone === 'good' ? 'bank' : 'scroll', title: PARTY_BY_ID[e.party]?.name ?? '', text: e.text, tone: e.tone === 'good' ? 'good' : 'info', sub: e.summary.join(' · ') });
+          break;
+        }
+        case 'taxRefund': audio.coin(); pushToast({ icon: 'bank', title: t('taxRefundTitle'), text: t('taxRefundText', { amount: money(e.amount) }), tone: 'good', sub: e.status ? t('statusDelta', { v: `+${e.status}` }) : undefined }); break;
+        case 'inspection':
+          audio.denied();
+          pushToast({
+            icon: 'scroll',
+            title: t(`inspectionTitle_${e.level}`),
+            text: t(`taxLetter_${e.level}`),
+            tone: e.level === 'crime' ? 'rare' : 'info',
+            sub: [t('inspectionFine', { amount: money(e.fine) }), t('statusDelta', { v: String(e.status) }), e.seized ? t('inspectionSeized') : '', e.level === 'crime' ? t(e.prison ? 'inspectionPrison' : 'inspectionLawyer') : ''].filter(Boolean).join(' · '),
+          });
+          break;
+        case 'regularize': audio.coin(); pushToast({ icon: 'bank', title: t('regularizeTitle'), text: t(e.amnesty ? 'amnestyText' : 'regularizeText', { amount: money(e.cost) }), tone: 'good' }); break;
+        case 'prescribed': audio.achievement(); pushToast({ icon: 'star', title: t('prescribedTitle'), text: t('prescribedText'), tone: 'rare' }); break;
         case 'encounterStart': audio.rare(); break;
         case 'encounterResult':
           if (e.choice !== 'leave') setFade(true);
@@ -174,6 +197,13 @@ function Game({ runtime }: { runtime: Runtime }) {
           break;
         case 'baby': audio.fanfare(); pushToast({ icon: 'star', title: t('babyTitle'), text: t('babyText', { n: e.children }), tone: 'rare' }); break;
         case 'childSupport': pushToast({ icon: 'bank', title: t('childSupportTitle'), text: t('childSupportText', { n: e.children, amount: money(e.amount) }), tone: 'info' }); break;
+        case 'chestDrop':
+          if (e.source === 'time' || e.source === 'click') {
+            audio.rare();
+            pushToast({ icon: 'box', title: t(e.rarity === 'legendary' ? 'chestDropLegend' : e.rarity === 'rare' ? 'chestDropRare' : 'chestDrop'), text: t('chestDropText'), tone: e.rarity === 'common' ? 'good' : 'rare' });
+          }
+          break;
+        case 'loginReward': audio.fanfare(); flyToCash(window.innerWidth / 2, window.innerHeight / 2, 10); break;
         case 'vault': audio.secret(); pushToast({ icon: 'key', title: t('vaultOpened'), text: e.text, tone: 'rare', sub: e.summary.join(' · ') }); break;
       }
     });
@@ -196,8 +226,9 @@ function Game({ runtime }: { runtime: Runtime }) {
   const menuAlert = upgradeAlert || engine.visibleBusinesses().some((b) => s.money.gte(engine.businessCost(b.id, 1))) || engine.visibleMissions().some((m) => { const [c, g] = m.progress(s); return c >= g; });
   // One blocking pop-up at a time, most important first.
   const help = nextHelp(s);
-  const busy = !!offline || majorPromo !== null || settingsOpen || eventOpen;
-  const modal = busy ? null : jailed ? 'jail' : s.pendingVote ? 'vote' : s.family.pending ? 'romance' : s.pendingDilemma ? 'dilemma' : help ? 'help' : null;
+  const busy = !!offline || majorPromo !== null || settingsOpen || eventOpen || chestsOpen;
+  const leagueResult = s.league.lastResult && !s.flags[`league_${s.league.lastResult.week}`];
+  const modal = busy ? null : jailed ? 'jail' : s.pendingVote ? 'vote' : s.login.pendingDay ? 'login' : leagueResult ? 'league' : s.family.pending ? 'romance' : s.pendingDilemma ? 'dilemma' : help ? 'help' : null;
   const unlockAudio = () => audio.unlock();
 
   return (
@@ -206,7 +237,7 @@ function Game({ runtime }: { runtime: Runtime }) {
       <main className="layout">
         <section className="play">
           <SceneView />
-          <ActionArea onOpenEvent={() => setEventOpen(true)} />
+          <ActionArea onOpenEvent={() => setEventOpen(true)} onOpenChests={() => setChestsOpen(true)} onOpenLeague={() => openMenu('ranking')} />
           <Tutorial onOpen={openMenu} />
         </section>
         {menuOpen && <div className="drawer-backdrop" onPointerDown={() => setMenuOpen(false)} />}
@@ -242,8 +273,11 @@ function Game({ runtime }: { runtime: Runtime }) {
       {eventOpen && s.pendingEvent && <EventModal onClose={() => setEventOpen(false)} />}
       {settingsOpen && <SettingsModal runtime={runtime} onClose={() => setSettingsOpen(false)} />}
       {fade && <div className="fade-black" onAnimationEnd={() => setFade(false)}><span>{t('fadeText')}</span></div>}
-      {modal === 'jail' && <JailModal onClose={() => setJailed(false)} />}
+      {modal === 'jail' && <JailModal reason={jailed ?? 'status'} onClose={() => setJailed(null)} />}
+      {chestsOpen && <ChestModal onClose={() => setChestsOpen(false)} />}
       {modal === 'vote' && <VoteModal />}
+      {modal === 'login' && <LoginModal />}
+      {modal === 'league' && <LeagueResultModal />}
       {modal === 'romance' && <RomanceModal />}
       {modal === 'dilemma' && <DilemmaModal />}
       {modal === 'help' && help && <HelpModal topic={help} />}

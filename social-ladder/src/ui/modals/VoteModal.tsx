@@ -34,6 +34,7 @@ export function VoteModal() {
                   {now.effects.map((e, i) => (
                     <li key={i}>{effectText(e)}</li>
                   ))}
+                  <li className="vote-tax">{t('voteTax', { rate: Math.round(p.tax.rate[phase] * 100), zeal: String(p.tax.inspect).replace('.', ',') })}</li>
                   {now.perk && <li>{t('perkEvery', { s: now.perk.every, label: now.perk.label })}</li>}
                   {loyal && <li className="loyal">{t('voteLoyal', { pct: Math.round(LOYALTY_BONUS * g.mandates * 100) })}</li>}
                 </ul>

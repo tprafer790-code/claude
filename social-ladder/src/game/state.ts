@@ -2,6 +2,7 @@ import { detectLanguage } from '../i18n';
 import { Decimal } from '../core/bignum';
 import type { Effect, Slot } from '../data/types';
 import type { EventOutcome } from '../data/events';
+import type { TaxMode } from '../data/hacienda';
 
 export const SAVE_VERSION = 1;
 
@@ -76,6 +77,24 @@ export interface Government {
   aidReadyAt: number;
   /** Seconds until right-wing governments trim inflation again. */
   deflationIn: number;
+  /** Seconds of play until the governing party's next absurd happening. */
+  happeningIn: number;
+}
+
+export interface TaxState {
+  mode: TaxMode;
+  /** 0–100: how suspicious the Treasury is. */
+  risk: number;
+  /** Unpaid tax not yet found by an inspection. */
+  hidden: Decimal;
+  /** Tax paid since the last refund (honest mode). */
+  paid: Decimal;
+  /** Seconds of play until the next inspection check / refund. */
+  checkIn: number;
+  refundIn: number;
+  /** Seconds of honest play at zero risk (prescription clock). */
+  cleanFor: number;
+  inspections: number;
 }
 
 export interface Family {
@@ -88,6 +107,43 @@ export interface Family {
   encounterIn: number;
   /** Partner of the encounter waiting for an answer. */
   pending: string | null;
+}
+
+/** Seven-day login calendar. */
+export interface LoginState {
+  /** Last calendar day the game was opened. */
+  lastDate: string;
+  /** Day of the 7-day streak reached on lastDate (1..7). */
+  streak: number;
+  /** Day whose reward is waiting to be collected (0 = nothing to collect). */
+  pendingDay: number;
+  bestStreak: number;
+}
+
+export interface ChestState {
+  common: number;
+  rare: number;
+  legendary: number;
+  /** Seconds of play until the next free chest. */
+  nextIn: number;
+  opened: number;
+  /** Permanent income bonus won from legendary chests (0.05 = +5 %). */
+  bonus: number;
+}
+
+export interface LeagueState {
+  /** Monday (YYYY-MM-DD) of the current league week. */
+  week: string;
+  /** Money earned since the week started. */
+  earned: Decimal;
+  /** One hour of your (un-buffed) income, lagging behind it; bots' totals scale from this. */
+  ref: Decimal;
+  /** When this league week started for you (later than Monday if you joined mid-week). */
+  joinedAt: number;
+  /** Lowest status reached this week. */
+  lowestStatus: number;
+  /** Final positions of the previous week, for the results pop-up. */
+  lastResult: { week: string; wealth: number; villain: number; chests: string[] } | null;
 }
 
 export interface GameState {
@@ -110,6 +166,7 @@ export interface GameState {
   /** Status points (-10..10): change how much net worth each promotion needs. */
   status: number;
   government: Government;
+  tax: TaxState;
   /** A vote is due (new life or new social class). */
   pendingVote: boolean;
   pendingDilemma: string | null;
@@ -143,6 +200,9 @@ export interface GameState {
   };
   stats: Stats;
   daily: DailyState;
+  login: LoginState;
+  chests: ChestState;
+  league: LeagueState;
 
   // ——— Scheduling (play-time based) ———
   nextEventIn: number;
@@ -176,7 +236,8 @@ export function createInitialState(now = Date.now()): GameState {
     lifeStartedAt: now,
     abilityReadyAt: {},
     status: 0,
-    government: { party: null, mandates: 0, subsidies: 0, okupa: false, notices: 0, perkIn: 30, housingBonus: false, electionIn: 600, aidReadyAt: 0, deflationIn: 60 },
+    government: { party: null, mandates: 0, subsidies: 0, okupa: false, notices: 0, perkIn: 30, housingBonus: false, electionIn: 600, aidReadyAt: 0, deflationIn: 60, happeningIn: 90 },
+    tax: { mode: 'honest', risk: 0, hidden: new Decimal(0), paid: new Decimal(0), checkIn: 45, refundIn: 300, cleanFor: 0, inspections: 0 },
     pendingVote: true,
     pendingDilemma: null,
     dilemmaTimeLeft: 0,
@@ -212,6 +273,9 @@ export function createInitialState(now = Date.now()): GameState {
       daysPlayed: [],
     },
     daily: { date: '', challengeId: '', baseline: 0, claimed: false, streak: 0, lastClaimDate: '' },
+    login: { lastDate: '', streak: 0, pendingDay: 0, bestStreak: 0 },
+    chests: { common: 0, rare: 0, legendary: 0, nextIn: 120, opened: 0, bonus: 0 },
+    league: { week: '', earned: new Decimal(0), ref: new Decimal(0), lowestStatus: 0, lastResult: null, joinedAt: 0 },
 
     nextEventIn: 120,
     nextOpportunityIn: 45,

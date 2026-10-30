@@ -29,6 +29,7 @@ export class Runtime {
   recoveredFromBackup = false;
   private lastTick = Date.now();
   private sinceSave = 0;
+  private sinceDayCheck = 0;
   private timer: number | null = null;
   private awayListeners = new Set<(s: OfflineSummary) => void>();
   pendingOffline: OfflineSummary | null = null;
@@ -75,6 +76,12 @@ export class Runtime {
     if (gap <= 0) return;
     this.engine.tick(gap / 1000);
     this.sinceSave += gap / 1000;
+    this.sinceDayCheck += gap / 1000;
+    // Midnight while playing: new daily reward, and on Mondays a new league week.
+    if (this.sinceDayCheck >= 30) {
+      this.sinceDayCheck = 0;
+      this.engine.ensureDaily(today());
+    }
     if (this.sinceSave >= ECONOMY.autosaveSeconds) this.saveNow();
   }
 

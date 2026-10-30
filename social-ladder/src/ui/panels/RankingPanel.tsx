@@ -9,6 +9,8 @@ import * as online from '../../online/online';
 import { Icon } from '../components/Icon';
 import { pushToast } from '../components/Toasts';
 import { useEngine } from '../hooks';
+import { LEAGUE } from '../../data/retention';
+import { ChestIcon } from '../components/Retention';
 
 const fromLog = (v: number) => money(Decimal.pow(10, v));
 
@@ -36,6 +38,7 @@ export function RankingPanel({ runtime }: { runtime: Runtime }) {
     return (
       <div className="panel">
         <div className="panel-head"><h2>{t('tabRanking')}</h2></div>
+        <LeagueBoard />
         <div className="notice">
           <Icon id="cloud" size={30} />
           <div>
@@ -50,6 +53,7 @@ export function RankingPanel({ runtime }: { runtime: Runtime }) {
   return (
     <div className="panel">
       <div className="panel-head"><h2>{t('tabRanking')}</h2></div>
+      <LeagueBoard />
       <OnlineRanking runtime={runtime} />
       {records}
     </div>
@@ -146,5 +150,46 @@ function OnlineRanking({ runtime }: { runtime: Runtime }) {
         </div>
       )}
     </>
+  );
+}
+
+/** Weekly league against simulated rivals: wealth and lowest status. */
+function LeagueBoard() {
+  const engine = useEngine();
+  const [kind, setKind] = useState<'wealth' | 'villain'>('wealth');
+  const s = engine.state;
+  if (!s.league.week) return null;
+  const rows = engine.leagueTable(kind);
+  const ends = (new Date(s.league.week + 'T00:00:00').getTime() + 7 * 86400000 - engine.now()) / 1000;
+  return (
+    <div className="league">
+      <h3>{t('leagueTitle')}</h3>
+      <p className="muted">{t('leagueEnds', { t: fmtDuration(Math.max(0, ends)) })}</p>
+      <div className="league-prizes">
+        {LEAGUE.rewards.map((r, i) => (
+          <span key={r.upTo}><ChestIcon rarity={r.chest} size={16} /> {i === 0 ? '1.º' : `${LEAGUE.rewards[i - 1].upTo + 1}-${r.upTo}.º`}</span>
+        ))}
+        <span><ChestIcon rarity={LEAGUE.villainChest} size={16} /> {t('leagueVillainPrize')}</span>
+      </div>
+      <div className="subtabs">
+        <button className={kind === 'wealth' ? 'on' : ''} onClick={() => setKind('wealth')}>{t('leagueWealth')}</button>
+        <button className={kind === 'villain' ? 'on' : ''} onClick={() => setKind('villain')}>{t('leagueVillain')}</button>
+      </div>
+      <table className="board">
+        <thead>
+          <tr><th>{t('rankShort')}</th><th>{t('player')}</th><th>{kind === 'wealth' ? t('leagueEarned') : t('leagueLowest')}</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={r.name + i} className={r.me ? 'me' : ''}>
+              <td>{i + 1}</td>
+              <td>{r.me && s.settings.playerName ? `${r.name} (${t('you')})` : r.name}</td>
+              <td>{kind === 'wealth' ? money(r.value) : r.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="muted small">{t('leagueSimulated')}</p>
+    </div>
   );
 }

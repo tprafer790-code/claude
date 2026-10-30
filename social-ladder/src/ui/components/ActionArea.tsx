@@ -15,12 +15,14 @@ import { Icon } from './Icon';
 import { PARTY_BY_ID, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../../data/parties';
 import { Decimal } from '../../core/bignum';
 import { HEALTH } from '../../data/social';
+import { ChestButton, LeagueChip, NextUnlockBar } from './Retention';
+import { HaciendaModal } from '../modals/HaciendaModal';
 
 /** Combo milestones: 5 small, 10 burst, 25 aura, 50 arcade spectacle, 100 celebration. */
 const COMBO_MILESTONES = [5, 10, 25, 50, 100];
 const RAINBOW = [FX.red, FX.orange, FX.gold, FX.green, FX.cyan, FX.electric, FX.violet, FX.pink];
 
-export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
+export function ActionArea({ onOpenEvent, onOpenChests, onOpenLeague }: { onOpenEvent: () => void; onOpenChests: () => void; onOpenLeague: () => void }) {
   const engine = useEngine();
   const s = engine.state;
   const d = engine.derived;
@@ -137,6 +139,8 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
   return (
     <div className="action-area">
       <div className="status-row">
+        <ChestButton onOpen={onOpenChests} />
+        <LeagueChip onOpen={onOpenLeague} />
         {ev && (
           <button className="event-pill" onClick={onOpenEvent}>
             <Icon id="scroll" size={18} />
@@ -152,6 +156,7 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
         ))}
       </div>
 
+      <NextUnlockBar />
       <ClimbHooks />
 
       <div className="click-zone">
@@ -229,11 +234,16 @@ function ClimbHooks() {
   const notices = party?.notices?.length ?? 0;
   const aidCd = engine.aidCooldown();
   const healCost = engine.healCost();
+  const [taxOpen, setTaxOpen] = useState(false);
+  const risk = Math.round(s.tax.risk);
   return (
     <div className="climb-hooks">
       {party && (
         <div className="gov-pill" style={{ ['--party' as string]: party.color }} title={party.phases[engine.phase()].text}>
           <b>{t('governs', { name: party.name })}</b> · {party.phases[engine.phase()].title}
+          <button className={`tax-btn ${s.tax.mode} ${risk >= 80 ? 'hot' : risk >= 40 ? 'warm' : ''}`} onClick={() => setTaxOpen(true)} title={t('hacienda')}>
+            🏛 {t('taxPill', { rate: Math.round(engine.taxRate() * 100) })}{s.tax.mode !== 'honest' || risk > 0 ? ` · ${t('taxRiskPill', { risk })}` : ''}
+          </button>
           {g.okupa && <span className="gov-extra">{t('okupaPill', { n: g.notices, max: notices })}</span>}
           {g.subsidies > 0 && <span className="gov-extra">{t('inflationPill', { pct: Math.round(SUBSIDY_INFLATION * Math.min(g.subsidies, SUBSIDY_INFLATION_CAP) * 100) })}</span>}
           <span className="gov-timer">{t('electionIn', { t: fmtDuration(Math.max(0, g.electionIn)) })}</span>
@@ -244,6 +254,7 @@ function ClimbHooks() {
           )}
         </div>
       )}
+      {taxOpen && <HaciendaModal onClose={() => setTaxOpen(false)} />}
       {(engine.inDanger() || s.health < HEALTH.max) && (
         <div className={`health ${engine.inDanger() ? 'danger' : ''}`}>
           <span className="health-label">♥ {t('health')}</span>
