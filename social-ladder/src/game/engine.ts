@@ -1195,6 +1195,17 @@ export class GameEngine {
     }
     this.changed();
   }
+  /** Milliseconds since the player last clicked. */
+  idleMs(): number {
+    return this.now() - this.lastActivityAt;
+  }
+  /** Cash picked up in the street: a falling banknote or a passer-by's tip. */
+  streetCash(kind: 'bill' | 'tip'): Decimal {
+    const amount = this.reward(kind === 'bill' ? 8 : 3, 1);
+    this.earn(amount);
+    this.changed();
+    return amount;
+  }
   typeKey(key: string) {
     if (key.length !== 1) return;
     this.typedBuffer = (this.typedBuffer + key.toLowerCase()).slice(-16);

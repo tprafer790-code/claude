@@ -10,9 +10,10 @@ import stages from './es/stages.json';
 import upgrades from './es/upgrades.json';
 import politics from './es/politics.json';
 import dilemmas from './es/dilemmas.json';
+import quips from './es/quips.json';
 
 /** Spanish content, keyed by content path (see content.ts). */
-export const CONTENT_ES: Record<string, string> = { ...stages, ...ranks, ...businesses, ...upgrades, ...items, ...achievements, ...events1, ...events2, ...politics, ...dilemmas };
+export const CONTENT_ES: Record<string, string> = { ...stages, ...ranks, ...businesses, ...upgrades, ...items, ...achievements, ...events1, ...events2, ...politics, ...dilemmas, ...quips };
 
 const n = (v: number) => v.toLocaleString('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
 

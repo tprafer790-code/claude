@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type Phaser from 'phaser';
 import { useEngineStatic } from '../hooks';
+import { HeroQuips } from './HeroQuips';
 
 /** Mounts the Phaser street scene (lazy-loaded so the UI paints first). */
 export function SceneView() {
@@ -22,7 +23,10 @@ export function SceneView() {
 
   return (
     <div className="scene-frame">
-      <div className="scene" ref={ref} />
+      <div className="scene-wrap">
+        <div className="scene" ref={ref} />
+        <HeroQuips />
+      </div>
     </div>
   );
 }

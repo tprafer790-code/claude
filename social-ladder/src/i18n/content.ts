@@ -15,6 +15,7 @@ import { PARTIES } from '../data/parties';
 import { DILEMMAS } from '../data/dilemmas';
 import { ATTACKS, RIVALS, STATUS_TITLES, VAULT_PRIZES } from '../data/social';
 import { PARTNERS } from '../data/romance';
+import { QUIPS } from '../data/quips';
 import type { Lang } from './index';
 import { CONTENT_ES, PERK_DESC_ES, BUSINESS_UPGRADE_ES } from './content.es';
 
@@ -52,6 +53,7 @@ const SOURCES: Record<string, unknown[]> = {
   vault: VAULT_PRIZES,
   attacks: ATTACKS,
   partners: PARTNERS,
+  quips: QUIPS,
 };
 
 interface Slot {
