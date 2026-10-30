@@ -5,11 +5,11 @@
  */
 export const CASINO = {
   /** A scratch card costs this fraction of your cash... */
-  scratchCashFraction: 0.3,
+  scratchCashFraction: 0.03,
   /** ...or at least this many seconds of income. */
-  scratchMinSeconds: 60,
+  scratchMinSeconds: 20,
   /** Status lost on every game. */
-  statusCost: 1,
+  statusCost: 0.5,
   /** Roulette stakes as fractions of your cash. */
   stakes: [0.1, 0.25, 0.5],
 } as const;

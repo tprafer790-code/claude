@@ -714,3 +714,99 @@ button.card-main:not(:disabled):active { transform: translateY(1px); }
 .roulette-bets .bet-red.on { background: #d62a2a; color: var(--white); }
 .roulette-bets .bet-black.on { background: #15172a; color: var(--white); box-shadow: 0 0 0 2px var(--white); }
 .roulette-bets select { background: var(--plum); color: var(--cream); border: none; padding: 5px; }
+
+/* ——— One screen, no scrolling: the street shrinks to make room for everything else ——— */
+.app { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+.layout { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; padding: 10px 16px; }
+.play { position: relative; flex: 1 1 auto; min-height: 0; gap: 8px; }
+.scene-frame { flex: 1 1 0; min-height: 110px; display: flex; }
+.scene { width: 100%; height: 100%; aspect-ratio: auto; }
+.tutorial { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 6; width: max-content; max-width: calc(100% - 24px); animation: none; font-size: 13px; padding: 6px 10px; }
+.status-row:empty { display: none; }
+.action-area { gap: 6px; }
+.big-button-face { padding: 14px 12px 12px; }
+@media (max-width: 1000px) { .layout { padding: 8px; gap: 8px; } }
+@media (max-width: 720px) {
+  .climb-hooks { grid-template-columns: 1fr 1fr; }
+  .climb-hooks .gov-pill, .climb-hooks .health { grid-column: 1 / -1; }
+  .rival, .vault { grid-template-columns: auto 1fr; gap: 4px; }
+  .rival-name, .vault-icon, .vault-count { display: none; }
+  .rival-bar span { font-size: 10px; }
+  .big-button-verb { font-size: 18px; }
+  .big-button-face { padding: 10px 8px 8px; gap: 2px; }
+  .big-button-sub { font-size: 12px; }
+  .abilities { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+  .ability { padding: 5px; }
+  .ability-name { font-size: 11px; }
+  .gov-pill { font-size: 11px; padding: 4px 8px; gap: 4px; }
+  .needs { display: none; }
+  .tutorial { font-size: 12px; }
+}
+@media (max-height: 700px) {
+  .big-button-face { padding: 8px; gap: 2px; }
+  .big-button-verb { font-size: 18px; }
+  .abilities { display: flex; overflow-x: auto; }
+  .ability { flex: 0 0 auto; }
+}
+
+/* Government extras, aid and health */
+.gov-timer { margin-left: auto; font-family: var(--font-pixel); font-size: 8px; color: var(--muted); }
+.aid-btn { border: none; padding: 4px 8px; font-size: 12px; font-weight: 600; background: var(--gold); color: var(--ink); box-shadow: 0 3px 0 var(--gold-dark); animation: pulse 1.4s ease-in-out infinite; }
+.aid-btn:disabled { background: var(--plum); color: var(--muted); box-shadow: 0 3px 0 var(--ink); animation: none; }
+.health { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font-size: 12px; }
+.health-label { font-family: var(--font-pixel); font-size: 8px; color: var(--pink); }
+.health-bar { position: relative; height: 14px; background: var(--ink); box-shadow: 0 0 0 2px var(--line); overflow: hidden; }
+.health-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #d62a2a, #ff6b6b); transition: width 0.3s steps(6); }
+.health-bar span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; text-shadow: 1px 1px 0 var(--ink); }
+.health.danger .health-label { animation: blink 0.8s steps(2) infinite; }
+.heal-btn { background: var(--green); box-shadow: 0 3px 0 #137a30; animation: none; }
+
+/* Romance: a fade to black stands in for the night */
+.modal.romance-modal { width: min(520px, 100%); box-shadow: 0 0 0 3px var(--pink), 0 0 30px rgba(255, 61, 173, 0.4); }
+.romance-kicker { font-family: var(--font-pixel); font-size: 9px; color: var(--pink); letter-spacing: 2px; }
+.romance-text { font-size: 14px; }
+.romance-choices { display: grid; gap: 8px; }
+.dilemma-choice.safe { background: linear-gradient(#1f6fd8, #0f3a7a); }
+.dilemma-choice.wild { background: linear-gradient(#c4207e, #6a1046); }
+.dilemma-choice.leave { background: linear-gradient(#3a3f66, #23284a); }
+.fade-black { position: fixed; inset: 0; z-index: 95; background: #000; display: grid; place-items: center; animation: fadeBlack 2.2s ease-in-out forwards; pointer-events: none; }
+.fade-black span { font-family: var(--font-pixel); font-size: 12px; color: var(--cream); letter-spacing: 2px; }
+@keyframes fadeBlack { 0% { opacity: 0; } 20%, 75% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Jail and help */
+.modal.jail-modal { text-align: center; box-shadow: 0 0 0 3px #888, 0 0 40px rgba(0, 0, 0, 0.8); }
+.jail-bars { height: 70px; margin: -18px -18px 10px; background: repeating-linear-gradient(90deg, #2a2e4a 0 14px, #9aa0b0 14px 22px); }
+.jail-title { font-size: 20px; color: var(--white); text-shadow: 3px 3px 0 var(--red), 5px 5px 0 var(--ink); }
+.modal.help-modal { width: min(440px, 100%); }
+.modal.help-modal h2 { margin: 6px 0; font-size: 14px; color: var(--gold); }
+
+/* Modals fit on one screen too */
+.modal { max-height: calc(100dvh - 24px); }
+@media (max-width: 720px) {
+  .modal-backdrop { padding: 8px; }
+  .modal { padding: 12px; }
+  .modal.vote-modal .parties { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .modal.vote-modal .party { padding: 6px; gap: 4px; font-size: 11px; }
+  .modal.vote-modal .party-now p, .modal.vote-modal .party-later, .modal.vote-modal .party-slogan, .modal.vote-modal .vote-intro { display: none; }
+  .modal.vote-modal .party-name { font-size: 12px; }
+  .modal.vote-modal .party-now ul { padding-left: 12px; }
+  .modal.vote-modal .vote-title { font-size: 12px; }
+  .dilemma-title { font-size: 14px; }
+  .dilemma-text, .romance-text { font-size: 13px; }
+  .dilemma-choice { padding: 8px; }
+}
+.action-area { flex: 0 0 auto; }
+@media (max-width: 720px) {
+  .gov-pill { flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
+  .gov-pill .gov-extra { display: none; }
+  .gov-timer { font-size: 7px; }
+  .aid-btn { font-size: 11px; padding: 3px 6px; }
+  .health { gap: 4px; }
+  .health-label { font-size: 7px; }
+  .rank-line .rank-name { font-size: 10px; }
+}
+@media (max-height: 700px) and (max-width: 720px) {
+  .topbar { padding: 4px 8px; gap: 4px; }
+  .rates { display: none; }
+  .combo { display: none; }
+}

@@ -68,10 +68,14 @@ La lógica de críticos no ha cambiado: probabilidad y multiplicador siguen en `
 ### 2.2 Política, dilemas, estatus y casino
 
 - **Menú ☰:** la tienda (negocios, mejoras, objetos, casino, escalera, metas, legado y ranking) se abre como cajón lateral desde el botón de la esquina superior derecha. Un punto verde avisa de que hay algo comprable o cobrable.
-- **Estatus (-10 a +10):** multiplica el patrimonio que pide cada ascenso (`statusReqMult` en `src/data/social.ts`): +10 → ×0,65; -3 → ×1,36; -10 → ×2,2.
-- **Elecciones:** al empezar cada vida y al llegar a cada clase social. Partidos y efectos por fase en `src/data/parties.ts` (fase temprana = clases 1-3, media = 4-5, final = 6-8). Repetir partido da +5 % de ingresos por mandato seguido.
+- **Estatus (-50 a +50, en medios puntos):** multiplica el patrimonio que pide cada ascenso (`statusReqMult` en `src/data/social.ts`): +25 → ×0,7; -10 → ×1,6; -30 o menos → ×3. Perder estatus paga «dinero sucio» (150 s de ingresos por punto, con tope proporcional a lo ganado en la vida); ganarlo trae donaciones (90 s por punto).
+- **Salud y cárcel:** con estatus -10 o menos la gente te pega cada 25-50 s (más a menudo cuanto peor estatus). La salud baja los ingresos hasta la mitad; curarse cuesta el 40 % del efectivo (mínimo 5 min de ingresos) y si llegas a 0 el hospital se queda el 25 %. Con -50 vas a la cárcel y empiezas la vida desde la calle (se conservan logros y legado).
+- **Elecciones cada 10 minutos de juego.** Partidos y efectos por fase en `src/data/parties.ts` (fase temprana = clases 1-3, media = 4-5, final = 6-8). Repetir partido da +5 % de ingresos por mandato seguido. Con PESOE o Podremos aparece el botón «Pedir ayuda» (cada 60 s); cada ayuda sube todos los precios un 3 % (tope +102 %). Con POX o PEPE la inflación baja una ayuda cada 60 s.
+- **Citas (`src/data/romance.ts`):** desde el rango 8, con estatus ≥ 3 o un vehículo, aparece cada 7-12 min una cita con una mujer adulta. Elección no explícita con fundido a negro: con protección (+1 % ingresos), sin protección (+30 % ingresos, 30 % de hijo con manutención del 8 % del efectivo cada 2 min) o despedirse.
+- **Ayuda contextual:** una ventana explica cada mecánica la primera vez que aparece (`src/ui/help.ts`).
 - **Dilemas morales:** 15 ventanas SÍ/NO con 25 s para decidir (si no, NO). Contenido en `src/data/dilemmas.ts`.
-- **Rival, caja fuerte y casino:** rival que se adelanta solo, caja fuerte que se abre a base de clics, rasca y gana y ruleta (`src/data/casino.ts`). Cada partida del casino cuesta 1 de estatus; con estatus -10 te vetan.
+- **Rival, caja fuerte y casino:** rival que se adelanta solo, caja fuerte que se abre a base de clics, rasca y gana barato y ruleta (`src/data/casino.ts`). Cada partida cuesta medio punto de estatus (sin recompensa de dinero sucio, para que no se pueda explotar).
+- **Sin scroll:** la interfaz ocupa exactamente la pantalla (100dvh) en ordenador y móvil; la escena se encoge para dejar sitio a los controles.
 
 **Ritmo aproximado** (simulador, 1 clic/s, sin prestigio): Millonario ≈ 21 min, Multimillonario ≈ 43 min, Isla privada ≈ 1 h 50 min, Dueño de un país ≈ 5 h. Las etapas absurda y cósmica están pensadas para alcanzarse con varias reinvenciones. Todo es ajustable en `src/config/economy.ts`.
 

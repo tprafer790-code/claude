@@ -16,9 +16,10 @@ import { UPGRADE_BY_ID, UPGRADES } from '../data/upgrades';
 import { businessAffordable, businessCost, computeDerived, type Derived } from './derive';
 import { checkCustomSecret } from './secretChecks';
 import { DILEMMA_BY_ID, DILEMMAS } from '../data/dilemmas';
-import { ENVELOPE_SCANDAL_CHANCE, PARTY_BY_ID, phaseForStage, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../data/parties';
+import { AID_COOLDOWN, DEFLATION_EVERY, ELECTION_EVERY, ENVELOPE_SCANDAL_CHANCE, PARTY_BY_ID, phaseForStage, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../data/parties';
+import { PARTNER_BY_ID, PARTNERS, ROMANCE } from '../data/romance';
 import { CASINO, RED_NUMBERS, SCRATCH_PRIZES, SCRATCH_SYMBOLS } from '../data/casino';
-import { RIVAL_GROWTH, RIVAL_LEAD, RIVALS, STATUS_MAX, STATUS_MIN, statusReqMult, VAULT_PRIZES, vaultClicks } from '../data/social';
+import { ATTACKS, HEALTH, RIVAL_GROWTH, RIVAL_LEAD, RIVALS, STATUS_DANGER, STATUS_GAIN_SECONDS, STATUS_JAIL, STATUS_LOSS_SECONDS, STATUS_MAX, STATUS_MIN, statusReqMult, VAULT_PRIZES, vaultClicks } from '../data/social';
 import { createInitialState, type GameState } from './state';
 
 export type GameEvent =
@@ -41,7 +42,15 @@ export type GameEvent =
   | { type: 'partyPerk'; party: string; label: string; text: string; summary: string[]; tone: 'good' | 'bad' }
   | { type: 'dilemmaStart'; id: string }
   | { type: 'dilemmaResult'; id: string; yes: boolean; timedOut: boolean; title: string; text: string; summary: string[]; statusDelta: number }
-  | { type: 'status'; delta: number; value: number }
+  | { type: 'status'; delta: number; value: number; payout: Decimal }
+  | { type: 'aid'; party: string; amount: Decimal; inflation: number }
+  | { type: 'attack'; damage: number; text: string; knockedOut: boolean; bill: Decimal }
+  | { type: 'heal'; cost: Decimal }
+  | { type: 'jail' }
+  | { type: 'encounterStart'; partner: string }
+  | { type: 'encounterResult'; choice: 'safe' | 'wild' | 'leave'; pregnant: boolean }
+  | { type: 'baby'; children: number }
+  | { type: 'childSupport'; amount: Decimal; children: number }
   | { type: 'rivalBeaten'; index: number; name: string; reward: Decimal }
   | { type: 'vault'; prize: string; text: string; summary: string[] };
 
@@ -255,6 +264,10 @@ export class GameEngine {
   // ——— Main loop ———
   tick(dt: number) {
     if (dt <= 0) return;
+    if (this.state.status <= STATUS_JAIL) {
+      this.goToJail();
+      return;
+    }
     const s = this.state;
     const t = this.now();
     const d = this.derived;
@@ -281,6 +294,8 @@ export class GameEngine {
     this.tickGovernment(dt);
     this.tickDilemma(dt);
     this.tickRival(dt);
+    this.tickHealth(dt);
+    this.tickFamily(dt);
     if (this.casinoPending && t - this.casinoPending.at > 15000) this.settleCasino();
 
     // Events
@@ -693,15 +708,146 @@ export class GameEngine {
 
   // ——— Status ———
   /** Changes status within its range; returns the change actually applied. */
-  changeStatus(add: number): number {
+  /**
+   * Changes status within its range and returns the change actually applied.
+   * Losing status pays dirty money; gaining it brings donations. `rewarded`
+   * is off for prices paid in status (the casino entry fee).
+   */
+  changeStatus(add: number, rewarded = true): number {
     const s = this.state;
-    const next = Math.max(STATUS_MIN, Math.min(STATUS_MAX, s.status + add));
+    const next = Math.round(Math.max(STATUS_MIN, Math.min(STATUS_MAX, s.status + add)) * 2) / 2;
     const delta = next - s.status;
     if (!delta) return 0;
     s.status = next;
+    let payout = new Decimal(0);
+    if (rewarded) {
+      const pts = Math.abs(delta);
+      payout = delta < 0 ? this.reward(pts * STATUS_LOSS_SECONDS, 50, Math.min(0.4, 0.1 * pts)) : this.reward(pts * STATUS_GAIN_SECONDS, 20, Math.min(0.25, 0.05 * pts));
+      this.earn(payout);
+    }
     this.invalidate();
-    this.emit({ type: 'status', delta, value: next });
+    this.emit({ type: 'status', delta, value: next, payout });
     return delta;
+  }
+
+  // ——— Health and jail ———
+  inDanger() {
+    return this.state.status <= STATUS_DANGER;
+  }
+  healCost(): Decimal {
+    return Decimal.max(this.state.money.mul(HEALTH.healCashFraction), this.incomeUnit().mul(HEALTH.healMinSeconds)).floor();
+  }
+  heal(): boolean {
+    const s = this.state;
+    if (s.health >= HEALTH.max) return false;
+    const cost = this.healCost();
+    if (!this.spend(cost)) return false;
+    s.health = HEALTH.max;
+    this.invalidate();
+    this.emit({ type: 'heal', cost });
+    this.changed();
+    return true;
+  }
+  private tickHealth(dt: number) {
+    const s = this.state;
+    if (!this.inDanger()) {
+      if (s.health < HEALTH.max) {
+        s.health = Math.min(HEALTH.max, s.health + HEALTH.regenPerSec * dt);
+        this.invalidate();
+      }
+      return;
+    }
+    s.attackIn -= dt;
+    if (s.attackIn > 0) return;
+    // The lower your status, the more often people go for you.
+    const fury = Math.min(3, 1 + (STATUS_DANGER - s.status) / 15);
+    const [a, b] = HEALTH.attackEvery;
+    s.attackIn = (a + this.random() * (b - a)) / fury;
+    const [lo, hi] = HEALTH.damage;
+    const damage = Math.round(lo + this.random() * (hi - lo));
+    s.health = Math.max(0, s.health - damage);
+    let bill = new Decimal(0);
+    const knockedOut = s.health <= 0;
+    if (knockedOut) {
+      bill = s.money.mul(HEALTH.hospitalCashFraction).floor();
+      s.money = s.money.sub(bill);
+      s.health = 40;
+    }
+    const text = ATTACKS[Math.floor(this.random() * ATTACKS.length)].text;
+    this.invalidate();
+    this.emit({ type: 'attack', damage, text, knockedOut, bill });
+  }
+  /** Status hit rock bottom: jail, and the life starts over with nothing gained. */
+  goToJail() {
+    const old = this.state;
+    this.state = this.freshLife(old, old.prestige);
+    this.state.counters.jail = (this.state.counters.jail ?? 0) + 1;
+    this.opportunity = null;
+    this.casinoPending = null;
+    this.combo = 0;
+    this.invalidate();
+    this.emit({ type: 'jail' });
+    this.changed();
+  }
+
+  // ——— Romance ———
+  private tickFamily(dt: number) {
+    const s = this.state;
+    const f = s.family;
+    if (f.pregnancyIn > 0) {
+      f.pregnancyIn -= dt;
+      if (f.pregnancyIn <= 0) {
+        f.pregnancyIn = 0;
+        f.children++;
+        if (f.children === 1) f.supportIn = ROMANCE.supportEvery;
+        s.lifeEffects.push({ effect: { kind: 'incomeMult', value: ROMANCE.childIncome }, label: t('childSupportLabel') });
+        this.invalidate();
+        this.emit({ type: 'baby', children: f.children });
+      }
+    }
+    if (f.children > 0) {
+      f.supportIn -= dt;
+      if (f.supportIn <= 0) {
+        f.supportIn = ROMANCE.supportEvery;
+        const per = Decimal.max(s.money.mul(ROMANCE.supportCashFraction), this.incomeUnit().mul(ROMANCE.supportMinSeconds));
+        const amount = Decimal.min(per.mul(f.children), s.money).floor();
+        s.money = s.money.sub(amount);
+        this.emit({ type: 'childSupport', amount, children: f.children });
+      }
+    }
+    if (f.pending || s.pendingVote || s.pendingDilemma || s.rankIndex < ROMANCE.minRank) return;
+    if (s.status < ROMANCE.minStatus && !s.equipped.ride) return;
+    f.encounterIn -= dt;
+    if (f.encounterIn > 0) return;
+    const [a, b] = ROMANCE.every;
+    f.encounterIn = a + this.random() * (b - a);
+    f.pending = PARTNERS[Math.floor(this.random() * PARTNERS.length)].id;
+    this.emit({ type: 'encounterStart', partner: f.pending });
+  }
+  startEncounter(partner = PARTNERS[0].id) {
+    this.state.family.pending = partner;
+    this.emit({ type: 'encounterStart', partner });
+    this.changed();
+  }
+  resolveEncounter(choice: 'safe' | 'wild' | 'leave'): boolean {
+    const s = this.state;
+    const f = s.family;
+    if (!f.pending || !PARTNER_BY_ID[f.pending]) return false;
+    f.pending = null;
+    let pregnant = false;
+    if (choice === 'safe') s.lifeEffects.push({ effect: { kind: 'incomeMult', value: ROMANCE.safeIncome }, label: t('romanceSafeLabel') });
+    if (choice === 'wild') {
+      s.lifeEffects.push({ effect: { kind: 'incomeMult', value: ROMANCE.wildIncome }, label: t('romanceWildLabel') });
+      if (f.pregnancyIn <= 0 && this.random() < ROMANCE.childChance) {
+        f.pregnancyIn = ROMANCE.pregnancySeconds;
+        pregnant = true;
+      }
+    }
+    s.counters.encounters = (s.counters.encounters ?? 0) + 1;
+    this.invalidate();
+    this.emit({ type: 'encounterResult', choice, pregnant });
+    this.changed();
+    return true;
   }
 
   // ——— Government ———
@@ -725,16 +871,34 @@ export class GameEngine {
     g.okupa = partyId === 'podremos' && phase === 0 && !this.hasHome();
     s.flags[`party_${partyId}_${phase}`] = true;
     s.pendingVote = false;
+    g.electionIn = ELECTION_EVERY;
     this.invalidate();
     this.emit({ type: 'vote', party: partyId, mandates: g.mandates });
     this.changed();
     return true;
   }
-  /** A new social class: elections, and squatters finally buy a home. */
+  aidCooldown(): number {
+    return Math.max(0, (this.state.government.aidReadyAt - this.now()) / 1000);
+  }
+  /** PESOE and Podremos hand out aid on request; every aid pushes prices up. */
+  requestAid(): boolean {
+    const g = this.state.government;
+    const party = g.party ? PARTY_BY_ID[g.party] : null;
+    if (!party?.aid || this.state.pendingVote || this.aidCooldown() > 0) return false;
+    const amount = this.reward(party.aid.seconds[this.phase()], 20);
+    this.earn(amount);
+    if (g.subsidies < SUBSIDY_INFLATION_CAP) g.subsidies++;
+    g.aidReadyAt = this.now() + AID_COOLDOWN * 1000;
+    this.invalidate();
+    this.emit({ type: 'aid', party: party.id, amount, inflation: Math.round(SUBSIDY_INFLATION * g.subsidies * 100) });
+    this.checkRanks();
+    this.changed();
+    return true;
+  }
+  /** A new social class: squatters finally buy a home. */
   private onNewClass() {
     const s = this.state;
     const g = s.government;
-    s.pendingVote = true;
     if (g.okupa) {
       g.okupa = false;
       g.notices = 0;
@@ -752,8 +916,23 @@ export class GameEngine {
     const s = this.state;
     const g = s.government;
     const party = g.party ? PARTY_BY_ID[g.party] : null;
-    const perk = party?.phases[this.phase()].perk;
-    if (!party || !perk || s.pendingVote) return;
+    if (!party || s.pendingVote) return;
+    g.electionIn -= dt;
+    if (g.electionIn <= 0) {
+      s.pendingVote = true;
+      return;
+    }
+    // Right-wing governments slowly bring prices back down.
+    if (!party.aid && g.subsidies > 0) {
+      g.deflationIn -= dt;
+      if (g.deflationIn <= 0) {
+        g.deflationIn = DEFLATION_EVERY;
+        g.subsidies--;
+        this.invalidate();
+      }
+    }
+    const perk = party.phases[this.phase()].perk;
+    if (!perk) return;
     if (perk.kind === 'notice' && !g.okupa) return;
     g.perkIn -= dt;
     if (g.perkIn > 0) return;
@@ -762,16 +941,6 @@ export class GameEngine {
     let text = perk.text;
     let tone: 'good' | 'bad' = 'good';
     switch (perk.kind) {
-      case 'subsidy': {
-        const amount = this.reward(perk.seconds ?? 30);
-        this.earn(amount);
-        summary.push(`+${money(amount)}`);
-        if (g.subsidies < SUBSIDY_INFLATION_CAP) {
-          g.subsidies++;
-          summary.push(t('pricesUp', { pct: Math.round(SUBSIDY_INFLATION * g.subsidies * 100) }));
-        }
-        break;
-      }
       case 'notice': {
         const notices = party.notices ?? [];
         if (g.notices >= notices.length) return;
@@ -858,7 +1027,7 @@ export class GameEngine {
       if (s.dilemmaTimeLeft <= 0) this.resolveDilemma(false, true);
       return;
     }
-    if (s.pendingVote) return;
+    if (s.pendingVote || s.family.pending) return;
     s.nextDilemmaIn -= dt;
     if (s.nextDilemmaIn <= 0) this.startDilemma();
   }
@@ -936,7 +1105,7 @@ export class GameEngine {
     if (!this.casinoOpen() || this.casinoPending) return null;
     const price = this.scratchPrice();
     if (!this.spend(price)) return null;
-    this.changeStatus(-CASINO.statusCost);
+    this.changeStatus(-CASINO.statusCost, false);
     const total = SCRATCH_PRIZES.reduce((a, p) => a + p.chance, 0);
     let r = this.random() * total;
     let prize = SCRATCH_PRIZES[0];
@@ -970,7 +1139,7 @@ export class GameEngine {
     if (!this.casinoOpen() || this.casinoPending) return null;
     const stake = this.rouletteStake(fraction);
     if (stake.lt(1) || !this.spend(stake)) return null;
-    this.changeStatus(-CASINO.statusCost);
+    this.changeStatus(-CASINO.statusCost, false);
     const n = Math.floor(this.random() * 37);
     const color = n === 0 ? 'green' : RED_NUMBERS.has(n) ? 'red' : 'black';
     let payout = new Decimal(0);
@@ -1131,11 +1300,23 @@ export class GameEngine {
     if (!this.canPrestige()) return false;
     const old = this.state;
     const gained = this.prestigeGain();
+    this.state = this.freshLife(old, { ...old.prestige, reputation: old.prestige.reputation + gained, legacy: old.prestige.legacy + gained, count: old.prestige.count + 1 });
+    const seed = SEED_MONEY[this.state.prestige.perks.seed_money ?? 0] ?? 0;
+    if (seed > 0) this.state.money = new Decimal(seed);
+    this.opportunity = null;
+    this.combo = 0;
+    this.invalidate();
+    this.checkAchievements();
+    this.emit({ type: 'prestige', gained });
+    this.changed();
+    return true;
+  }
+  /** A new life that keeps everything permanent from `old`. */
+  private freshLife(old: GameState, prestige: GameState['prestige']): GameState {
     const fresh = createInitialState(this.now());
     const heirlooms: Record<string, true> = {};
     for (const id in old.items) if (ITEM_BY_ID[id]?.unobtainableInShop) heirlooms[id] = true;
-
-    this.state = {
+    return {
       ...fresh,
       lifetimeEarned: old.lifetimeEarned,
       highestRankEver: old.highestRankEver,
@@ -1147,7 +1328,7 @@ export class GameEngine {
       flags: old.flags,
       counters: old.counters,
       missionsClaimed: old.missionsClaimed,
-      prestige: { ...old.prestige, reputation: old.prestige.reputation + gained, legacy: old.prestige.legacy + gained, count: old.prestige.count + 1 },
+      prestige,
       stats: old.stats,
       daily: old.daily,
       createdAt: old.createdAt,
@@ -1159,15 +1340,6 @@ export class GameEngine {
       nextEventIn: 90,
       nextOpportunityIn: 30,
     };
-    const seed = SEED_MONEY[this.state.prestige.perks.seed_money ?? 0] ?? 0;
-    if (seed > 0) this.state.money = new Decimal(seed);
-    this.opportunity = null;
-    this.combo = 0;
-    this.invalidate();
-    this.checkAchievements();
-    this.emit({ type: 'prestige', gained });
-    this.changed();
-    return true;
   }
   buyPerk(id: string): boolean {
     const p = PERK_BY_ID[id];

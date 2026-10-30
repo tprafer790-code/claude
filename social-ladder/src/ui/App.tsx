@@ -35,6 +35,10 @@ import { CasinoPanel } from './panels/CasinoPanel';
 import { VoteModal } from './modals/VoteModal';
 import { DilemmaModal } from './modals/DilemmaModal';
 import { PARTY_BY_ID } from '../data/parties';
+import { RomanceModal } from './modals/RomanceModal';
+import { JailModal } from './modals/JailModal';
+import { HelpModal } from './modals/HelpModal';
+import { nextHelp } from './help';
 
 type Tab = 'business' | 'upgrades' | 'objects' | 'casino' | 'ladder' | 'goals' | 'legacy' | 'ranking';
 const TABS: { id: Tab; label: StringKey; icon: IconId }[] = [
@@ -65,6 +69,8 @@ function Game({ runtime }: { runtime: Runtime }) {
   const [eventOpen, setEventOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [jailed, setJailed] = useState(false);
+  const [fade, setFade] = useState(false);
   const openMenu = (to?: Tab) => {
     if (to) setTab(to);
     setMenuOpen(true);
@@ -150,6 +156,24 @@ function Game({ runtime }: { runtime: Runtime }) {
           break;
         }
         case 'rivalBeaten': audio.fanfare(); break;
+        case 'status':
+          if (e.payout.gt(0)) pushToast({ icon: 'coin', title: t('fxStatus', { v: `${e.delta > 0 ? '+' : ''}${e.delta}` }), text: t(e.delta < 0 ? 'statusPayoutLoss' : 'statusPayoutGain', { amount: money(e.payout) }), tone: e.delta < 0 ? 'info' : 'good' });
+          break;
+        case 'aid': audio.coin(); pushToast({ icon: 'bank', title: `${PARTY_BY_ID[e.party]?.aid?.label ?? ''}: +${money(e.amount)}`, text: t('aidInflation', { pct: e.inflation }), tone: 'good' }); break;
+        case 'attack':
+          audio.denied();
+          pushToast({ icon: 'scroll', title: t('attackTitle', { n: e.damage }), text: e.knockedOut ? `${e.text} ${t('knockedOut', { amount: money(e.bill) })}` : e.text, tone: 'info' });
+          break;
+        case 'heal': audio.achievement(); pushToast({ icon: 'star', title: t('healed'), text: `-${money(e.cost)}`, tone: 'good' }); break;
+        case 'jail': audio.prestige(); setMenuOpen(false); setJailed(true); break;
+        case 'encounterStart': audio.rare(); break;
+        case 'encounterResult':
+          if (e.choice !== 'leave') setFade(true);
+          window.setTimeout(() => pushToast({ icon: 'star', title: t('romanceKicker'), text: t(e.choice === 'safe' ? 'romanceSafeResult' : e.choice === 'wild' ? 'romanceWildResult' : 'romanceLeaveResult'), tone: 'good' }), e.choice === 'leave' ? 0 : 2200);
+          if (e.pregnant) window.setTimeout(() => pushToast({ icon: 'scroll', title: t('romanceKicker'), text: t('romancePregnant'), tone: 'rare' }), 4500);
+          break;
+        case 'baby': audio.fanfare(); pushToast({ icon: 'star', title: t('babyTitle'), text: t('babyText', { n: e.children }), tone: 'rare' }); break;
+        case 'childSupport': pushToast({ icon: 'bank', title: t('childSupportTitle'), text: t('childSupportText', { n: e.children, amount: money(e.amount) }), tone: 'info' }); break;
         case 'vault': audio.secret(); pushToast({ icon: 'key', title: t('vaultOpened'), text: e.text, tone: 'rare', sub: e.summary.join(' · ') }); break;
       }
     });
@@ -170,6 +194,10 @@ function Game({ runtime }: { runtime: Runtime }) {
   const stage = STAGE_BY_ID[engine.rank.stage];
   const upgradeAlert = engine.availableUpgrades().some((u) => s.money.gte(engine.upgradeCost(u.id)));
   const menuAlert = upgradeAlert || engine.visibleBusinesses().some((b) => s.money.gte(engine.businessCost(b.id, 1))) || engine.visibleMissions().some((m) => { const [c, g] = m.progress(s); return c >= g; });
+  // One blocking pop-up at a time, most important first.
+  const help = nextHelp(s);
+  const busy = !!offline || majorPromo !== null || settingsOpen || eventOpen;
+  const modal = busy ? null : jailed ? 'jail' : s.pendingVote ? 'vote' : s.family.pending ? 'romance' : s.pendingDilemma ? 'dilemma' : help ? 'help' : null;
   const unlockAudio = () => audio.unlock();
 
   return (
@@ -213,8 +241,12 @@ function Game({ runtime }: { runtime: Runtime }) {
       {majorPromo !== null && <PromotionModal rankIndex={majorPromo} onClose={() => setMajorPromo(null)} />}
       {eventOpen && s.pendingEvent && <EventModal onClose={() => setEventOpen(false)} />}
       {settingsOpen && <SettingsModal runtime={runtime} onClose={() => setSettingsOpen(false)} />}
-      {s.pendingVote && !offline && majorPromo === null && <VoteModal />}
-      {s.pendingDilemma && !s.pendingVote && !offline && majorPromo === null && <DilemmaModal />}
+      {fade && <div className="fade-black" onAnimationEnd={() => setFade(false)}><span>{t('fadeText')}</span></div>}
+      {modal === 'jail' && <JailModal onClose={() => setJailed(false)} />}
+      {modal === 'vote' && <VoteModal />}
+      {modal === 'romance' && <RomanceModal />}
+      {modal === 'dilemma' && <DilemmaModal />}
+      {modal === 'help' && help && <HelpModal topic={help} />}
     </div>
   );
 }

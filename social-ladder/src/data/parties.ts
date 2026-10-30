@@ -2,7 +2,7 @@ import type { Effect } from './types';
 
 /**
  * Parody political parties. The player votes when a life starts and again
- * every time they reach a new social class. Each party helps or hurts in a
+ * every ten minutes of play. Each party helps or hurts in a
  * different phase of the climb, so every one is a viable strategy:
  * PESOE and Podremos front-load help, POX pays off late, PEPE is steady.
  *
@@ -10,8 +10,6 @@ import type { Effect } from './types';
  * 2 = late (Extreme wealth and beyond).
  */
 export type PartyPerkKind =
-  /** Periodic government aid: money now, but prices rise a little each time. */
-  | 'subsidy'
   /** Eviction notice for the squatted flat (each one stresses income a bit). */
   | 'notice'
   /** A parade closes your street: temporary income penalty. */
@@ -45,6 +43,8 @@ export interface PartyDef {
   desc: string;
   color: string;
   phases: [PartyPhase, PartyPhase, PartyPhase];
+  /** Left-wing governments hand out aid on request (each one raises prices). */
+  aid?: { label: string; seconds: [number, number, number] };
   /** Escalating eviction notices (Podremos only). */
   notices?: { id: string; text: string }[];
 }
@@ -53,15 +53,17 @@ export const PARTIES: PartyDef[] = [
   {
     id: 'pesoe', name: 'PESOE', color: '#e3262f',
     desc: 'A social shield for everyone. The bill, too.',
+    aid: { label: 'Minimum vital income', seconds: [60, 40, 25] },
     phases: [
-      { title: 'Social Shield', text: 'Aid rains on the poor. Every aid also nudges all prices up 3%.', effects: [{ kind: 'incomeMult', value: 1.25 }, { kind: 'clickMult', value: 1.25 }], perk: { kind: 'subsidy', every: 60, seconds: 45, label: 'Government aid', text: 'A subsidy lands in your account. Prices rise 3%.' } },
-      { title: 'Minimum Vital Income', text: 'Smaller aid, same inflation. The middle class pays for the party.', effects: [{ kind: 'incomeMult', value: 1.1 }], perk: { kind: 'subsidy', every: 75, seconds: 30, label: 'Government aid', text: 'Another aid arrives. Prices rise 3%.' } },
+      { title: 'Social Shield', text: 'Ask for aid whenever you like. Each aid also pushes every price up 3%.', effects: [{ kind: 'incomeMult', value: 1.25 }, { kind: 'clickMult', value: 1.25 }] },
+      { title: 'Minimum Vital Income', text: 'Smaller aid, same inflation. The middle class pays for the party.', effects: [{ kind: 'incomeMult', value: 1.1 }] },
       { title: 'Make the Rich Pay', text: 'You are the rich now. Taxes bite, but the Treasury lets you sleep easy.', effects: [{ kind: 'incomeMult', value: 0.85 }, { kind: 'offlineEfficiency', value: 0.15 }] },
     ],
   },
   {
     id: 'podremos', name: 'Podremos', color: '#7b2fa3',
     desc: 'Yes we can (squat).',
+    aid: { label: 'Basic income', seconds: [45, 35, 25] },
     phases: [
       { title: 'Squatted Flat', text: 'A free flat if you have no home yet. Eviction notices keep coming until you reach a new social class and buy your own.', effects: [{ kind: 'clickMult', value: 1.2 }], perk: { kind: 'notice', every: 70, label: 'Eviction notice', text: 'The owner wants the flat back.' } },
       { title: 'Public Housing', text: 'Cooperatives everywhere: businesses 15% cheaper.', effects: [{ kind: 'costDiscount', value: 0.85 }, { kind: 'incomeMult', value: 1.05 }] },
@@ -99,10 +101,16 @@ export const PARTY_BY_ID: Record<string, PartyDef> = Object.fromEntries(PARTIES.
 
 /** Each consecutive mandate of the same party adds this to all income. */
 export const LOYALTY_BONUS = 0.05;
-/** PESOE: each aid received raises every price by this fraction... */
+/** Each aid received raises every price by this fraction... */
 export const SUBSIDY_INFLATION = 0.03;
-/** ...up to this many aids. */
-export const SUBSIDY_INFLATION_CAP = 20;
+/** ...up to this many aids (+102%). */
+export const SUBSIDY_INFLATION_CAP = 34;
+/** Seconds between aid requests. */
+export const AID_COOLDOWN = 60;
+/** Right-wing governments remove one aid's worth of inflation this often (seconds). */
+export const DEFLATION_EVERY = 60;
+/** Seconds of play between elections. */
+export const ELECTION_EVERY = 600;
 /** Podremos: the squatted flat's income bonus, minus this per eviction notice. */
 export const OKUPA_INCOME = 1.3;
 export const OKUPA_NOTICE_PENALTY = 0.05;

@@ -15,27 +15,62 @@ function makeEngine(rand = 0.99) {
 describe('status', () => {
   it('makes promotions cheaper or dearer', () => {
     expect(statusReqMult(0)).toBe(1);
-    expect(statusReqMult(-3)).toBeCloseTo(1.36);
-    expect(statusReqMult(10)).toBeCloseTo(0.65);
+    expect(statusReqMult(-10)).toBeCloseTo(1.6);
+    expect(statusReqMult(-50)).toBe(3);
+    expect(statusReqMult(10)).toBeCloseTo(0.88);
     const { engine } = makeEngine();
-    engine.changeStatus(-3);
+    engine.changeStatus(-10);
     engine.state.earnedThisLife = new Decimal(RANKS[1].req).mul(1.2);
     engine.checkRanks();
     expect(engine.state.rankIndex).toBe(0);
-    engine.changeStatus(3);
+    engine.changeStatus(10);
     engine.checkRanks();
     expect(engine.state.rankIndex).toBeGreaterThan(0);
   });
 
-  it('stays within its range', () => {
+  it('pays out when it changes, and sends you to jail at -50', () => {
     const { engine } = makeEngine();
-    expect(engine.changeStatus(-50)).toBe(-10);
+    engine.state.earnedThisLife = new Decimal(1e6);
+    engine.state.businesses.cans = 5;
+    const before = engine.state.money;
+    engine.changeStatus(-2);
+    expect(engine.state.money.gt(before)).toBe(true);
+    const mid = engine.state.money;
+    engine.changeStatus(1);
+    expect(engine.state.money.gt(mid)).toBe(true);
+    expect(engine.changeStatus(-100)).toBe(-49);
     expect(engine.casinoOpen()).toBe(false);
+    engine.tick(0.1);
+    expect(engine.state.status).toBe(0);
+    expect(engine.state.businesses.cans).toBeUndefined();
+    expect(engine.state.counters.jail).toBe(1);
+  });
+
+  it('lets people attack you at -10, and healing costs money', () => {
+    const { engine } = makeEngine(0.5);
+    engine.vote('pepe');
+    engine.changeStatus(-12);
+    engine.tick(40);
+    expect(engine.state.health).toBeLessThan(100);
+    expect(engine.derived.incomeMult).toBeLessThan(1.05 * 1.01);
+    engine.state.money = new Decimal(1e6);
+    expect(engine.heal()).toBe(true);
+    expect(engine.state.health).toBe(100);
+    expect(engine.state.money.lt(1e6)).toBe(true);
   });
 });
 
 describe('elections', () => {
-  it('asks for a vote on a new life and on a new social class', () => {
+  it('asks for a vote on a new life and every 10 minutes', () => {
+    const { engine } = makeEngine();
+    engine.vote('pox');
+    engine.tick(599);
+    expect(engine.state.pendingVote).toBe(false);
+    engine.tick(2);
+    expect(engine.state.pendingVote).toBe(true);
+  });
+
+  it('gives the squatter a home on a new social class', () => {
     const { engine } = makeEngine();
     expect(engine.state.pendingVote).toBe(true);
     expect(engine.vote('podremos')).toBe(true);
@@ -45,18 +80,25 @@ describe('elections', () => {
     for (const r of RANKS.slice(0, 9)) if (r.requiresItem) engine.state.items[r.requiresItem] = true;
     engine.state.earnedThisLife = new Decimal(RANKS[8].req);
     engine.checkRanks();
-    expect(engine.state.pendingVote).toBe(true);
     expect(engine.state.government.okupa).toBe(false);
     expect(engine.state.money.gt(before)).toBe(true);
   });
 
-  it('PESOE aid raises prices', () => {
-    const { engine } = makeEngine();
+  it('aid is a button for PESOE and Podremos, and raises prices', () => {
+    const { engine, clock } = makeEngine();
     engine.vote('pesoe');
     const price = engine.itemPrice('cardboard_mattress');
-    engine.tick(30);
+    expect(engine.requestAid()).toBe(true);
+    expect(engine.requestAid()).toBe(false); // cooldown
     expect(engine.state.government.subsidies).toBe(1);
     expect(engine.itemPrice('cardboard_mattress').gt(price)).toBe(true);
+    clock.advance(61_000);
+    expect(engine.requestAid()).toBe(true);
+    engine.state.pendingVote = true;
+    engine.vote('pepe');
+    expect(engine.requestAid()).toBe(false);
+    engine.tick(61);
+    expect(engine.state.government.subsidies).toBe(1);
   });
 
   it('rewards loyal voters', () => {
@@ -89,6 +131,24 @@ describe('dilemmas', () => {
   });
 });
 
+describe('romance', () => {
+  it('fades to consequences: protection is safe, no protection may bring a child', () => {
+    const { engine } = makeEngine(0.1);
+    engine.startEncounter('lucia');
+    engine.resolveEncounter('safe');
+    expect(engine.state.family.pregnancyIn).toBe(0);
+    engine.startEncounter('marta');
+    engine.resolveEncounter('wild');
+    expect(engine.state.family.pregnancyIn).toBeGreaterThan(0);
+    engine.state.pendingVote = false;
+    engine.state.money = new Decimal(1e5);
+    engine.tick(91);
+    expect(engine.state.family.children).toBe(1);
+    engine.tick(121);
+    expect(engine.state.money.lt(1e5)).toBe(true);
+  });
+});
+
 describe('casino', () => {
   it('charges money and status, and pays only after the reveal', () => {
     const { engine } = makeEngine(0.5);
@@ -96,13 +156,13 @@ describe('casino', () => {
     const card = engine.playScratch();
     expect(card).not.toBeNull();
     expect(card!.grid).toHaveLength(9);
-    expect(engine.state.status).toBe(-1);
+    expect(engine.state.status).toBe(-0.5);
     expect(engine.state.money.lt(1000)).toBe(true);
     const r = engine.spinRoulette('red', 0.5);
     expect(r).toBeNull(); // the scratch card is still being revealed
     engine.settleCasino();
     expect(engine.spinRoulette('red', 0.5)).not.toBeNull();
-    expect(engine.state.status).toBeLessThanOrEqual(-2);
+    expect(engine.state.status).toBeLessThanOrEqual(-1);
   });
 });
 

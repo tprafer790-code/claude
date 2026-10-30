@@ -70,6 +70,24 @@ export interface Government {
   perkIn: number;
   /** The one-off housing grant when leaving the squat was paid. */
   housingBonus: boolean;
+  /** Seconds of play until the next election. */
+  electionIn: number;
+  /** Wall-clock time when aid can be requested again. */
+  aidReadyAt: number;
+  /** Seconds until right-wing governments trim inflation again. */
+  deflationIn: number;
+}
+
+export interface Family {
+  children: number;
+  /** Seconds until a baby arrives (0 = no pregnancy). */
+  pregnancyIn: number;
+  /** Seconds until the next child-support payment. */
+  supportIn: number;
+  /** Seconds of play until the next romantic encounter. */
+  encounterIn: number;
+  /** Partner of the encounter waiting for an answer. */
+  pending: string | null;
 }
 
 export interface GameState {
@@ -100,6 +118,11 @@ export interface GameState {
   nextDilemmaIn: number;
   rival: { index: number; worth: Decimal };
   vault: { clicks: number; opened: number };
+  /** 0–100. Only matters once your status is low enough for people to attack you. */
+  health: number;
+  /** Seconds of play until the next street attack. */
+  attackIn: number;
+  family: Family;
 
   // ——— Permanent ———
   lifetimeEarned: Decimal;
@@ -153,13 +176,16 @@ export function createInitialState(now = Date.now()): GameState {
     lifeStartedAt: now,
     abilityReadyAt: {},
     status: 0,
-    government: { party: null, mandates: 0, subsidies: 0, okupa: false, notices: 0, perkIn: 30, housingBonus: false },
+    government: { party: null, mandates: 0, subsidies: 0, okupa: false, notices: 0, perkIn: 30, housingBonus: false, electionIn: 600, aidReadyAt: 0, deflationIn: 60 },
     pendingVote: true,
     pendingDilemma: null,
     dilemmaTimeLeft: 0,
     nextDilemmaIn: 75,
     rival: { index: 0, worth: new Decimal(0) },
     vault: { clicks: 0, opened: 0 },
+    health: 100,
+    attackIn: 30,
+    family: { children: 0, pregnancyIn: 0, supportIn: 120, encounterIn: 480, pending: null },
 
     lifetimeEarned: new Decimal(0),
     highestRankEver: 0,

@@ -206,6 +206,7 @@ export function FxOverlay() {
           const [x, y] = centerOf('.status-chip');
           fx.text(x, y + 18, t('fxStatus', { v: `${e.delta > 0 ? '+' : ''}${e.delta}` }), { size: 14, color: e.delta > 0 ? FX.green : FX.red, life: 1.4, rise: -30, pop: 1.8 });
           fx.burst(x, y, { count: 14, colors: e.delta > 0 ? [FX.green, FX.gold, FX.white] : [FX.red, '#5a0d1a'], speed: [50, 150], size: 3, glow: 0.5, life: 0.7, gravity: 120 });
+          if (e.payout.gt(0)) flyToCash(x, y, 10);
           document.querySelector('.status-chip')?.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)', filter: 'brightness(1.8)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
           break;
         }
@@ -221,6 +222,26 @@ export function FxOverlay() {
           });
           flyToCash(rx, ry, 10);
           celebrate({ kind: 'rank', kicker: t('rivalBeaten'), title: e.name, sub: t('rivalBeatenSub', { amount: money(e.reward), next: engine.rivalDef().name }), still: fx.reduced });
+          break;
+        }
+        case 'aid': {
+          const [x, y] = centerOf('.aid-btn');
+          fx.burst(x, y, { count: 24, colors: [FX.gold, FX.green, FX.white], speed: [60, 200], size: T.particleSize, glow: 0.5, life: 0.8, gravity: 180 });
+          flyToCash(x, y, 8);
+          fx.text(x, y - 16, `+${money(e.amount)}`, { size: 13, color: FX.gold, life: 1, rise: 40 });
+          break;
+        }
+        case 'attack': {
+          const [x, y] = centerOf('.scene-frame');
+          fx.flash(FX.red, 0.35, 220);
+          fx.burst(x, y + 20, { count: 30, colors: [FX.red, '#ffffff', '#ffd23f'], speed: [120, 300], size: 4, glow: 0.4, life: 0.6, gravity: 200 });
+          fx.ring(x, y + 20, FX.red, 70, 0.3, 6);
+          fx.text(x, y - 10, t('fxHit'), { size: 26, color: FX.white, shadow: FX.red, life: 0.9, rise: 30, pop: 2 });
+          if (shakeAllowed(engine.state.settings)) shake(document.querySelector('.play'), 12, 260);
+          break;
+        }
+        case 'jail': {
+          fx.flash('#000000', 0.8, 900);
           break;
         }
         case 'vault': {

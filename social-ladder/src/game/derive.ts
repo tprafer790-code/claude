@@ -71,6 +71,8 @@ export function activeEffects(s: GameState): { general: Effect[]; items: Effect[
   }
   for (const le of s.lifeEffects) out.push(le.effect);
   out.push(...governmentEffects(s));
+  // Bruises cost money: income falls to half at zero health.
+  if (s.health < 100) out.push({ kind: 'incomeMult', value: 0.5 + 0.5 * Math.max(0, s.health) / 100 });
   return { general: out, items };
 }
 

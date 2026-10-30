@@ -3,19 +3,27 @@
  * of the climb feel contested and full of surprises.
  */
 
-/** Status ranges from -10 to +10 within a life. */
-export const STATUS_MIN = -10;
-export const STATUS_MAX = 10;
+/** Status ranges from -50 to +50 within a life (in half points). */
+export const STATUS_MIN = -50;
+export const STATUS_MAX = 50;
+/** At or below this status, people attack you in the street. */
+export const STATUS_DANGER = -10;
+/** Reaching the minimum status sends you to jail: back to the start of the life. */
+export const STATUS_JAIL = -50;
 
 /**
  * Promotion requirement multiplier for a status value. Good status makes each
- * rank a little cheaper; bad status makes it much more expensive, so dirty
- * money has a real cost.
+ * rank cheaper; bad status makes it much more expensive.
  */
 export function statusReqMult(status: number): number {
-  if (status >= 0) return Math.max(0.65, 1 - 0.035 * status);
-  return Math.min(2.2, 1 + 0.12 * -status);
+  if (status >= 0) return Math.max(0.6, 1 - 0.012 * status);
+  return Math.min(3, 1 + 0.06 * -status);
 }
+
+/** Losing status pays this many seconds of income per point (dirty money)... */
+export const STATUS_LOSS_SECONDS = 150;
+/** ...and gaining it brings donations worth this many seconds per point. */
+export const STATUS_GAIN_SECONDS = 90;
 
 export interface StatusTitle {
   id: string;
@@ -25,13 +33,14 @@ export interface StatusTitle {
 }
 
 export const STATUS_TITLES: StatusTitle[] = [
-  { id: 'pariah', min: -10, name: 'Public Enemy' },
-  { id: 'shady', min: -6, name: 'Shady Character' },
-  { id: 'gossip', min: -2, name: 'Neighbourhood Gossip' },
+  { id: 'jailbird', min: -50, name: 'Future Inmate' },
+  { id: 'pariah', min: -30, name: 'Public Enemy' },
+  { id: 'shady', min: -10, name: 'Shady Character' },
+  { id: 'gossip', min: -3, name: 'Neighbourhood Gossip' },
   { id: 'nobody', min: 0, name: 'Nobody' },
-  { id: 'decent', min: 2, name: 'Decent Person' },
-  { id: 'respected', min: 5, name: 'Respected' },
-  { id: 'icon', min: 8, name: 'National Icon' },
+  { id: 'decent', min: 3, name: 'Decent Person' },
+  { id: 'respected', min: 10, name: 'Respected' },
+  { id: 'icon', min: 25, name: 'National Icon' },
 ];
 
 export function statusTitle(status: number): StatusTitle {
@@ -39,6 +48,35 @@ export function statusTitle(status: number): StatusTitle {
   for (const st of STATUS_TITLES) if (status >= st.min) out = st;
   return out;
 }
+
+/** Health: street attacks while your status is in the gutter. */
+export const HEALTH = {
+  max: 100,
+  /** Seconds between attacks at the danger threshold (faster as status drops). */
+  attackEvery: [25, 50] as const,
+  damage: [8, 20] as const,
+  /** Slow recovery per second while status is above the danger threshold. */
+  regenPerSec: 0.2,
+  /** Healing costs this fraction of your cash, or at least this many seconds of income. */
+  healCashFraction: 0.4,
+  healMinSeconds: 300,
+  /** Knocked out: the hospital keeps this fraction of your cash. */
+  hospitalCashFraction: 0.25,
+} as const;
+
+export interface AttackDef {
+  id: string;
+  text: string;
+}
+
+export const ATTACKS: AttackDef[] = [
+  { id: 'slipper', text: 'A neighbour throws a slipper at you. With precision.' },
+  { id: 'handbag', text: 'A grandmother hits you with her handbag. It is full of coins.' },
+  { id: 'egg', text: 'Someone throws an egg at you. Free range, at least.' },
+  { id: 'baguette', text: 'A baker hits you with a day-old baguette. It is basically a club.' },
+  { id: 'cane', text: 'A pensioner whacks you with his cane and blames the government.' },
+  { id: 'influencer', text: 'An influencer slaps the back of your neck for a video. 2 million views.' },
+];
 
 /**
  * Rivals: someone is always just ahead of you. Overtaking one pays out and

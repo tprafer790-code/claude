@@ -13,7 +13,8 @@ import { STAGES } from '../data/stages';
 import { UPGRADES } from '../data/upgrades';
 import { PARTIES } from '../data/parties';
 import { DILEMMAS } from '../data/dilemmas';
-import { RIVALS, STATUS_TITLES, VAULT_PRIZES } from '../data/social';
+import { ATTACKS, RIVALS, STATUS_TITLES, VAULT_PRIZES } from '../data/social';
+import { PARTNERS } from '../data/romance';
 import type { Lang } from './index';
 import { CONTENT_ES, PERK_DESC_ES, BUSINESS_UPGRADE_ES } from './content.es';
 
@@ -49,6 +50,8 @@ const SOURCES: Record<string, unknown[]> = {
   statusTitles: STATUS_TITLES,
   rivals: RIVALS,
   vault: VAULT_PRIZES,
+  attacks: ATTACKS,
+  partners: PARTNERS,
 };
 
 interface Slot {

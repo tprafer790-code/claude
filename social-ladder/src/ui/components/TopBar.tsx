@@ -48,7 +48,7 @@ export function TopBar({ onSettings, onMenu, menuOpen, menuAlert }: { onSettings
           <span className="rank-name">{rank.name}</span>
           <span className="rank-num">#{s.rankIndex + 1}</span>
           <span className={`status-chip ${s.status > 0 ? 'up' : s.status < 0 ? 'down' : ''}`} data-tip={t('statusTip', { mult: decimal(engine.statusMult(), 2) })}>
-            {t('status')} {s.status > 0 ? '+' : ''}{s.status} · {statusTitle(s.status).name}
+            {t('status')} {s.status > 0 ? '+' : ''}{Number.isInteger(s.status) ? s.status : decimal(s.status, 1)} · {statusTitle(s.status).name}
           </span>
         </div>
         <div className="progress" data-tip={t('netWorthTip')}>
