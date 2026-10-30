@@ -28,6 +28,8 @@ export const HELP: HelpTopic[] = [
   { id: 'dilemma', title: 'help_dilemma_t', text: 'help_dilemma', when: (s) => Object.keys(s.seenDilemmas).length > 0 },
   { id: 'inflation', title: 'help_inflation_t', text: 'help_inflation', when: (s) => s.government.subsidies >= 5 },
   { id: 'casino', title: 'help_casino_t', text: 'help_casino', when: (s) => s.rankIndex >= 4 },
+  { id: 'chests', title: 'help_chests_t', text: 'help_chests', when: (s) => s.chests.common + s.chests.rare + s.chests.legendary > 0 },
+  { id: 'league', title: 'help_league_t', text: 'help_league', when: (s) => s.stats.playSeconds >= 240 && !!s.league.week },
   { id: 'children', title: 'help_children_t', text: 'help_children', when: (s) => s.family.children > 0 },
 ];
 

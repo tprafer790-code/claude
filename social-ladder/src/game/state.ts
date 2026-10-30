@@ -90,6 +90,43 @@ export interface Family {
   pending: string | null;
 }
 
+/** Seven-day login calendar. */
+export interface LoginState {
+  /** Last calendar day the game was opened. */
+  lastDate: string;
+  /** Day of the 7-day streak reached on lastDate (1..7). */
+  streak: number;
+  /** Day whose reward is waiting to be collected (0 = nothing to collect). */
+  pendingDay: number;
+  bestStreak: number;
+}
+
+export interface ChestState {
+  common: number;
+  rare: number;
+  legendary: number;
+  /** Seconds of play until the next free chest. */
+  nextIn: number;
+  opened: number;
+  /** Permanent income bonus won from legendary chests (0.05 = +5 %). */
+  bonus: number;
+}
+
+export interface LeagueState {
+  /** Monday (YYYY-MM-DD) of the current league week. */
+  week: string;
+  /** Money earned since the week started. */
+  earned: Decimal;
+  /** One hour of your (un-buffed) income, lagging behind it; bots' totals scale from this. */
+  ref: Decimal;
+  /** When this league week started for you (later than Monday if you joined mid-week). */
+  joinedAt: number;
+  /** Lowest status reached this week. */
+  lowestStatus: number;
+  /** Final positions of the previous week, for the results pop-up. */
+  lastResult: { week: string; wealth: number; villain: number; chests: string[] } | null;
+}
+
 export interface GameState {
   version: number;
 
@@ -143,6 +180,9 @@ export interface GameState {
   };
   stats: Stats;
   daily: DailyState;
+  login: LoginState;
+  chests: ChestState;
+  league: LeagueState;
 
   // ——— Scheduling (play-time based) ———
   nextEventIn: number;
@@ -212,6 +252,9 @@ export function createInitialState(now = Date.now()): GameState {
       daysPlayed: [],
     },
     daily: { date: '', challengeId: '', baseline: 0, claimed: false, streak: 0, lastClaimDate: '' },
+    login: { lastDate: '', streak: 0, pendingDay: 0, bestStreak: 0 },
+    chests: { common: 0, rare: 0, legendary: 0, nextIn: 120, opened: 0, bonus: 0 },
+    league: { week: '', earned: new Decimal(0), ref: new Decimal(0), lowestStatus: 0, lastResult: null, joinedAt: 0 },
 
     nextEventIn: 120,
     nextOpportunityIn: 45,

@@ -42,6 +42,7 @@ El juego funciona **completo en modo local** sin configurar nada: guardado en `l
 | Secretos | 17 secretos (interacción con el escenario, texto tecleado, condiciones de juego) |
 | Eventos | 24 eventos aleatorios con decisiones y consecuencias permanentes o diferidas |
 | Objetivos | 73 logros (algunos ocultos), 34 misiones, 5 retos diarios |
+| Enganche | Recompensa diaria de 7 días, cofres común/raro/legendario, barra de siguiente desbloqueo y liga semanal (ver 2.3) |
 | Prestigio | "Reinvención": reputación = ⌊∛(ganancias totales / 1e6)⌋, 10 ventajas permanentes |
 | Offline | 60 % de eficiencia, tope de 8 h (ampliables), resumen al volver |
 | Persistencia | Autoguardado cada 10 s, copia de seguridad, exportar/importar código, migración de versiones |
@@ -76,6 +77,20 @@ La lógica de críticos no ha cambiado: probabilidad y multiplicador siguen en `
 - **Dilemas morales:** 15 ventanas SÍ/NO con 25 s para decidir (si no, NO). Contenido en `src/data/dilemmas.ts`.
 - **Rival, caja fuerte y casino:** rival que se adelanta solo, caja fuerte que se abre a base de clics, rasca y gana barato y ruleta (`src/data/casino.ts`). Cada partida cuesta medio punto de estatus (sin recompensa de dinero sucio, para que no se pueda explotar).
 - **Sin scroll:** la interfaz ocupa exactamente la pantalla (100dvh) en ordenador y móvil; la escena se encoge para dejar sitio a los controles.
+
+### 2.3 Enganche: racha diaria, cofres, siguiente desbloqueo y liga semanal
+
+Todo el equilibrado está en `src/data/retention.ts`.
+
+| Mecánica | Cómo funciona |
+|---|---|
+| Recompensa diaria | Calendario de 7 días que aparece la primera vez que abres el juego cada día. Paga 5, 10, 10, 20, 20, 30 y 60 min de ingresos; los días 3, 5 y 7 añaden un cofre común, raro y legendario. Si fallas un día, vuelves al día 1. Tras el día 7 empieza otra vuelta. |
+| Ganancias sin jugar | Ya existían (60 %, tope 8 h). El resumen ahora nombra el negocio que más ha facturado, avisa si no tienes negocios y, tras 2 h o más fuera, deja un cofre común en el buzón. |
+| Cofres | Cae uno cada 2,5-5,5 min de juego y, con probabilidad 1/450, al hacer clic (75 % común, 21 % raro, 4 % legendario). Máximo 9 de cada tipo. Común: dinero o un impulso corto. Raro: más dinero, ingresos ×3 o +2 de estatus. Legendario: 1 h de ingresos, ingresos ×7 durante 3 min o «herencia» de +5 % de ingresos para siempre (tope +50 %, sobrevive a la reinvención). |
+| Siguiente desbloqueo | Barra siempre visible con lo próximo que desbloquea la escalera (negocio, habilidad, clase social, citas o reinvención). El nombre aparece como «???» y el icono borroso hasta que llevas el 70 % del camino. |
+| Liga semanal | Tabla de 20 (tú y 19 rivales) por dinero ganado desde el lunes, y otra de «villanos» por el estatus más bajo de la semana. Tu puesto se ve siempre bajo la calle. Premios al cambiar de semana: 1.º cofre legendario, 2.º-3.º raro, 4.º-10.º común; el peor estatus, cofre raro. |
+
+**Sobre los rivales de la liga:** son **simulados** y el juego lo dice en la propia tabla. Como la economía crece de forma exponencial, su dinero se mide en *horas de tus ingresos* (de 15 min a 60 h a final de semana) y sigue a tus ingresos con una hora de retraso. Así la liga sigue siendo disputada en cualquier etapa: quien juega más días (y acumula ganancias sin jugar) sube. Si te unes a mitad de semana, la semana cuenta desde que entraste. Una liga real entre jugadores necesita servidor (ver sección 3).
 
 **Ritmo aproximado** (simulador, 1 clic/s, sin prestigio): Millonario ≈ 21 min, Multimillonario ≈ 43 min, Isla privada ≈ 1 h 50 min, Dueño de un país ≈ 5 h. Las etapas absurda y cósmica están pensadas para alcanzarse con varias reinvenciones. Todo es ajustable en `src/config/economy.ts`.
 

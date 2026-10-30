@@ -15,12 +15,13 @@ import { Icon } from './Icon';
 import { PARTY_BY_ID, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../../data/parties';
 import { Decimal } from '../../core/bignum';
 import { HEALTH } from '../../data/social';
+import { ChestButton, LeagueChip, NextUnlockBar } from './Retention';
 
 /** Combo milestones: 5 small, 10 burst, 25 aura, 50 arcade spectacle, 100 celebration. */
 const COMBO_MILESTONES = [5, 10, 25, 50, 100];
 const RAINBOW = [FX.red, FX.orange, FX.gold, FX.green, FX.cyan, FX.electric, FX.violet, FX.pink];
 
-export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
+export function ActionArea({ onOpenEvent, onOpenChests, onOpenLeague }: { onOpenEvent: () => void; onOpenChests: () => void; onOpenLeague: () => void }) {
   const engine = useEngine();
   const s = engine.state;
   const d = engine.derived;
@@ -137,6 +138,8 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
   return (
     <div className="action-area">
       <div className="status-row">
+        <ChestButton onOpen={onOpenChests} />
+        <LeagueChip onOpen={onOpenLeague} />
         {ev && (
           <button className="event-pill" onClick={onOpenEvent}>
             <Icon id="scroll" size={18} />
@@ -152,6 +155,7 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
         ))}
       </div>
 
+      <NextUnlockBar />
       <ClimbHooks />
 
       <div className="click-zone">

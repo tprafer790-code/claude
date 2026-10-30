@@ -826,3 +826,61 @@ button.card-main:not(:disabled):active { transform: translateY(1px); }
 @keyframes quip-pop { from { transform: scale(.6) translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 720px) { .hero-quip { font-size: 10px; max-width: 62vw; padding: 4px 7px; } }
 @media (prefers-reduced-motion: reduce) { .hero-quip { animation: none; } }
+
+/* ——— Retention: chests, daily streak, weekly league, next unlock ——— */
+.chest-btn, .league-chip {
+  display: inline-flex; align-items: center; gap: 6px; border: none; padding: 3px 8px;
+  font-family: var(--font-pixel); font-size: 8px; line-height: 16px; color: var(--white);
+  box-shadow: 0 2px 0 var(--ink); cursor: pointer;
+}
+.chest-btn { background: #5a3317; animation: chestBob 1.2s steps(4) infinite; }
+.chest-btn.rarity-rare { background: #0e4f8f; box-shadow: 0 2px 0 var(--ink), 0 0 10px #22e6e0; }
+.chest-btn.rarity-legendary { background: #5b2390; box-shadow: 0 2px 0 var(--ink), 0 0 14px #ff3dad; animation: chestBob 0.8s steps(4) infinite, pulse 1.2s steps(6) infinite; }
+.league-chip { background: var(--plum); color: var(--cream); }
+.league-chip.top { background: var(--gold); color: var(--ink); }
+@keyframes chestBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+
+.next-unlock { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 8px; font-size: 12px; }
+.next-unlock-tag { font-family: var(--font-pixel); font-size: 8px; padding: 3px 5px; background: var(--violet, #a855f7); color: var(--white); }
+.next-unlock-icon { display: inline-flex; }
+.next-unlock-icon.hidden { filter: blur(2px) grayscale(1) brightness(0.6); }
+.next-unlock-bar { position: relative; height: 16px; background: var(--ink); box-shadow: 0 0 0 2px var(--line); overflow: hidden; }
+.next-unlock-fill { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(90deg, #a855f7 0 6px, #ff3dad 6px 8px); transition: width 0.25s steps(8); }
+.next-unlock-bar span { position: absolute; inset: 0; display: flex; align-items: center; gap: 4px; padding: 0 6px; font-size: 11px; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 0 var(--ink), -1px -1px 0 var(--ink); }
+.next-unlock.reveal .next-unlock-bar { box-shadow: 0 0 0 2px #ff3dad, 0 0 10px #ff3dad; }
+
+.modal-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.login-modal, .chest-modal, .league-modal { text-align: center; }
+.login-days { list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0; margin: 12px 0; }
+.login-day { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; background: var(--ink); box-shadow: 0 0 0 2px var(--line); min-height: 70px; justify-content: space-between; }
+.login-day small { font-family: var(--font-pixel); font-size: 6px; color: var(--muted); }
+.login-day b { font-size: 10px; color: var(--cream); word-break: break-all; }
+.login-day.done { opacity: 0.55; }
+.login-day.done b { color: var(--green, #39f56a); }
+.login-day.today { box-shadow: 0 0 0 2px var(--gold), 0 0 14px var(--gold); background: #2a2340; animation: pulse 1s steps(5) infinite; }
+.login-day.today b { color: var(--gold); }
+.login-day.grand { background: #2b1640; }
+.login-coin { font-family: var(--font-pixel); font-size: 14px; color: var(--gold); }
+
+.chest-stage { display: flex; justify-content: center; padding: 16px 0 8px; }
+.chest-stage.shaking svg { animation: chestShake 0.12s steps(2) infinite; }
+.chest-stage.opened svg { animation: popIn 0.3s steps(5); filter: drop-shadow(0 0 12px var(--gold)); }
+.chest-modal.rarity-rare h2 { color: #22e6e0; }
+.chest-modal.rarity-legendary h2 { color: #ff3dad; text-shadow: 0 0 10px #a855f7; }
+.chest-result { font-size: 16px; min-height: 2.6em; color: var(--cream); }
+.chest-held { display: flex; justify-content: center; align-items: center; gap: 14px; font-family: var(--font-pixel); font-size: 9px; }
+.chest-held span { display: inline-flex; align-items: center; gap: 4px; }
+@keyframes chestShake { 0% { transform: translate(-3px, 1px) rotate(-4deg); } 100% { transform: translate(3px, -1px) rotate(4deg); } }
+.offline-chest { color: var(--gold); }
+
+.league { margin-bottom: 14px; }
+.league-prizes { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0; font-size: 12px; }
+.league-prizes span { display: inline-flex; align-items: center; gap: 4px; }
+.league .small { font-size: 11px; }
+@media (max-width: 720px) {
+  .login-day b { font-size: 8px; }
+  .next-unlock { grid-template-columns: auto 1fr; gap: 6px; }
+  .next-unlock-tag { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .chest-btn, .login-day.today, .chest-stage.shaking svg { animation: none; } }
+.reduced-motion .chest-btn, .reduced-motion .login-day.today, .reduced-motion .chest-stage.shaking svg { animation: none; }

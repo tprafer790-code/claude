@@ -20,7 +20,9 @@ import { AID_COOLDOWN, DEFLATION_EVERY, ELECTION_EVERY, ENVELOPE_SCANDAL_CHANCE,
 import { PARTNER_BY_ID, PARTNERS, ROMANCE } from '../data/romance';
 import { CASINO, RED_NUMBERS, SCRATCH_PRIZES, SCRATCH_SYMBOLS } from '../data/casino';
 import { ATTACKS, HEALTH, RIVAL_GROWTH, RIVAL_LEAD, RIVALS, STATUS_DANGER, STATUS_GAIN_SECONDS, STATUS_JAIL, STATUS_LOSS_SECONDS, STATUS_MAX, STATUS_MIN, statusReqMult, VAULT_PRIZES, vaultClicks } from '../data/social';
+import { CHEST_PRIZES, CHESTS, LEAGUE, leagueBots, LOGIN_DAYS, botProgress, prevDay, weekElapsed, weekOf, type ChestPrize, type ChestRarity } from '../data/retention';
 import { createInitialState, type GameState } from './state';
+import type { IconId } from '../data/types';
 
 export type GameEvent =
   | { type: 'click'; amount: Decimal; crit: boolean; combo: number; comboMult: number; lucky: Decimal | null }
@@ -52,7 +54,33 @@ export type GameEvent =
   | { type: 'baby'; children: number }
   | { type: 'childSupport'; amount: Decimal; children: number }
   | { type: 'rivalBeaten'; index: number; name: string; reward: Decimal }
-  | { type: 'vault'; prize: string; text: string; summary: string[] };
+  | { type: 'vault'; prize: string; text: string; summary: string[] }
+  | { type: 'chestDrop'; rarity: ChestRarity; source: 'time' | 'click' | 'login' | 'offline' | 'league' }
+  | { type: 'chestOpen'; result: ChestResult }
+  | { type: 'loginReward'; day: number; amount: Decimal; chest: ChestRarity | null };
+
+export interface ChestResult {
+  rarity: ChestRarity;
+  prize: ChestPrize['kind'];
+  text: string;
+  amount: Decimal | null;
+}
+
+export interface NextUnlock {
+  kind: 'business' | 'ability' | 'class' | 'dates' | 'prestige';
+  name: string;
+  icon: IconId;
+  rank: number;
+  fraction: number;
+  reveal: boolean;
+}
+
+export interface LeagueRow {
+  name: string;
+  value: Decimal;
+  status: number;
+  me: boolean;
+}
 
 export interface ClickResult {
   amount: Decimal;
@@ -70,6 +98,10 @@ export interface OfflineSummary {
   efficiency: number;
   ranksGained: string[];
   resolved: string[];
+  /** Business that earned the most while away (null with no businesses). */
+  topBusiness: string | null;
+  /** A chest left in the letterbox after a long absence. */
+  chest: boolean;
 }
 
 export interface EngineOptions {
@@ -206,6 +238,7 @@ export class GameEngine {
     s.money = s.money.add(amount);
     s.earnedThisLife = s.earnedThisLife.add(amount);
     s.lifetimeEarned = s.lifetimeEarned.add(amount);
+    s.league.earned = s.league.earned.add(amount);
     if (s.earnedThisLife.gt(s.stats.bestLifeEarned)) s.stats.bestLifeEarned = s.earnedThisLife;
   }
   private spend(amount: Decimal): boolean {
@@ -253,6 +286,7 @@ export class GameEngine {
     if (this.combo > s.stats.maxCombo) s.stats.maxCombo = this.combo;
     s.vault.clicks++;
     if (s.vault.clicks >= vaultClicks(s.vault.opened)) this.openVault();
+    if (this.random() < CHESTS.clickChance) this.dropChest('click');
 
     const result = { amount, crit, combo: this.combo, comboMult, lucky };
     this.emit({ type: 'click', ...result });
@@ -297,6 +331,17 @@ export class GameEngine {
     this.tickHealth(dt);
     this.tickFamily(dt);
     if (this.casinoPending && t - this.casinoPending.at > 15000) this.settleCasino();
+
+    // Free chests fall every few minutes of play.
+    s.chests.nextIn -= dt;
+    if (s.chests.nextIn <= 0) {
+      s.chests.nextIn = CHESTS.dropMin + this.random() * (CHESTS.dropMax - CHESTS.dropMin);
+      this.dropChest('time');
+    }
+    if (s.status < s.league.lowestStatus) s.league.lowestStatus = s.status;
+    // Rivals grow with you, an hour behind.
+    const hourly = this.incomeUnit().mul(3600);
+    if (hourly.gt(s.league.ref)) s.league.ref = s.league.ref.add(hourly.sub(s.league.ref).mul(Math.min(1, dt / LEAGUE.refLagSeconds)));
 
     // Events
     if (!s.pendingEvent) {
@@ -374,6 +419,34 @@ export class GameEngine {
       this.checkCustomSecrets();
       this.checkAchievements();
     }
+  }
+
+  /**
+   * The next thing the climb unlocks (business, ability, social class…) and
+   * how close it is. The name stays hidden until you are 70 % of the way.
+   */
+  nextUnlock(): NextUnlock | null {
+    const s = this.state;
+    const cands: Omit<NextUnlock, 'fraction' | 'reveal'>[] = [];
+    const nb = this.nextLockedBusiness();
+    if (nb) cands.push({ kind: 'business', name: nb.name, icon: nb.icon, rank: nb.rankReq });
+    const ab = ABILITIES.find((a) => a.rankReq > s.rankIndex);
+    if (ab) cands.push({ kind: 'ability', name: ab.name, icon: ab.icon, rank: ab.rankReq });
+    const cls = RANKS.findIndex((r, i) => i > s.rankIndex && r.stage !== this.rank.stage);
+    if (cls > 0) cands.push({ kind: 'class', name: STAGE_BY_ID[RANKS[cls].stage].name, icon: 'crown', rank: cls });
+    if (s.rankIndex < ROMANCE.minRank) cands.push({ kind: 'dates', name: '', icon: 'wine', rank: ROMANCE.minRank });
+    if (s.rankIndex < ECONOMY.prestige.minRankIndex && s.prestige.count === 0) cands.push({ kind: 'prestige', name: '', icon: 'star', rank: ECONOMY.prestige.minRankIndex });
+    if (!cands.length) return null;
+    const next = cands.reduce((a, b) => (b.rank < a.rank ? b : a));
+    let fraction: number;
+    if (next.rank === s.rankIndex + 1) fraction = this.rankProgress().fraction;
+    else {
+      const cur = Decimal.max(this.rankReq(s.rankIndex), 1);
+      const req = this.rankReq(next.rank);
+      const e = Decimal.max(s.earnedThisLife, 1);
+      fraction = Math.max(0, Math.min(1, e.div(cur).log10() / Math.max(1e-9, req.div(cur).log10())));
+    }
+    return { ...next, fraction, reveal: fraction >= 0.7 };
   }
 
   // ——— Businesses ———
@@ -1266,6 +1339,8 @@ export class GameEngine {
     if (!s.stats.daysPlayed.includes(today)) {
       s.stats.daysPlayed = [...s.stats.daysPlayed, today].slice(-60);
     }
+    this.ensureLogin(today);
+    this.ensureLeague(today);
     if (s.daily.date === today) return;
     let h = 0;
     for (const ch of today) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -1292,6 +1367,146 @@ export class GameEngine {
     this.checkRanks();
     this.changed();
     return true;
+  }
+
+  // ——— Daily login streak ———
+  /** Advances the 7-day calendar on the first visit of each day. */
+  ensureLogin(today: string) {
+    const l = this.state.login;
+    if (l.lastDate === today) return;
+    l.streak = l.lastDate === prevDay(today) ? (l.streak % LOGIN_DAYS.length) + 1 : 1;
+    l.lastDate = today;
+    l.pendingDay = l.streak;
+    l.bestStreak = Math.max(l.bestStreak, l.streak);
+    this.changed();
+  }
+  loginReward(day: number): Decimal {
+    return this.reward(LOGIN_DAYS[day - 1].seconds, 100);
+  }
+  claimLogin(): boolean {
+    const l = this.state.login;
+    const day = l.pendingDay;
+    if (!day) return false;
+    const def = LOGIN_DAYS[day - 1];
+    const amount = this.loginReward(day);
+    this.earn(amount);
+    l.pendingDay = 0;
+    if (def.chest) this.dropChest('login', def.chest);
+    this.emit({ type: 'loginReward', day, amount, chest: def.chest ?? null });
+    this.checkRanks();
+    this.changed();
+    return true;
+  }
+
+  // ——— Chests ———
+  rollRarity(): ChestRarity {
+    const r = this.random();
+    return r < CHESTS.legendaryChance ? 'legendary' : r < CHESTS.legendaryChance + CHESTS.rareChance ? 'rare' : 'common';
+  }
+  /** Adds a chest (random rarity unless given). Returns false when that pile is full. */
+  dropChest(source: 'time' | 'click' | 'login' | 'offline' | 'league', rarity: ChestRarity = this.rollRarity()): boolean {
+    const c = this.state.chests;
+    if (c[rarity] >= CHESTS.maxHeld) return false;
+    c[rarity]++;
+    this.emit({ type: 'chestDrop', rarity, source });
+    return true;
+  }
+  chestCount(): number {
+    const c = this.state.chests;
+    return c.common + c.rare + c.legendary;
+  }
+  /** Opens the best chest held (or the given rarity). */
+  openChest(rarity?: ChestRarity): ChestResult | null {
+    const s = this.state;
+    const c = s.chests;
+    const pick = rarity ?? (c.legendary > 0 ? 'legendary' : c.rare > 0 ? 'rare' : 'common');
+    if (c[pick] <= 0) return null;
+    c[pick]--;
+    c.opened++;
+    const table = CHEST_PRIZES[pick];
+    let roll = this.random() * table.reduce((n, [w]) => n + w, 0);
+    let prize = table[table.length - 1][1];
+    for (const [w, p] of table) {
+      if (roll < w) {
+        prize = p;
+        break;
+      }
+      roll -= w;
+    }
+    // The permanent bonus has a ceiling; past it the legendary pays big cash instead.
+    if (prize.kind === 'bonus' && c.bonus >= CHESTS.legendaryBonusCap) prize = { kind: 'cash', seconds: 3600 };
+    let text: string;
+    let amount: Decimal | null = null;
+    switch (prize.kind) {
+      case 'cash':
+        amount = this.reward(prize.seconds, 50, pick === 'legendary' ? 0.5 : ECONOMY.rewardCapFraction);
+        this.earn(amount);
+        text = t('chestCash', { amount: money(amount) });
+        break;
+      case 'buff':
+        this.addBuff(`chest_${prize.target}`, t(pick === 'legendary' ? 'chestBuffLegend' : 'chestBuff'), prize.target, prize.mult, prize.seconds);
+        text = t(prize.target === 'income' ? 'chestIncomeBuff' : 'chestClickBuff', { mult: prize.mult, s: prize.seconds });
+        break;
+      case 'status':
+        amount = this.reward(prize.seconds, 50);
+        this.earn(amount);
+        this.changeStatus(prize.points, false);
+        text = t('chestStatus', { n: prize.points, amount: money(amount) });
+        break;
+      case 'bonus':
+        c.bonus = Math.min(CHESTS.legendaryBonusCap, +(c.bonus + CHESTS.legendaryIncomeBonus).toFixed(2));
+        text = t('chestBonus', { pct: Math.round(CHESTS.legendaryIncomeBonus * 100), total: Math.round(c.bonus * 100) });
+        break;
+    }
+    const result: ChestResult = { rarity: pick, prize: prize.kind, text, amount };
+    this.emit({ type: 'chestOpen', result });
+    this.invalidate();
+    this.checkRanks();
+    this.changed();
+    return result;
+  }
+
+  // ——— Weekly league ———
+  /** Starts a new league week when the calendar week changes, paying last week's prizes. */
+  ensureLeague(today: string) {
+    const s = this.state;
+    const week = weekOf(today);
+    if (s.league.week === week) return;
+    if (s.league.week) {
+      const rows = this.leagueTable('wealth', 1);
+      const villains = this.leagueTable('villain', 1);
+      const wealth = rows.findIndex((r) => r.me) + 1;
+      const villain = villains.findIndex((r) => r.me) + 1;
+      const chests: string[] = [];
+      const prize = LEAGUE.rewards.find((r) => wealth <= r.upTo);
+      if (prize && this.dropChest('league', prize.chest)) chests.push(prize.chest);
+      if (villain === 1 && this.dropChest('league', LEAGUE.villainChest)) chests.push(LEAGUE.villainChest);
+      s.league.lastResult = { week: s.league.week, wealth, villain, chests };
+    }
+    s.league.week = week;
+    s.league.earned = new Decimal(0);
+    s.league.lowestStatus = s.status;
+    s.league.ref = Decimal.max(this.incomeUnit().mul(3600), LEAGUE.refFloor);
+    s.league.joinedAt = this.now();
+    this.changed();
+  }
+  /** Weekly table: 19 simulated rivals plus you, sorted best first. */
+  leagueTable(kind: 'wealth' | 'villain', elapsed = weekElapsed(this.state.league.week, this.now(), this.state.league.joinedAt)): LeagueRow[] {
+    const s = this.state;
+    const bots = leagueBots(s.league.week, Math.floor(s.createdAt / 1000));
+    const rows: LeagueRow[] = bots.map((b) => ({
+      name: b.name,
+      value: s.league.ref.mul(b.factor * botProgress(b, elapsed)),
+      status: Math.round(b.lowestStatus * Math.min(1, elapsed * 3)),
+      me: false,
+    }));
+    rows.push({ name: s.settings.playerName || t('you'), value: s.league.earned, status: s.league.lowestStatus, me: true });
+    if (kind === 'wealth') rows.sort((a, b) => (b.value.cmp(a.value) || (a.me ? 1 : -1)));
+    else rows.sort((a, b) => a.status - b.status || (a.me ? 1 : -1));
+    return rows;
+  }
+  leaguePosition(kind: 'wealth' | 'villain' = 'wealth'): number {
+    return this.leagueTable(kind).findIndex((r) => r.me) + 1;
   }
 
   // ——— Prestige ———
@@ -1342,6 +1557,9 @@ export class GameEngine {
       prestige,
       stats: old.stats,
       daily: old.daily,
+      login: old.login,
+      chests: old.chests,
+      league: old.league,
       createdAt: old.createdAt,
       settings: old.settings,
       tutorialDone: true,
@@ -1389,9 +1607,13 @@ export class GameEngine {
     this.checkRanks();
     this.checkAchievements();
     const ranksGained = RANKS.slice(rankBefore + 1, s.rankIndex + 1).map((r) => r.name);
+    let topBusiness: string | null = null;
+    for (const id in d.businessIncome) if (!topBusiness || d.businessIncome[id].gt(d.businessIncome[topBusiness])) topBusiness = id;
+    if (topBusiness && d.businessIncome[topBusiness].lte(0)) topBusiness = null;
+    const chest = seconds >= CHESTS.offlineChestSeconds && this.dropChest('offline', 'common');
     this.invalidate();
     this.changed();
     if (seconds < ECONOMY.offline.minSecondsForSummary && resolved.length === 0) return null;
-    return { seconds, creditedSeconds: credited, capped: seconds > cap, earned, efficiency: d.offlineEfficiency, ranksGained, resolved };
+    return { seconds, creditedSeconds: credited, capped: seconds > cap, earned, efficiency: d.offlineEfficiency, ranksGained, resolved, topBusiness, chest };
   }
 }
