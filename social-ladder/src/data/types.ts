@@ -20,7 +20,9 @@ export type Effect =
   /** Adds a percentage of income/s to every click (0.01 = 1%). */
   | { kind: 'clickIpsPercent'; value: number }
   /** Multiplies business prices (0.95 = 5% cheaper). */
-  | { kind: 'costDiscount'; value: number };
+  | { kind: 'costDiscount'; value: number }
+  /** Multiplies every price: businesses, upgrades and objects (1.1 = 10% dearer). */
+  | { kind: 'priceMult'; value: number };
 
 export type StageId =
   | 'survival'

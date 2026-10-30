@@ -56,6 +56,22 @@ export interface DailyState {
   lastClaimDate: string;
 }
 
+export interface Government {
+  /** Party governing this social class, or null before the first vote. */
+  party: string | null;
+  /** Consecutive mandates of the same party (loyalty bonus). */
+  mandates: number;
+  /** PESOE aids received this life (each raises prices). */
+  subsidies: number;
+  /** Podremos: living in a squatted flat. */
+  okupa: boolean;
+  notices: number;
+  /** Seconds of play until the party's next perk. */
+  perkIn: number;
+  /** The one-off housing grant when leaving the squat was paid. */
+  housingBonus: boolean;
+}
+
 export interface GameState {
   version: number;
 
@@ -73,6 +89,17 @@ export interface GameState {
   lifeClicks: number;
   lifeStartedAt: number;
   abilityReadyAt: Record<string, number>;
+  /** Status points (-10..10): change how much net worth each promotion needs. */
+  status: number;
+  government: Government;
+  /** A vote is due (new life or new social class). */
+  pendingVote: boolean;
+  pendingDilemma: string | null;
+  /** Seconds left to answer the open dilemma before it answers itself (NO). */
+  dilemmaTimeLeft: number;
+  nextDilemmaIn: number;
+  rival: { index: number; worth: Decimal };
+  vault: { clicks: number; opened: number };
 
   // ——— Permanent ———
   lifetimeEarned: Decimal;
@@ -106,6 +133,7 @@ export interface GameState {
   settings: Settings;
   tutorialDone: boolean;
   seenEvents: Record<string, number>;
+  seenDilemmas: Record<string, number>;
 }
 
 export function createInitialState(now = Date.now()): GameState {
@@ -124,6 +152,14 @@ export function createInitialState(now = Date.now()): GameState {
     lifeClicks: 0,
     lifeStartedAt: now,
     abilityReadyAt: {},
+    status: 0,
+    government: { party: null, mandates: 0, subsidies: 0, okupa: false, notices: 0, perkIn: 30, housingBonus: false },
+    pendingVote: true,
+    pendingDilemma: null,
+    dilemmaTimeLeft: 0,
+    nextDilemmaIn: 75,
+    rival: { index: 0, worth: new Decimal(0) },
+    vault: { clicks: 0, opened: 0 },
 
     lifetimeEarned: new Decimal(0),
     highestRankEver: 0,
@@ -161,5 +197,6 @@ export function createInitialState(now = Date.now()): GameState {
     settings: { sfxVolume: 0.7, musicVolume: 0.35, muted: false, language: detectLanguage(), playerName: '', reducedMotion: false, screenShake: true },
     tutorialDone: false,
     seenEvents: {},
+    seenDilemmas: {},
   };
 }

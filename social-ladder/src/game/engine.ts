@@ -15,6 +15,10 @@ import { STAGE_BY_ID } from '../data/stages';
 import { UPGRADE_BY_ID, UPGRADES } from '../data/upgrades';
 import { businessAffordable, businessCost, computeDerived, type Derived } from './derive';
 import { checkCustomSecret } from './secretChecks';
+import { DILEMMA_BY_ID, DILEMMAS } from '../data/dilemmas';
+import { ENVELOPE_SCANDAL_CHANCE, PARTY_BY_ID, phaseForStage, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../data/parties';
+import { CASINO, RED_NUMBERS, SCRATCH_PRIZES, SCRATCH_SYMBOLS } from '../data/casino';
+import { RIVAL_GROWTH, RIVAL_LEAD, RIVALS, STATUS_MAX, STATUS_MIN, statusReqMult, VAULT_PRIZES, vaultClicks } from '../data/social';
 import { createInitialState, type GameState } from './state';
 
 export type GameEvent =
@@ -32,7 +36,14 @@ export type GameEvent =
   | { type: 'ability'; id: string }
   | { type: 'mission'; id: string; reward: Decimal }
   | { type: 'prestige'; gained: number }
-  | { type: 'toast'; text: string; tone: 'info' | 'good' | 'bad' | 'rare' };
+  | { type: 'toast'; text: string; tone: 'info' | 'good' | 'bad' | 'rare' }
+  | { type: 'vote'; party: string; mandates: number }
+  | { type: 'partyPerk'; party: string; label: string; text: string; summary: string[]; tone: 'good' | 'bad' }
+  | { type: 'dilemmaStart'; id: string }
+  | { type: 'dilemmaResult'; id: string; yes: boolean; timedOut: boolean; title: string; text: string; summary: string[]; statusDelta: number }
+  | { type: 'status'; delta: number; value: number }
+  | { type: 'rivalBeaten'; index: number; name: string; reward: Decimal }
+  | { type: 'vault'; prize: string; text: string; summary: string[] };
 
 export interface ClickResult {
   amount: Decimal;
@@ -59,6 +70,24 @@ export interface EngineOptions {
 
 export type BuyQty = 1 | 10 | 100 | 'max';
 
+export interface ScratchResult {
+  prize: string;
+  grid: string[];
+  payout: Decimal;
+  price: Decimal;
+}
+
+export interface RouletteResult {
+  n: number;
+  color: 'red' | 'black' | 'green';
+  win: boolean;
+  payout: Decimal;
+  stake: Decimal;
+}
+
+/** Seconds to answer a dilemma before it defaults to NO. */
+export const DILEMMA_SECONDS = 25;
+
 /**
  * The game simulation. Pure TypeScript with no DOM access, so it can be unit
  * tested and simulated headlessly. UI and renderer subscribe to changes and
@@ -84,6 +113,8 @@ export class GameEngine {
   private achievementTimer = 0;
   private assistantCarry = 0;
   opportunity: { id: number; expiresAt: number } | null = null;
+  /** A casino prize waiting for its reveal animation. */
+  casinoPending: { payout: Decimal; status: number; at: number } | null = null;
   private opportunitySeq = 0;
   visible = true;
 
@@ -146,9 +177,9 @@ export class GameEngine {
    * A reward worth `seconds` of income, capped at a fraction of this life's
    * net worth so bonuses accelerate progress without skipping whole stages.
    */
-  reward(seconds: number, min = 0): Decimal {
+  reward(seconds: number, min = 0, capFraction: number = ECONOMY.rewardCapFraction): Decimal {
     const unit = this.incomeUnit();
-    const cap = Decimal.max(this.state.earnedThisLife.mul(ECONOMY.rewardCapFraction), unit.mul(15));
+    const cap = Decimal.max(this.state.earnedThisLife.mul(capFraction), unit.mul(15));
     return Decimal.min(unit.mul(seconds), cap).max(min);
   }
 
@@ -211,6 +242,8 @@ export class GameEngine {
     s.lifeClicks++;
     if (crit) s.stats.crits++;
     if (this.combo > s.stats.maxCombo) s.stats.maxCombo = this.combo;
+    s.vault.clicks++;
+    if (s.vault.clicks >= vaultClicks(s.vault.opened)) this.openVault();
 
     const result = { amount, crit, combo: this.combo, comboMult, lucky };
     this.emit({ type: 'click', ...result });
@@ -245,6 +278,10 @@ export class GameEngine {
     if (s.buffs.length !== before) this.invalidate();
 
     this.resolveDueDelayed(t);
+    this.tickGovernment(dt);
+    this.tickDilemma(dt);
+    this.tickRival(dt);
+    if (this.casinoPending && t - this.casinoPending.at > 15000) this.settleCasino();
 
     // Events
     if (!s.pendingEvent) {
@@ -277,12 +314,20 @@ export class GameEngine {
   nextRank() {
     return RANKS[this.state.rankIndex + 1] ?? null;
   }
+  /** Net worth needed for a rank, after the status multiplier. */
+  rankReq(index: number): Decimal {
+    const r = RANKS[index];
+    return r ? new Decimal(r.req).mul(this.statusMult()) : new Decimal(Infinity);
+  }
+  statusMult(): number {
+    return statusReqMult(this.state.status);
+  }
   /** Progress to the next rank in [0..1] (log-scaled for readability) and blockers. */
   rankProgress(): { fraction: number; missingItem: string | null; req: Decimal | null } {
     const next = this.nextRank();
     if (!next) return { fraction: 1, missingItem: null, req: null };
-    const cur = new Decimal(this.rank.req);
-    const req = new Decimal(next.req);
+    const req = this.rankReq(this.state.rankIndex + 1);
+    const cur = Decimal.min(this.rankReq(this.state.rankIndex), req);
     const e = this.state.earnedThisLife;
     let fraction: number;
     if (e.gte(req)) fraction = 1;
@@ -299,7 +344,7 @@ export class GameEngine {
     for (;;) {
       const next = RANKS[s.rankIndex + 1];
       if (!next) break;
-      if (s.earnedThisLife.lt(next.req)) break;
+      if (s.earnedThisLife.lt(this.rankReq(s.rankIndex + 1))) break;
       if (next.requiresItem && !s.items[next.requiresItem]) break;
       const from = s.rankIndex;
       s.rankIndex++;
@@ -308,6 +353,7 @@ export class GameEngine {
       this.invalidate();
       promoted = true;
       this.emit({ type: 'promotion', from, to: s.rankIndex, stageChanged });
+      if (stageChanged) this.onNewClass();
     }
     if (promoted) {
       this.checkCustomSecrets();
@@ -363,8 +409,7 @@ export class GameEngine {
   }
   buyUpgrade(id: string): boolean {
     if (!this.isUpgradeAvailable(id)) return false;
-    const u = UPGRADE_BY_ID[id];
-    if (!this.spend(new Decimal(u.cost))) return false;
+    if (!this.spend(this.upgradeCost(id))) return false;
     this.state.upgrades[id] = true;
     this.emit({ type: 'purchase', kind: 'upgrade', id });
     this.changed();
@@ -384,14 +429,20 @@ export class GameEngine {
   shopItems() {
     return ITEMS.filter((i) => !i.unobtainableInShop);
   }
+  itemPrice(id: string): Decimal {
+    return new Decimal(ITEM_BY_ID[id]?.price ?? 0).mul(this.derived.priceMult);
+  }
+  upgradeCost(id: string): Decimal {
+    return new Decimal(UPGRADE_BY_ID[id]?.cost ?? 0).mul(this.derived.priceMult);
+  }
   canBuyItem(id: string) {
     const it = ITEM_BY_ID[id];
-    return !!it && !it.unobtainableInShop && !this.state.items[id] && this.state.rankIndex >= it.rankReq && this.state.money.gte(it.price);
+    return !!it && !it.unobtainableInShop && !this.state.items[id] && this.state.rankIndex >= it.rankReq && this.state.money.gte(this.itemPrice(id));
   }
   buyItem(id: string): boolean {
     const it = ITEM_BY_ID[id];
     if (!it || it.unobtainableInShop || this.state.items[id] || this.state.rankIndex < it.rankReq) return false;
-    if (!this.spend(new Decimal(it.price))) return false;
+    if (!this.spend(this.itemPrice(id))) return false;
     this.grantItem(id);
     this.state.stats.itemsBought++;
     this.emit({ type: 'purchase', kind: 'item', id });
@@ -574,7 +625,7 @@ export class GameEngine {
       switch (a.type) {
         case 'money': {
           let amount = new Decimal(0);
-          if (a.seconds) amount = amount.add(this.reward(a.seconds));
+          if (a.seconds) amount = amount.add(this.reward(a.seconds, 0, a.capFraction));
           if (a.fraction) amount = amount.add(s.money.mul(a.fraction));
           if (amount.gt(0)) {
             this.earn(amount);
@@ -606,6 +657,11 @@ export class GameEngine {
         case 'counter':
           s.counters[a.id] = (s.counters[a.id] ?? 0) + a.add;
           break;
+        case 'status': {
+          const delta = this.changeStatus(a.add);
+          if (delta) summary.push(t('statusDelta', { v: `${delta > 0 ? '+' : ''}${delta}` }));
+          break;
+        }
         case 'permanent':
           s.lifeEffects.push({ effect: a.effect, label: a.label });
           this.invalidate();
@@ -633,6 +689,316 @@ export class GameEngine {
     }
     this.invalidate();
     return texts;
+  }
+
+  // ——— Status ———
+  /** Changes status within its range; returns the change actually applied. */
+  changeStatus(add: number): number {
+    const s = this.state;
+    const next = Math.max(STATUS_MIN, Math.min(STATUS_MAX, s.status + add));
+    const delta = next - s.status;
+    if (!delta) return 0;
+    s.status = next;
+    this.invalidate();
+    this.emit({ type: 'status', delta, value: next });
+    return delta;
+  }
+
+  // ——— Government ———
+  phase() {
+    return phaseForStage(this.stage.index);
+  }
+  /** Owns a real home (not just a cardboard mattress). */
+  private hasHome() {
+    return Object.keys(this.state.items).some((id) => ITEM_BY_ID[id]?.slot === 'home' && ITEM_BY_ID[id].price >= 50000);
+  }
+  vote(partyId: string): boolean {
+    const s = this.state;
+    const party = PARTY_BY_ID[partyId];
+    if (!party || !s.pendingVote) return false;
+    const g = s.government;
+    const phase = this.phase();
+    g.mandates = g.party === partyId ? g.mandates + 1 : 1;
+    g.party = partyId;
+    g.perkIn = 25;
+    g.notices = 0;
+    g.okupa = partyId === 'podremos' && phase === 0 && !this.hasHome();
+    s.flags[`party_${partyId}_${phase}`] = true;
+    s.pendingVote = false;
+    this.invalidate();
+    this.emit({ type: 'vote', party: partyId, mandates: g.mandates });
+    this.changed();
+    return true;
+  }
+  /** A new social class: elections, and squatters finally buy a home. */
+  private onNewClass() {
+    const s = this.state;
+    const g = s.government;
+    s.pendingVote = true;
+    if (g.okupa) {
+      g.okupa = false;
+      g.notices = 0;
+      const summary: string[] = [];
+      if (!g.housingBonus) {
+        g.housingBonus = true;
+        const amount = this.reward(300, 0, 0.15);
+        this.earn(amount);
+        summary.push(`+${money(amount)}`);
+      }
+      this.emit({ type: 'partyPerk', party: 'podremos', label: t('housingTitle'), text: t('housingText'), summary, tone: 'good' });
+    }
+  }
+  private tickGovernment(dt: number) {
+    const s = this.state;
+    const g = s.government;
+    const party = g.party ? PARTY_BY_ID[g.party] : null;
+    const perk = party?.phases[this.phase()].perk;
+    if (!party || !perk || s.pendingVote) return;
+    if (perk.kind === 'notice' && !g.okupa) return;
+    g.perkIn -= dt;
+    if (g.perkIn > 0) return;
+    g.perkIn = perk.every;
+    const summary: string[] = [];
+    let text = perk.text;
+    let tone: 'good' | 'bad' = 'good';
+    switch (perk.kind) {
+      case 'subsidy': {
+        const amount = this.reward(perk.seconds ?? 30);
+        this.earn(amount);
+        summary.push(`+${money(amount)}`);
+        if (g.subsidies < SUBSIDY_INFLATION_CAP) {
+          g.subsidies++;
+          summary.push(t('pricesUp', { pct: Math.round(SUBSIDY_INFLATION * g.subsidies * 100) }));
+        }
+        break;
+      }
+      case 'notice': {
+        const notices = party.notices ?? [];
+        if (g.notices >= notices.length) return;
+        text = notices[g.notices].text;
+        g.notices++;
+        tone = 'bad';
+        summary.push(t('noticeStress', { n: g.notices, max: notices.length }));
+        break;
+      }
+      case 'parade':
+        this.addBuff('parade', perk.label, 'income', 0.5, 15);
+        tone = 'bad';
+        break;
+      case 'envelope':
+      case 'kickback': {
+        const amount = this.reward(perk.seconds ?? 30);
+        this.earn(amount);
+        summary.push(`+${money(amount)}`);
+        if (perk.kind === 'envelope' && this.random() < ENVELOPE_SCANDAL_CHANCE) {
+          text = t('envelopeScandal');
+          tone = 'bad';
+          const d = this.changeStatus(-1);
+          if (d) summary.push(t('statusDelta', { v: String(d) }));
+        }
+        break;
+      }
+    }
+    this.invalidate();
+    this.emit({ type: 'partyPerk', party: party.id, label: perk.label, text, summary, tone });
+  }
+
+  // ——— Moral dilemmas ———
+  eligibleDilemmas() {
+    const s = this.state;
+    return DILEMMAS.filter((d) => s.rankIndex >= d.minRank && (d.maxRank === undefined || s.rankIndex <= d.maxRank) && !(d.once && s.seenDilemmas[d.id]) );
+  }
+  startDilemma(forceId?: string) {
+    const s = this.state;
+    const pool = forceId ? [DILEMMA_BY_ID[forceId]].filter(Boolean) : this.eligibleDilemmas().filter((d) => d.id !== this.lastDilemma);
+    this.scheduleDilemma();
+    if (!pool.length) return;
+    const total = pool.reduce((a, d) => a + d.weight, 0);
+    let r = this.random() * total;
+    let chosen = pool[0];
+    for (const d of pool) {
+      r -= d.weight;
+      if (r <= 0) {
+        chosen = d;
+        break;
+      }
+    }
+    s.pendingDilemma = chosen.id;
+    s.dilemmaTimeLeft = DILEMMA_SECONDS;
+    this.emit({ type: 'dilemmaStart', id: chosen.id });
+    this.changed();
+  }
+  private lastDilemma = '';
+  private scheduleDilemma() {
+    this.state.nextDilemmaIn = 110 + this.random() * 120;
+  }
+  resolveDilemma(yes: boolean, timedOut = false): boolean {
+    const s = this.state;
+    const d = s.pendingDilemma ? DILEMMA_BY_ID[s.pendingDilemma] : null;
+    if (!d) return false;
+    const choice = yes ? d.yes : d.no;
+    const cost = this.choiceCost(choice.costSeconds);
+    if (!this.spend(cost)) return false;
+    const before = s.status;
+    const outcome = this.pickOutcome(choice.outcomes);
+    const summary = this.applyActions(outcome.actions, d.title);
+    if (cost.gt(0)) summary.unshift(`-${money(cost)}`);
+    s.pendingDilemma = null;
+    s.seenDilemmas[d.id] = (s.seenDilemmas[d.id] ?? 0) + 1;
+    this.lastDilemma = d.id;
+    this.emit({ type: 'dilemmaResult', id: d.id, yes, timedOut, title: d.title, text: outcome.text, summary, statusDelta: s.status - before });
+    this.checkRanks();
+    this.changed();
+    return true;
+  }
+  private tickDilemma(dt: number) {
+    const s = this.state;
+    if (s.pendingDilemma) {
+      s.dilemmaTimeLeft -= dt;
+      if (s.dilemmaTimeLeft <= 0) this.resolveDilemma(false, true);
+      return;
+    }
+    if (s.pendingVote) return;
+    s.nextDilemmaIn -= dt;
+    if (s.nextDilemmaIn <= 0) this.startDilemma();
+  }
+
+  // ——— Rival ———
+  rivalDef() {
+    return RIVALS[Math.min(this.state.rival.index, RIVALS.length - 1)];
+  }
+  private tickRival(dt: number) {
+    const s = this.state;
+    const r = s.rival;
+    if (r.worth.lte(0)) r.worth = Decimal.max(s.earnedThisLife.mul(RIVAL_LEAD), 200);
+    r.worth = r.worth.add(this.baseDerived.incomePerSec.mul(RIVAL_GROWTH * dt));
+    if (s.earnedThisLife.lt(r.worth)) return;
+    const name = this.rivalDef().name;
+    const index = r.index;
+    const reward = this.reward(90, 50);
+    this.earn(reward);
+    this.addBuff('rival', t('rivalBuff'), 'income', 2, 20);
+    r.index++;
+    r.worth = s.earnedThisLife.mul(RIVAL_LEAD + 0.1 * Math.min(r.index, 10));
+    this.emit({ type: 'rivalBeaten', index, name, reward });
+  }
+
+  // ——— Mystery safe ———
+  vaultProgress(): [number, number] {
+    const v = this.state.vault;
+    return [v.clicks, vaultClicks(v.opened)];
+  }
+  private openVault() {
+    const s = this.state;
+    const total = VAULT_PRIZES.reduce((a, p) => a + p.chance, 0);
+    let r = this.random() * total;
+    let prize = VAULT_PRIZES[0];
+    for (const p of VAULT_PRIZES) {
+      r -= p.chance;
+      if (r <= 0) {
+        prize = p;
+        break;
+      }
+    }
+    const summary: string[] = [];
+    const pay = (amount: Decimal) => {
+      this.earn(amount);
+      summary.push(`+${money(amount)}`);
+    };
+    switch (prize.id) {
+      case 'cash': pay(this.reward(240, 100)); break;
+      case 'frenzy': this.addBuff('vault_income', t('vaultBuff'), 'income', 3, 45); break;
+      case 'hands': this.addBuff('vault_click', t('vaultBuff'), 'click', 5, 20); break;
+      case 'status': this.changeStatus(1); break;
+      case 'jackpot': pay(this.reward(900, 500, 0.25)); break;
+    }
+    s.vault.opened++;
+    s.vault.clicks = 0;
+    this.emit({ type: 'vault', prize: prize.id, text: prize.text, summary });
+  }
+
+  // ——— Casino ———
+  /** Below this status the casino will not let you in. */
+  casinoOpen() {
+    return this.state.status > STATUS_MIN;
+  }
+  scratchPrice(): Decimal {
+    return Decimal.max(this.state.money.mul(CASINO.scratchCashFraction), this.incomeUnit().mul(CASINO.scratchMinSeconds)).floor().max(10);
+  }
+  rouletteStake(fraction: number): Decimal {
+    return this.state.money.mul(fraction).floor();
+  }
+  /**
+   * Buys a scratch card: money and status are paid now, the prize is held
+   * until the card is scratched (`settleCasino`) so the reveal is a surprise.
+   */
+  playScratch(): ScratchResult | null {
+    if (!this.casinoOpen() || this.casinoPending) return null;
+    const price = this.scratchPrice();
+    if (!this.spend(price)) return null;
+    this.changeStatus(-CASINO.statusCost);
+    const total = SCRATCH_PRIZES.reduce((a, p) => a + p.chance, 0);
+    let r = this.random() * total;
+    let prize = SCRATCH_PRIZES[0];
+    for (const p of SCRATCH_PRIZES) {
+      r -= p.chance;
+      if (r <= 0) {
+        prize = p;
+        break;
+      }
+    }
+    const payout = price.mul(prize.mult);
+    this.casinoPending = { payout, status: prize.status, at: this.now() };
+    this.countPlay();
+    this.changed();
+    return { prize: prize.id, grid: this.scratchGrid(prize.symbol), payout, price };
+  }
+  /** A 3×3 card where only the winning symbol (if any) appears three times. */
+  private scratchGrid(win: string | null): string[] {
+    // Each other symbol appears at most twice, so no accidental line.
+    const pool = SCRATCH_SYMBOLS.filter((x) => x !== win).flatMap((x) => [x, x]);
+    const cells: string[] = win ? [win, win, win] : [];
+    while (cells.length < 9) cells.push(pool.splice(Math.floor(this.random() * pool.length), 1)[0]);
+    for (let i = cells.length - 1; i > 0; i--) {
+      const j = Math.floor(this.random() * (i + 1));
+      [cells[i], cells[j]] = [cells[j], cells[i]];
+    }
+    return cells;
+  }
+  /** Spins the roulette. `bet` is 'red', 'black' or a number 0–36. */
+  spinRoulette(bet: 'red' | 'black' | number, fraction: number): RouletteResult | null {
+    if (!this.casinoOpen() || this.casinoPending) return null;
+    const stake = this.rouletteStake(fraction);
+    if (stake.lt(1) || !this.spend(stake)) return null;
+    this.changeStatus(-CASINO.statusCost);
+    const n = Math.floor(this.random() * 37);
+    const color = n === 0 ? 'green' : RED_NUMBERS.has(n) ? 'red' : 'black';
+    let payout = new Decimal(0);
+    let status = 0;
+    if (typeof bet === 'number') {
+      if (bet === n) {
+        payout = stake.mul(36);
+        status = 2;
+      }
+    } else if (bet === color) payout = stake.mul(2);
+    else if (n === 0) status = -1;
+    this.casinoPending = { payout, status, at: this.now() };
+    this.countPlay();
+    this.changed();
+    return { n, color, win: payout.gt(0), payout, stake };
+  }
+  private countPlay() {
+    this.state.counters.casino_plays = (this.state.counters.casino_plays ?? 0) + 1;
+  }
+  /** Pays out the last casino game once its reveal has finished. */
+  settleCasino() {
+    const p = this.casinoPending;
+    if (!p) return;
+    this.casinoPending = null;
+    if (p.payout.gt(0)) this.earn(p.payout);
+    if (p.status) this.changeStatus(p.status);
+    this.checkRanks();
+    this.changed();
   }
 
   // ——— Achievements ———
@@ -788,6 +1154,7 @@ export class GameEngine {
       settings: old.settings,
       tutorialDone: true,
       seenEvents: old.seenEvents,
+      seenDilemmas: old.seenDilemmas,
       items: heirlooms,
       nextEventIn: 90,
       nextOpportunityIn: 30,

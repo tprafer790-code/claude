@@ -6,7 +6,10 @@ import type { Effect } from './types';
  * same event stays relevant from the street to the stratosphere.
  */
 export type EventAction =
-  | { type: 'money'; seconds?: number; fraction?: number }
+  /** `capFraction` overrides the usual reward cap (a fraction of this life's net worth). */
+  | { type: 'money'; seconds?: number; fraction?: number; capFraction?: number }
+  /** Adds (or removes) status points, which change how much net worth each promotion needs. */
+  | { type: 'status'; add: number }
   | { type: 'buff'; target: 'income' | 'click'; mult: number; seconds: number; label: string }
   | { type: 'item'; id: string }
   | { type: 'flag'; id: string }

@@ -11,6 +11,9 @@ import { RANKS } from '../data/ranks';
 import { SECRETS } from '../data/secrets';
 import { STAGES } from '../data/stages';
 import { UPGRADES } from '../data/upgrades';
+import { PARTIES } from '../data/parties';
+import { DILEMMAS } from '../data/dilemmas';
+import { RIVALS, STATUS_TITLES, VAULT_PRIZES } from '../data/social';
 import type { Lang } from './index';
 import { CONTENT_ES, PERK_DESC_ES, BUSINESS_UPGRADE_ES } from './content.es';
 
@@ -41,6 +44,11 @@ const SOURCES: Record<string, unknown[]> = {
   dailies: DAILIES,
   perks: PERKS,
   abilities: ABILITIES,
+  parties: PARTIES,
+  dilemmas: DILEMMAS,
+  statusTitles: STATUS_TITLES,
+  rivals: RIVALS,
+  vault: VAULT_PRIZES,
 };
 
 interface Slot {

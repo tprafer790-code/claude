@@ -31,12 +31,17 @@ import { Icon } from './components/Icon';
 import { FxOverlay } from './components/FxOverlay';
 import { Celebration } from './components/Celebration';
 import { reducedMotion, tierForStage } from '../fx/intensity';
+import { CasinoPanel } from './panels/CasinoPanel';
+import { VoteModal } from './modals/VoteModal';
+import { DilemmaModal } from './modals/DilemmaModal';
+import { PARTY_BY_ID } from '../data/parties';
 
-type Tab = 'business' | 'upgrades' | 'objects' | 'ladder' | 'goals' | 'legacy' | 'ranking';
+type Tab = 'business' | 'upgrades' | 'objects' | 'casino' | 'ladder' | 'goals' | 'legacy' | 'ranking';
 const TABS: { id: Tab; label: StringKey; icon: IconId }[] = [
   { id: 'business', label: 'tabBusiness', icon: 'store' },
   { id: 'upgrades', label: 'tabUpgrades', icon: 'star' },
   { id: 'objects', label: 'tabObjects', icon: 'box' },
+  { id: 'casino', label: 'casino', icon: 'gem' },
   { id: 'ladder', label: 'tabLadder', icon: 'trophy' },
   { id: 'goals', label: 'tabGoals', icon: 'scroll' },
   { id: 'legacy', label: 'tabLegacy', icon: 'crown' },
@@ -59,6 +64,19 @@ function Game({ runtime }: { runtime: Runtime }) {
   const [majorPromo, setMajorPromo] = useState<number | null>(null);
   const [eventOpen, setEventOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const openMenu = (to?: Tab) => {
+    if (to) setTab(to);
+    setMenuOpen(true);
+  };
+
+  // Escape closes the shop menu (modals handle their own Escape).
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenuOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   setLanguage(s.settings.language);
 
@@ -119,6 +137,20 @@ function Game({ runtime }: { runtime: Runtime }) {
         case 'prestige': audio.prestige(); pushToast({ icon: 'crown', title: t('newLifeTitle'), text: t('newLifeText', { n: e.gained }), tone: 'rare' }); break;
         case 'ability': audio.coin(); break;
         case 'toast': pushToast({ icon: 'star', title: e.text, text: '', tone: e.tone === 'bad' ? 'info' : e.tone === 'rare' ? 'rare' : 'good' }); break;
+        case 'vote': audio.fanfare(); break;
+        case 'partyPerk': {
+          if (e.tone === 'good') audio.coin(); else audio.denied();
+          pushToast({ icon: e.tone === 'good' ? 'bank' : 'scroll', title: `${PARTY_BY_ID[e.party]?.name ?? ''} · ${e.label}`, text: e.text, tone: e.tone === 'good' ? 'good' : 'info', sub: e.summary.join(' · ') });
+          break;
+        }
+        case 'dilemmaStart': audio.event(); break;
+        case 'dilemmaResult': {
+          if (e.statusDelta < 0) audio.denied(); else audio.achievement();
+          pushToast({ icon: 'scroll', title: e.title, text: e.timedOut ? `${t('dilemmaTimeout')} ${e.text}` : e.text, tone: e.statusDelta < 0 ? 'info' : 'good', sub: e.summary.join(' · ') });
+          break;
+        }
+        case 'rivalBeaten': audio.fanfare(); break;
+        case 'vault': audio.secret(); pushToast({ icon: 'key', title: t('vaultOpened'), text: e.text, tone: 'rare', sub: e.summary.join(' · ') }); break;
       }
     });
   }, [engine]);
@@ -136,37 +168,42 @@ function Game({ runtime }: { runtime: Runtime }) {
   }, [engine]);
 
   const stage = STAGE_BY_ID[engine.rank.stage];
+  const upgradeAlert = engine.availableUpgrades().some((u) => s.money.gte(engine.upgradeCost(u.id)));
+  const menuAlert = upgradeAlert || engine.visibleBusinesses().some((b) => s.money.gte(engine.businessCost(b.id, 1))) || engine.visibleMissions().some((m) => { const [c, g] = m.progress(s); return c >= g; });
   const unlockAudio = () => audio.unlock();
 
   return (
     <div className={`app stage-${stage.id} ${reducedMotion(s.settings) ? 'reduced-motion' : ''}`} data-tier={tierForStage(stage.index)} style={{ ['--accent' as string]: stage.accent, ['--accent-dark' as string]: stage.accentDark }} onPointerDown={unlockAudio}>
-      <TopBar onSettings={() => setSettingsOpen(true)} />
+      <TopBar onSettings={() => setSettingsOpen(true)} onMenu={() => setMenuOpen((o) => !o)} menuOpen={menuOpen} menuAlert={menuAlert} />
       <main className="layout">
         <section className="play">
           <SceneView />
           <ActionArea onOpenEvent={() => setEventOpen(true)} />
-          <Tutorial onGoObjects={() => setTab('objects')} />
+          <Tutorial onOpen={openMenu} />
         </section>
-        <aside className="panels">
+        {menuOpen && <div className="drawer-backdrop" onPointerDown={() => setMenuOpen(false)} />}
+        <aside className={`panels drawer ${menuOpen ? 'open' : ''}`} aria-hidden={!menuOpen} inert={!menuOpen}>
+          <button className="drawer-close icon-btn" onClick={() => setMenuOpen(false)} aria-label={t('menuClose')}>✕</button>
           <nav className="tabs" role="tablist">
             {TABS.map((tb) => (
               <button key={tb.id} role="tab" aria-selected={tab === tb.id} className={`tab ${tab === tb.id ? 'active' : ''}`} onClick={() => setTab(tb.id)}>
                 <Icon id={tb.icon} size={20} />
                 <span>{t(tb.label)}</span>
                 {tb.id === 'goals' && engine.visibleMissions().some((m) => { const [c, g] = m.progress(s); return c >= g; }) && <i className="dot" />}
-                {tb.id === 'upgrades' && engine.availableUpgrades().some((u) => s.money.gte(u.cost)) && <i className="dot" />}
+                {tb.id === 'upgrades' && upgradeAlert && <i className="dot" />}
               </button>
             ))}
           </nav>
-          <div className="panel-body">
+          {menuOpen && <div className="panel-body">
             {tab === 'business' && <BusinessPanel />}
             {tab === 'upgrades' && <UpgradesPanel />}
             {tab === 'objects' && <ObjectsPanel />}
             {tab === 'ladder' && <LadderPanel />}
             {tab === 'goals' && <GoalsPanel />}
             {tab === 'legacy' && <LegacyPanel />}
+            {tab === 'casino' && <CasinoPanel />}
             {tab === 'ranking' && <RankingPanel runtime={runtime} />}
-          </div>
+          </div>}
         </aside>
       </main>
       <Toasts />
@@ -176,6 +213,8 @@ function Game({ runtime }: { runtime: Runtime }) {
       {majorPromo !== null && <PromotionModal rankIndex={majorPromo} onClose={() => setMajorPromo(null)} />}
       {eventOpen && s.pendingEvent && <EventModal onClose={() => setEventOpen(false)} />}
       {settingsOpen && <SettingsModal runtime={runtime} onClose={() => setSettingsOpen(false)} />}
+      {s.pendingVote && !offline && majorPromo === null && <VoteModal />}
+      {s.pendingDilemma && !s.pendingVote && !offline && majorPromo === null && <DilemmaModal />}
     </div>
   );
 }

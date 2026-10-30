@@ -12,6 +12,8 @@ import { useEngine } from '../hooks';
 import { celebrate } from './Celebration';
 import { flyToCash } from './FxOverlay';
 import { Icon } from './Icon';
+import { PARTY_BY_ID, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../../data/parties';
+import { Decimal } from '../../core/bignum';
 
 /** Combo milestones: 5 small, 10 burst, 25 aura, 50 arcade spectacle, 100 celebration. */
 const COMBO_MILESTONES = [5, 10, 25, 50, 100];
@@ -149,6 +151,8 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
         ))}
       </div>
 
+      <ClimbHooks />
+
       <div className="click-zone">
         <button
           ref={buttonRef}
@@ -207,6 +211,46 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Government, rival and mystery safe: what is happening around the climb. */
+function ClimbHooks() {
+  const engine = useEngine();
+  const s = engine.state;
+  const g = s.government;
+  const party = g.party ? PARTY_BY_ID[g.party] : null;
+  const rival = engine.rivalDef();
+  const gap = s.rival.worth.sub(s.earnedThisLife);
+  const rivalFrac = s.rival.worth.gt(0) ? Math.min(1, s.earnedThisLife.div(s.rival.worth).toNumber()) : 0;
+  const [vc, vn] = engine.vaultProgress();
+  const notices = party?.notices?.length ?? 0;
+  return (
+    <div className="climb-hooks">
+      {party && (
+        <div className="gov-pill" style={{ ['--party' as string]: party.color }} title={party.phases[engine.phase()].text}>
+          <b>{t('governs', { name: party.name })}</b> · {party.phases[engine.phase()].title}
+          {g.okupa && <span className="gov-extra">{t('okupaPill', { n: g.notices, max: notices })}</span>}
+          {g.subsidies > 0 && <span className="gov-extra">{t('inflationPill', { pct: Math.round(SUBSIDY_INFLATION * Math.min(g.subsidies, SUBSIDY_INFLATION_CAP) * 100) })}</span>}
+        </div>
+      )}
+      <div className="rival" title={rival.desc}>
+        <span className="rival-tag">{t('rival')}</span>
+        <span className="rival-name">{rival.name}</span>
+        <div className="rival-bar">
+          <div className="rival-fill" style={{ width: `${(rivalFrac * 100).toFixed(1)}%` }} />
+          <span>{money(s.rival.worth)} · {t('rivalAhead', { amount: money(Decimal.max(gap, 0)) })}</span>
+        </div>
+      </div>
+      <div className={`vault ${vc / vn > 0.85 ? 'near' : ''}`} data-tip={t('vaultTip')}>
+        <span className="vault-icon" aria-hidden="true">🔒</span>
+        <span className="vault-label">{t('vault')}</span>
+        <div className="vault-bar">
+          <div className="vault-fill" style={{ width: `${((vc / vn) * 100).toFixed(1)}%` }} />
+        </div>
+        <span className="vault-count">{vc}/{vn}</span>
+      </div>
     </div>
   );
 }

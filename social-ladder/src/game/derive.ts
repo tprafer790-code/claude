@@ -3,6 +3,8 @@ import { BUSINESSES, BUSINESS_BY_ID } from '../data/businesses';
 import { COMBOS } from '../data/combos';
 import { ITEM_BY_ID } from '../data/items';
 import { RANKS } from '../data/ranks';
+import { STAGE_BY_ID } from '../data/stages';
+import { LOYALTY_BONUS, OKUPA_INCOME, OKUPA_NOTICE_PENALTY, PARTY_BY_ID, phaseForStage, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../data/parties';
 import { SECRET_BY_ID } from '../data/secrets';
 import { UPGRADE_BY_ID } from '../data/upgrades';
 import { BUSINESS_MILESTONES } from '../config/economy';
@@ -28,6 +30,8 @@ export interface Derived {
   offlineEfficiency: number;
   opportunityRate: number;
   costDiscount: number;
+  /** Multiplier on every price (businesses, upgrades, objects). */
+  priceMult: number;
   eventRate: number;
   assistantClicksPerSec: number;
   /** Additive bonus breakdown (for the stats panel). */
@@ -66,7 +70,23 @@ export function activeEffects(s: GameState): { general: Effect[]; items: Effect[
     if (b) out.push(...b);
   }
   for (const le of s.lifeEffects) out.push(le.effect);
+  out.push(...governmentEffects(s));
   return { general: out, items };
+}
+
+/** Effects of the party in government for the current social class. */
+export function governmentEffects(s: GameState): Effect[] {
+  const g = s.government;
+  const out: Effect[] = [];
+  // Inflation from aid outlives the government that handed it out.
+  if (g.subsidies > 0) out.push({ kind: 'priceMult', value: 1 + SUBSIDY_INFLATION * Math.min(g.subsidies, SUBSIDY_INFLATION_CAP) });
+  const party = g.party ? PARTY_BY_ID[g.party] : null;
+  if (!party) return out;
+  const phase = phaseForStage(STAGE_BY_ID[RANKS[s.rankIndex].stage].index);
+  out.push(...party.phases[phase].effects);
+  if (g.mandates > 1) out.push({ kind: 'incomeMult', value: 1 + LOYALTY_BONUS * (g.mandates - 1) });
+  if (g.okupa) out.push({ kind: 'incomeMult', value: OKUPA_INCOME - OKUPA_NOTICE_PENALTY * g.notices }, { kind: 'offlineCapHours', value: 4 });
+  return out;
 }
 
 export function perk(s: GameState, id: string): number {
@@ -92,6 +112,7 @@ export function computeDerived(s: GameState, now: number, includeBuffs = true): 
   let opportunityRate = Math.pow(0.9, perk(s, 'lucky_star'));
   let costDiscount = 1 - 0.05 * perk(s, 'bargain_hunter');
   let clickIpsPercent = 0;
+  let priceMult = 1;
   const bizMult: Record<string, number> = {};
 
   for (const e of effects) {
@@ -106,6 +127,7 @@ export function computeDerived(s: GameState, now: number, includeBuffs = true): 
       case 'opportunityRate': opportunityRate *= e.value; break;
       case 'clickIpsPercent': clickIpsPercent += e.value; break;
       case 'costDiscount': costDiscount *= e.value; break;
+      case 'priceMult': priceMult *= e.value; break;
     }
   }
 
@@ -165,7 +187,8 @@ export function computeDerived(s: GameState, now: number, includeBuffs = true): 
     offlineCapHours,
     offlineEfficiency: Math.min(offlineEfficiency, 1),
     opportunityRate: Math.max(opportunityRate, 0.3),
-    costDiscount: Math.max(costDiscount, 0.5),
+    costDiscount: Math.max(costDiscount, 0.5) * priceMult,
+    priceMult,
     eventRate: 1 + 0.15 * perk(s, 'event_magnet'),
     assistantClicksPerSec: perk(s, 'assistant'),
     breakdown,

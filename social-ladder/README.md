@@ -63,7 +63,15 @@ El juego funciona **completo en modo local** sin configurar nada: guardado en `l
 
 La lógica de críticos no ha cambiado: probabilidad y multiplicador siguen en `src/config/economy.ts` y en los efectos de objetos. Un crítico se considera *excepcional* (efecto más fuerte) si coincide con el combo al máximo, con una habilidad de clic activa o con un hallazgo afortunado.
 
-**Pruebas realizadas:** 39 tests unitarios en verde (incluida la cobertura completa de la traducción y los niveles de intensidad); build de producción sin errores; prueba en Chromium (escritorio 1366×800 y móvil 390×844): clics, críticos con sacudida y vuelta exacta a reposo, movimiento reducido sin sacudida, 300 clics rápidos y 40 críticos seguidos (las partículas tienen tope y el bucle de animación se detiene al terminar), compra, todas las pestañas, persistencia tras recargar, sin errores de consola ni desbordamiento horizontal.
+**Pruebas realizadas (fase 3):** 39 tests unitarios en verde (incluida la cobertura completa de la traducción y los niveles de intensidad); build de producción sin errores; prueba en Chromium (escritorio 1366×800 y móvil 390×844): clics, críticos con sacudida y vuelta exacta a reposo, movimiento reducido sin sacudida, 300 clics rápidos y 40 críticos seguidos (las partículas tienen tope y el bucle de animación se detiene al terminar), compra, todas las pestañas, persistencia tras recargar, sin errores de consola ni desbordamiento horizontal.
+
+### 2.2 Política, dilemas, estatus y casino
+
+- **Menú ☰:** la tienda (negocios, mejoras, objetos, casino, escalera, metas, legado y ranking) se abre como cajón lateral desde el botón de la esquina superior derecha. Un punto verde avisa de que hay algo comprable o cobrable.
+- **Estatus (-10 a +10):** multiplica el patrimonio que pide cada ascenso (`statusReqMult` en `src/data/social.ts`): +10 → ×0,65; -3 → ×1,36; -10 → ×2,2.
+- **Elecciones:** al empezar cada vida y al llegar a cada clase social. Partidos y efectos por fase en `src/data/parties.ts` (fase temprana = clases 1-3, media = 4-5, final = 6-8). Repetir partido da +5 % de ingresos por mandato seguido.
+- **Dilemas morales:** 15 ventanas SÍ/NO con 25 s para decidir (si no, NO). Contenido en `src/data/dilemmas.ts`.
+- **Rival, caja fuerte y casino:** rival que se adelanta solo, caja fuerte que se abre a base de clics, rasca y gana y ruleta (`src/data/casino.ts`). Cada partida del casino cuesta 1 de estatus; con estatus -10 te vetan.
 
 **Ritmo aproximado** (simulador, 1 clic/s, sin prestigio): Millonario ≈ 21 min, Multimillonario ≈ 43 min, Isla privada ≈ 1 h 50 min, Dueño de un país ≈ 5 h. Las etapas absurda y cósmica están pensadas para alcanzarse con varias reinvenciones. Todo es ajustable en `src/config/economy.ts`.
 
