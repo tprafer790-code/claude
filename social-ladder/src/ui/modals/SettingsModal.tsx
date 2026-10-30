@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fmtDuration, money } from '../../core/bignum';
+import { decimal, fmtDuration, money } from '../../core/bignum';
 import { RANKS } from '../../data/ranks';
 import type { Runtime } from '../../game/runtime';
 import { exportSave } from '../../game/persistence';
@@ -68,8 +68,8 @@ export function SettingsModal({ runtime, onClose }: { runtime: Runtime; onClose:
         <dt>{t('highestRank')}</dt><dd>{RANKS[s.highestRankEver].name}</dd>
         <dt>{t('totalClicks')}</dt><dd>{s.stats.totalClicks.toLocaleString('en-US')}</dd>
         <dt>{t('playTime')}</dt><dd>{fmtDuration(s.stats.playSeconds)}</dd>
-        <dt>{t('income')} ×</dt><dd>{d.incomeMult.toFixed(2)} (ranks +{Math.round(d.breakdown.ranks * 100)}%, achievements +{Math.round(d.breakdown.achievements * 100)}%, collection +{Math.round(d.breakdown.collection * 100)}%, {t('lifestyle').toLowerCase()} +{Math.round(d.breakdown.lifestyleIncome * 100)}%)</dd>
-        <dt>{t('clicks')} ×</dt><dd>{d.clickMult.toFixed(2)}</dd>
+        <dt>{t('income')} ×</dt><dd>{decimal(d.incomeMult, 2)} ({t('incomeBreakdown', { ranks: Math.round(d.breakdown.ranks * 100), ach: Math.round(d.breakdown.achievements * 100), col: Math.round(d.breakdown.collection * 100), life: Math.round(d.breakdown.lifestyleIncome * 100) })})</dd>
+        <dt>{t('clicks')} ×</dt><dd>{decimal(d.clickMult, 2)}</dd>
         <dt>{t('offline')}</dt><dd>{t('offlineStat', { pct: Math.round(d.offlineEfficiency * 100), hours: d.offlineCapHours })}</dd>
       </dl>
 

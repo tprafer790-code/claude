@@ -20,7 +20,7 @@ export interface AchievementDef {
   check: (s: GameState) => boolean;
 }
 
-const WEALTH_NAMES = [
+export const WEALTH_NAMES = [
   [100, 'Pocket Change'], [1e3, 'Four Digits'], [1e4, 'Savings Account'], [1e5, 'Emergency Fund'],
   [1e6, 'Seven Figures'], [1e7, 'Eight Figures'], [1e8, 'Nine Figures'], [1e9, 'Ten Figures'],
   [1e11, 'Generational'], [1e13, 'Economic Weather'], [1e15, 'Quadrillionaire'], [1e18, 'Quintillionaire'],

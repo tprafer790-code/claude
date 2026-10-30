@@ -47,7 +47,7 @@ El juego funciona **completo en modo local** sin configurar nada: guardado en `l
 | Persistencia | Autoguardado cada 10 s, copia de seguridad, exportar/importar código, migración de versiones |
 | Presentación | Pixel art procedural, 8 escenarios, personaje que cambia según etapa y equipo, partículas, audio chiptune sintetizado (WebAudio) |
 | Accesibilidad | Movimiento reducido, volumen/silencio, teclado (Espacio/Enter), diseño responsive |
-| Idiomas | Español e inglés; ~1.000 textos de contenido traducidos por identificador (`src/i18n/content.ts`), con test de cobertura |
+| Idiomas | Español e inglés; ~1.000 textos de contenido traducidos por identificador (`src/i18n/content.ts`), con test de cobertura. En español las cantidades usan la escala larga (K, M, mM = mil millones, B = billón, T = trillón…) y coma decimal |
 
 **Pruebas realizadas:** 36 tests unitarios en verde (incluida la cobertura completa de la traducción); build de producción sin errores; prueba en Chromium (escritorio 1366×800 y móvil 390×844): clics, compra, todas las pestañas, persistencia tras recargar, sin errores de consola ni desbordamiento horizontal.
 
@@ -145,7 +145,6 @@ Principios: el motor es determinista e independiente del DOM (reloj y aleatoried
 
 ## 6. Pendiente / limitaciones conocidas
 
-- Los sufijos de cantidades usan la escala corta anglosajona (K, M, B = mil millones, T = billón…) también en español.
 - Textos guardados en partidas antiguas (eventos diferidos pendientes, bonificaciones activas) conservan el idioma en que se generaron.
 - Supabase sin probar contra un proyecto real (ver 3.2). El antitrampas es básico.
 - Música: un bucle chiptune procedural por etapa; no hay pistas compuestas.

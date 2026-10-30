@@ -177,4 +177,5 @@ export const es: Partial<Record<keyof typeof en, string>> = {
   critLine: 'Clics: crítico {pct} % ×{mult}',
   repBonus: '+{pct} % de ingresos y clics',
   requiredFor: 'Necesario para {rank}',
+  incomeBreakdown: 'rangos +{ranks} %, logros +{ach} %, colección +{col} %, objetos +{life} %',
 };

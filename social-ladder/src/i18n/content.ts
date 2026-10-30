@@ -1,5 +1,6 @@
 import { ABILITIES } from '../data/abilities';
-import { ACHIEVEMENTS } from '../data/achievements';
+import { ACHIEVEMENT_BY_ID, ACHIEVEMENTS, WEALTH_NAMES } from '../data/achievements';
+import { money } from '../core/bignum';
 import { BUSINESS_BY_ID, BUSINESSES } from '../data/businesses';
 import { COMBOS } from '../data/combos';
 import { EVENTS } from '../data/events';
@@ -85,6 +86,12 @@ export function applyContentLanguage(lang: Lang) {
   contentPaths();
   const dict = lang === 'es' ? CONTENT_ES : {};
   for (const [path, s] of slots!) (s.owner as Record<string | number, unknown>)[s.key] = dict[path] ?? s.original;
+
+  // Amounts depend on the number style, so they are filled in after translation.
+  WEALTH_NAMES.forEach(([n], i) => {
+    const a = ACHIEVEMENT_BY_ID[`wealth_${i}`];
+    a.desc = a.desc.replace('{amount}', money(n));
+  });
 
   for (const p of PERKS) p.desc = (lang === 'es' && PERK_DESC_ES[p.id]) || perkOriginals.get(p.id)!;
 

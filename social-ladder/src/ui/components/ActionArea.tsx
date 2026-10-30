@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { fmtDuration, money } from '../../core/bignum';
+import { decimal, fmtDuration, money } from '../../core/bignum';
 import { ECONOMY } from '../../config/economy';
 import { EVENT_BY_ID } from '../../data/events';
 import { STAGE_BY_ID } from '../../data/stages';
@@ -97,7 +97,7 @@ export function ActionArea({ onOpenEvent }: { onOpenEvent: () => void }) {
 
       <div className="combo" data-tip={t('comboTip')}>
         <span className="combo-label">
-          {t('combo')} {comboActive ? `×${(1 + comboSteps * ECONOMY.click.comboStep).toFixed(2)}` : ''}
+          {t('combo')} {comboActive ? `×${decimal(1 + comboSteps * ECONOMY.click.comboStep, 2)}` : ''}
         </span>
         <div className="combo-bar">
           <div className="combo-fill" style={{ width: `${(comboSteps / d.comboMax) * 100}%` }} />

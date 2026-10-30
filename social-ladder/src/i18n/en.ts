@@ -175,4 +175,5 @@ export const en = {
   critLine: 'Clicks: crit {pct}% ×{mult}',
   repBonus: '+{pct}% income & clicks',
   requiredFor: 'Required for {rank}',
+  incomeBreakdown: 'ranks +{ranks}%, achievements +{ach}%, collection +{col}%, objects +{life}%',
 };

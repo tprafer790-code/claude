@@ -1,3 +1,5 @@
+import { money } from '../core/bignum';
+import { SEED_MONEY } from '../data/perks';
 import achievements from './es/achievements.json';
 import businesses from './es/businesses.json';
 import events1 from './es/events1.json';
@@ -13,7 +15,7 @@ export const CONTENT_ES: Record<string, string> = { ...stages, ...ranks, ...busi
 const n = (v: number) => v.toLocaleString('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
 
 export const PERK_DESC_ES: Record<string, (level: number) => string> = {
-  seed_money: (l) => `Empiezas cada vida con ${['$0', '$1K', '$100K', '$10M', '$1B'][l]}.`,
+  seed_money: (l) => `Empiezas cada vida con ${money(SEED_MONEY[l])}.`,
   business_school: (l) => `Todos los ingresos ×${n(1 + 0.25 * l)} (+0,25 por nivel).`,
   golden_hands: (l) => `Clics ×${Math.pow(2, l)} (×2 por nivel).`,
   assistant: (l) => `Un asistente hace clic por ti ${l} ${l === 1 ? 'vez' : 'veces'} por segundo (sin críticos ni combos).`,

@@ -1,3 +1,5 @@
+import { ACHIEVEMENT_BY_ID } from '../src/data/achievements';
+import { fmt } from '../src/core/bignum';
 import { afterAll, describe, expect, it } from 'vitest';
 import { BUSINESS_BY_ID } from '../src/data/businesses';
 import { PERKS } from '../src/data/perks';
@@ -26,7 +28,7 @@ describe('Spanish translation', () => {
   it('keeps numbers from the English text', () => {
     // Guards against translating "×3 for 45s" as something with different values.
     const nums = (s: string) => (s.match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(',', '.').replace(/^(\d+)\.(\d{3})$/, '$1$2')).sort();
-    const mismatched = [...contentPaths()].filter(([p, enText]) => CONTENT_ES[p] && nums(enText).join() !== nums(CONTENT_ES[p]).join());
+    const mismatched = [...contentPaths()].filter(([p, enText]) => CONTENT_ES[p] && !CONTENT_ES[p].includes('{amount}') && nums(enText).join() !== nums(CONTENT_ES[p]).join());
     expect(mismatched.map(([p]) => p)).toEqual([]);
   });
 
@@ -35,8 +37,12 @@ describe('Spanish translation', () => {
     expect(RANKS[0].name).toBe('Residente de Cartón');
     expect(UPGRADE_BY_ID.bu_cans_0.name).toBe(BUSINESS_BY_ID.cans.upgradeNames[0]);
     expect(UPGRADE_BY_ID.bu_cans_0.desc).toContain('Recogida de Latas');
+    expect(ACHIEVEMENT_BY_ID.wealth_7.desc).toBe('Gana $1mM en total (todas las vidas).');
+    expect(fmt(1.5e12)).toBe('1,5B');
     setLanguage('en');
     expect(RANKS[0].name).toBe('Cardboard Resident');
+    expect(ACHIEVEMENT_BY_ID.wealth_7.desc).toBe('Earn $1B in total (all lives).');
+    expect(fmt(1.5e12)).toBe('1.5T');
     expect(UPGRADE_BY_ID.bu_cans_0.desc).toBe('Can Collecting income ×2');
   });
 });

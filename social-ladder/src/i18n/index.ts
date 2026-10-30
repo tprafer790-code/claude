@@ -1,6 +1,7 @@
 import { en } from './en';
 import { es } from './es';
 import { applyContentLanguage } from './content';
+import { setNumberStyle } from '../core/bignum';
 
 export type Lang = 'en' | 'es';
 export type StringKey = keyof typeof en;
@@ -10,6 +11,7 @@ let current: Lang = 'en';
 
 export function setLanguage(lang: Lang) {
   current = lang;
+  setNumberStyle(lang === 'es' ? 'es' : 'short');
   applyContentLanguage(lang);
   if (typeof document !== 'undefined') document.documentElement.lang = lang;
 }
