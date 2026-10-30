@@ -424,4 +424,5 @@ export const en = {
   help_happenings_t: "Life under each government",
   help_happenings: "Every couple of minutes the government does something absurd: sometimes it pays you, sometimes it costs you. Each party has its own, and every one has good and bad moments.",
   voteTax: "🏛 Income tax {rate}% · inspectors ×{zeal}",
+  adDouble: '▶ Watch an ad: double it',
 };

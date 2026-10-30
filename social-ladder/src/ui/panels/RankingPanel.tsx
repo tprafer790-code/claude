@@ -1,3 +1,4 @@
+import { FAMILY } from '../../edition';
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { Decimal, fmtDuration, money } from '../../core/bignum';
@@ -39,13 +40,13 @@ export function RankingPanel({ runtime }: { runtime: Runtime }) {
       <div className="panel">
         <div className="panel-head"><h2>{t('tabRanking')}</h2></div>
         <LeagueBoard />
-        <div className="notice">
+        {!FAMILY && <div className="notice">
           <Icon id="cloud" size={30} />
           <div>
             <b>{t('leaderboardOffline')}</b>
             <p>{t('leaderboardOfflineDesc')}</p>
           </div>
-        </div>
+        </div>}
         {records}
       </div>
     );

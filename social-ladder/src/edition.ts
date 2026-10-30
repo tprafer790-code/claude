@@ -10,7 +10,11 @@
  * `FAMILY`, so the bundler drops the other edition's text.
  */
 declare const __EDITION__: 'classic' | 'family';
+declare const __PORTAL__: 'none' | 'crazygames';
 
 export type Edition = 'classic' | 'family';
 export const EDITION: Edition = __EDITION__;
 export const FAMILY = EDITION === 'family';
+
+/** Web portal whose SDK the build talks to (`--mode crazygames`). */
+export const PORTAL: 'none' | 'crazygames' = __PORTAL__;

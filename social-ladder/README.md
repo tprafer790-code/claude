@@ -25,6 +25,7 @@ npm run dev          # http://localhost:5173
 | `npm run typecheck` | Solo comprobación de tipos |
 | `npm run simulate -- <horas> <clics/s> [rangoPrestigio]` | Bot de equilibrado: juega de forma voraz y muestra cuándo alcanza cada rango |
 | `npm run build:family` | Build de la **edición familiar internacional** en `dist-family/` |
+| `npm run build:crazygames` | Edición familiar con el SDK de CrazyGames y el ZIP para subir en `release/` |
 | `npm run test:classic` / `npm run test:family` | Tests de una sola edición (`npm test` ejecuta las dos) |
 | `npm run e2e` | Prueba de humo en navegador (Playwright) contra `npm run preview` |
 
@@ -216,7 +217,7 @@ Principios: el motor es determinista e independiente del DOM (reloj y aleatoried
 - Equilibrado de las etapas absurda/cósmica validado solo con el simulador, no con jugadores.
 - Sin PWA/instalación offline ni notificaciones push.
 - Edición familiar: el texto de la edición clásica sigue dentro del paquete JavaScript aunque el jugador nunca lo ve.
-- Edición familiar: falta integrar el SDK de Poki o CrazyGames antes de enviarla (anuncios, eventos de partida).
+- CrazyGames: el SDK (`src/portal/index.ts`) se ha probado con un SDK simulado; el SDK real solo responde dentro de CrazyGames (su herramienta de QA). Poki aún no está integrado.
 - Navegadores probados: Chromium (escritorio y móvil emulado). Safari y Firefox sin verificar.
 - Los efectos se han medido en Chromium sin aceleración gráfica; falta comprobarlos en un móvil real de gama baja.
 
