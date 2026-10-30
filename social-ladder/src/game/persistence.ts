@@ -4,7 +4,7 @@ import { createInitialState, SAVE_VERSION, type GameState } from './state';
 export const SAVE_KEY = 'the-social-ladder:save';
 export const BACKUP_KEY = 'the-social-ladder:save-backup';
 
-const DECIMAL_PATHS: ReadonlyArray<readonly string[]> = [['money'], ['earnedThisLife'], ['lifetimeEarned'], ['stats', 'bestLifeEarned'], ['rival', 'worth'], ['league', 'earned'], ['league', 'ref']];
+const DECIMAL_PATHS: ReadonlyArray<readonly string[]> = [['money'], ['earnedThisLife'], ['lifetimeEarned'], ['stats', 'bestLifeEarned'], ['rival', 'worth'], ['league', 'earned'], ['league', 'ref'], ['tax', 'hidden'], ['tax', 'paid']];
 
 /** Storage abstraction so persistence can be tested without a browser. */
 export interface KeyValueStore {

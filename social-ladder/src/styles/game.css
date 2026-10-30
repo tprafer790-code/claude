@@ -884,3 +884,51 @@ button.card-main:not(:disabled):active { transform: translateY(1px); }
 }
 @media (prefers-reduced-motion: reduce) { .chest-btn, .login-day.today, .chest-stage.shaking svg { animation: none; } }
 .reduced-motion .chest-btn, .reduced-motion .login-day.today, .reduced-motion .chest-stage.shaking svg { animation: none; }
+
+/* ——— Six parties fit on one screen ——— */
+.modal.vote-modal { width: min(1100px, 100%); }
+.modal.vote-modal .parties { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.modal.vote-modal .party { gap: 4px; padding: 8px; font-size: 12px; }
+.modal.vote-modal .party-now p { margin: 2px 0; }
+.party-now li.vote-tax { color: var(--sun); }
+@media (max-height: 820px) and (min-width: 721px) {
+  .modal.vote-modal .party-later, .modal.vote-modal .vote-intro { display: none; }
+  .modal.vote-modal .party-now p { font-size: 11px; }
+}
+@media (max-width: 720px) {
+  .modal.vote-modal .parties { grid-template-columns: 1fr 1fr; gap: 5px; }
+  .modal.vote-modal .party { padding: 5px; gap: 3px; font-size: 10px; }
+  .modal.vote-modal .party-now ul { padding-left: 10px; }
+  .modal.vote-modal .party-vote { padding: 4px; font-size: 10px; }
+}
+
+/* ——— Treasury ——— */
+.tax-btn { border: none; padding: 3px 7px; font-size: 11px; font-weight: 600; background: var(--ink); color: var(--cream); box-shadow: 0 0 0 1px var(--line); cursor: pointer; white-space: nowrap; }
+.tax-btn.evade, .tax-btn.engineering { color: var(--gold); }
+.tax-btn.warm { background: #6a3a10; color: var(--white); }
+.tax-btn.hot { background: var(--red); color: var(--white); animation: blink 0.8s steps(2) infinite; }
+.modal.hacienda-modal { width: min(560px, 100%); display: flex; flex-direction: column; gap: 8px; box-shadow: 0 0 0 3px var(--gold), 0 0 30px rgba(255, 196, 0, 0.3); }
+.hacienda-title { margin: 0; font-size: 16px; color: var(--gold); }
+.hacienda-intro, .hacienda-rate { margin: 0; font-size: 13px; color: var(--cream); }
+.hacienda-rate { color: var(--sun); }
+.tax-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tax-mode { display: flex; flex-direction: column; gap: 4px; text-align: left; border: none; padding: 8px; color: var(--white); background: var(--panel-2); box-shadow: 0 0 0 2px var(--line), 0 4px 0 var(--ink); cursor: pointer; }
+.tax-mode b { font-family: var(--font-pixel); font-size: 9px; }
+.tax-mode span { font-size: 12px; color: var(--cream); }
+.tax-mode.on.tax-honest { background: #1f7a44; box-shadow: 0 0 0 2px var(--green), 0 4px 0 var(--ink); }
+.tax-mode.on.tax-engineering { background: #7a5a10; box-shadow: 0 0 0 2px var(--gold), 0 4px 0 var(--ink); }
+.tax-mode.on.tax-evade { background: #8a0f1f; box-shadow: 0 0 0 2px var(--red), 0 4px 0 var(--ink); }
+.tax-mode:disabled { opacity: 0.45; cursor: not-allowed; }
+.tax-risk { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; font-size: 12px; }
+.tax-risk-bar { position: relative; height: 16px; background: var(--ink); box-shadow: 0 0 0 2px var(--line); overflow: hidden; }
+.tax-risk-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--green), var(--gold) 45%, var(--red) 85%); transition: width 0.3s; }
+.tax-risk-bar i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--white); opacity: 0.6; }
+.tax-risk-bar > span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; text-shadow: 1px 1px 0 var(--ink); }
+.tax-hidden { margin: 0; font-size: 12px; color: var(--sun); }
+.tax-risk.lvl-crime + .tax-hidden { color: var(--pink); font-weight: 600; }
+.tax-hint { color: var(--muted); font-size: 11px; }
+@media (max-width: 520px) {
+  .tax-modes { grid-template-columns: 1fr; }
+  .tax-mode { flex-direction: row; align-items: baseline; gap: 6px; padding: 6px; }
+  .tax-mode span { font-size: 11px; }
+}

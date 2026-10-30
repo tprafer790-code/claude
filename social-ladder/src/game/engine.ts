@@ -1,4 +1,4 @@
-import { t } from '../i18n';
+import { getLanguage, t } from '../i18n';
 import { BUSINESS_UPGRADE_TIERS, ECONOMY } from '../config/economy';
 import { Decimal, money } from '../core/bignum';
 import { ABILITIES } from '../data/abilities';
@@ -16,12 +16,13 @@ import { UPGRADE_BY_ID, UPGRADES } from '../data/upgrades';
 import { businessAffordable, businessCost, computeDerived, type Derived } from './derive';
 import { checkCustomSecret } from './secretChecks';
 import { DILEMMA_BY_ID, DILEMMAS } from '../data/dilemmas';
-import { AID_COOLDOWN, DEFLATION_EVERY, ELECTION_EVERY, ENVELOPE_SCANDAL_CHANCE, PARTY_BY_ID, phaseForStage, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../data/parties';
+import { AID_COOLDOWN, DEFLATION_EVERY, ELECTION_EVERY, ENVELOPE_SCANDAL_CHANCE, HAPPENING_EVERY, PARTY_BY_ID, phaseForStage, TOWNHALL_INCOME, TOWNHALL_STATUS, type PartyDef, SUBSIDY_INFLATION, SUBSIDY_INFLATION_CAP } from '../data/parties';
 import { PARTNER_BY_ID, PARTNERS, ROMANCE } from '../data/romance';
 import { CASINO, RED_NUMBERS, SCRATCH_PRIZES, SCRATCH_SYMBOLS } from '../data/casino';
 import { ATTACKS, HEALTH, RIVAL_GROWTH, RIVAL_LEAD, RIVALS, STATUS_DANGER, STATUS_GAIN_SECONDS, STATUS_JAIL, STATUS_LOSS_SECONDS, STATUS_MAX, STATUS_MIN, statusReqMult, VAULT_PRIZES, vaultClicks } from '../data/social';
 import { CHEST_PRIZES, CHESTS, LEAGUE, leagueBots, LOGIN_DAYS, botProgress, prevDay, weekElapsed, weekOf, type ChestPrize, type ChestRarity } from '../data/retention';
 import { createInitialState, type GameState } from './state';
+import { ENGINEERING_MIN_PHASE, HACIENDA, inspectionChance, inspectionLevel, TAX_MODES, TAX_PAID, TAX_RISK_PER_SEC, type InspectionLevel, type TaxMode } from '../data/hacienda';
 import type { IconId } from '../data/types';
 
 export type GameEvent =
@@ -48,7 +49,12 @@ export type GameEvent =
   | { type: 'aid'; party: string; amount: Decimal; inflation: number }
   | { type: 'attack'; damage: number; text: string; knockedOut: boolean; bill: Decimal }
   | { type: 'heal'; cost: Decimal }
-  | { type: 'jail' }
+  | { type: 'jail'; reason: 'status' | 'tax' }
+  | { type: 'happening'; party: string; text: string; summary: string[]; tone: 'good' | 'bad' }
+  | { type: 'taxRefund'; amount: Decimal; status: number }
+  | { type: 'inspection'; level: InspectionLevel; fine: Decimal; status: number; prison: boolean; seized: boolean }
+  | { type: 'regularize'; cost: Decimal; amnesty: boolean }
+  | { type: 'prescribed' }
   | { type: 'encounterStart'; partner: string }
   | { type: 'encounterResult'; choice: 'safe' | 'wild' | 'leave'; pregnant: boolean }
   | { type: 'baby'; children: number }
@@ -306,7 +312,8 @@ export class GameEngine {
     const t = this.now();
     const d = this.derived;
 
-    this.earn(d.incomePerSec.mul(dt));
+    this.earnTaxed(d.incomePerSec.mul(dt), dt);
+    if (this.state !== s) return;
 
     if (d.assistantClicksPerSec > 0) {
       this.assistantCarry += d.assistantClicksPerSec * dt;
@@ -851,7 +858,7 @@ export class GameEngine {
     this.emit({ type: 'attack', damage, text, knockedOut, bill });
   }
   /** Status hit rock bottom: jail, and the life starts over with nothing gained. */
-  goToJail() {
+  goToJail(reason: 'status' | 'tax' = 'status') {
     const old = this.state;
     this.state = this.freshLife(old, old.prestige);
     this.state.counters.jail = (this.state.counters.jail ?? 0) + 1;
@@ -859,7 +866,7 @@ export class GameEngine {
     this.casinoPending = null;
     this.combo = 0;
     this.invalidate();
-    this.emit({ type: 'jail' });
+    this.emit({ type: 'jail', reason });
     this.changed();
   }
 
@@ -940,6 +947,7 @@ export class GameEngine {
     g.mandates = g.party === partyId ? g.mandates + 1 : 1;
     g.party = partyId;
     g.perkIn = 25;
+    g.happeningIn = 60;
     g.notices = 0;
     g.okupa = partyId === 'podremos' && phase === 0 && !this.hasHome();
     s.flags[`party_${partyId}_${phase}`] = true;
@@ -1004,6 +1012,12 @@ export class GameEngine {
         this.invalidate();
       }
     }
+    g.happeningIn -= dt;
+    if (g.happeningIn <= 0) {
+      const [a, b] = HAPPENING_EVERY;
+      g.happeningIn = a + this.random() * (b - a);
+      this.happen(party);
+    }
     const perk = party.phases[this.phase()].perk;
     if (!perk) return;
     if (perk.kind === 'notice' && !g.okupa) return;
@@ -1027,6 +1041,12 @@ export class GameEngine {
         this.addBuff('parade', perk.label, 'income', 0.5, 15);
         tone = 'bad';
         break;
+      case 'townhall': {
+        this.addBuff('townhall', perk.label, 'income', TOWNHALL_INCOME, 10);
+        const d = this.changeStatus(TOWNHALL_STATUS);
+        if (d) summary.push(t('statusDelta', { v: `+${d}` }));
+        break;
+      }
       case 'envelope':
       case 'kickback': {
         const amount = this.reward(perk.seconds ?? 30);
@@ -1043,6 +1063,150 @@ export class GameEngine {
     }
     this.invalidate();
     this.emit({ type: 'partyPerk', party: party.id, label: perk.label, text, summary, tone });
+  }
+
+  /** One of the governing party's absurd happenings. */
+  happen(party: PartyDef, id?: string) {
+    const list = party.happenings;
+    if (!list.length) return;
+    const h = (id && list.find((x) => x.id === id)) || list[Math.floor(this.random() * list.length)];
+    const s = this.state;
+    const summary: string[] = [];
+    let good = 0;
+    if (h.money) {
+      const amount = this.reward(Math.abs(h.money), 10);
+      if (h.money > 0) {
+        this.earn(amount);
+        summary.push(`+${money(amount)}`);
+        good++;
+      } else {
+        const paid = Decimal.min(amount, s.money).floor();
+        s.money = s.money.sub(paid);
+        summary.push(`-${money(paid)}`);
+        good--;
+      }
+    }
+    if (h.status) {
+      const d = this.changeStatus(h.status, h.status > 0);
+      if (d) summary.push(t('statusDelta', { v: `${d > 0 ? '+' : ''}${d}` }));
+      good += Math.sign(h.status);
+    }
+    if (h.buff) {
+      this.addBuff(`hap_${h.id}`, party.name, h.buff.target, h.buff.mult, h.buff.seconds);
+      summary.push(`${h.buff.target === 'click' ? t('clicksWord') : t('incomeWord')} ×${String(h.buff.mult).replace('.', getLanguage() === 'es' ? ',' : '.')} · ${h.buff.seconds}s`);
+      good += h.buff.mult >= 1 ? 1 : -1;
+    }
+    this.invalidate();
+    this.emit({ type: 'happening', party: party.id, text: h.text, summary, tone: good >= 0 ? 'good' : 'bad' });
+  }
+
+  // ——— Treasury (Hacienda) ———
+  /** Income-tax rate of the current government for this social class. */
+  taxRate(): number {
+    const g = this.state.government;
+    const party = g.party ? PARTY_BY_ID[g.party] : null;
+    return party ? party.tax.rate[this.phase()] : HACIENDA.defaultRate;
+  }
+  /** How hard the current government chases tax dodgers. */
+  taxZeal(): number {
+    const g = this.state.government;
+    return g.party ? PARTY_BY_ID[g.party].tax.inspect : 1;
+  }
+  canUseTaxMode(mode: TaxMode): boolean {
+    return mode !== 'engineering' || this.phase() >= ENGINEERING_MIN_PHASE;
+  }
+  setTaxMode(mode: TaxMode): boolean {
+    if (!TAX_MODES.includes(mode) || !this.canUseTaxMode(mode)) return false;
+    this.state.tax.mode = mode;
+    this.state.tax.cleanFor = 0;
+    this.changed();
+    return true;
+  }
+  /** PEPE's Tax Amnesty (late phase) lets hidden money home for 10%. */
+  amnestyOpen(): boolean {
+    return this.state.government.party === 'pepe' && this.phase() === 2;
+  }
+  regularizeCost(): Decimal {
+    const h = this.state.tax.hidden;
+    return h.mul(this.amnestyOpen() ? HACIENDA.amnestyRate : 1 + HACIENDA.regularizeSurcharge).ceil();
+  }
+  /** Own up voluntarily: pay the hidden tax plus a surcharge, risk back to zero. */
+  regularize(): boolean {
+    const x = this.state.tax;
+    if (x.hidden.lte(0)) return false;
+    const cost = this.regularizeCost();
+    if (!this.spend(cost)) return false;
+    x.hidden = new Decimal(0);
+    x.risk = 0;
+    x.cleanFor = 0;
+    this.emit({ type: 'regularize', cost, amnesty: this.amnestyOpen() });
+    this.changed();
+    return true;
+  }
+  /** Passive income goes through the Treasury: honest pays, evaders hide it. */
+  private earnTaxed(gross: Decimal, dt: number) {
+    const x = this.state.tax;
+    const rate = this.taxRate();
+    const paidShare = TAX_PAID[x.mode];
+    const tax = gross.mul(rate);
+    this.earn(gross.sub(tax.mul(paidShare)));
+    if (paidShare > 0) x.paid = x.paid.add(tax.mul(paidShare));
+    if (paidShare < 1) x.hidden = x.hidden.add(tax.mul(1 - paidShare));
+    this.tickTax(dt);
+  }
+  private tickTax(dt: number) {
+    const s = this.state;
+    const x = s.tax;
+    x.risk = Math.max(0, Math.min(100, x.risk + TAX_RISK_PER_SEC[x.mode] * dt));
+    if (x.mode === 'honest') {
+      x.refundIn -= dt;
+      if (x.refundIn <= 0) {
+        x.refundIn = HACIENDA.refundEvery;
+        const amount = x.paid.mul(HACIENDA.refundShare).floor();
+        x.paid = new Decimal(0);
+        if (amount.gt(0)) {
+          this.earn(amount);
+          const d = this.changeStatus(HACIENDA.refundStatus, false);
+          this.emit({ type: 'taxRefund', amount, status: d });
+        }
+      }
+      // Old sins prescribe after a long enough clean spell.
+      if (x.risk <= 0 && x.hidden.gt(0)) {
+        x.cleanFor += dt;
+        if (x.cleanFor >= HACIENDA.prescriptionSeconds) {
+          x.hidden = new Decimal(0);
+          x.cleanFor = 0;
+          this.emit({ type: 'prescribed' });
+        }
+      }
+    }
+    x.checkIn -= dt;
+    if (x.checkIn > 0) return;
+    x.checkIn = HACIENDA.checkEvery;
+    if (x.hidden.lt(this.incomeUnit().mul(HACIENDA.minHiddenSeconds))) return;
+    if (this.random() < inspectionChance(x.risk, this.taxZeal())) this.inspect();
+  }
+  /** The Treasury knocks. Punishment depends on the risk at that moment. */
+  inspect(level: InspectionLevel = inspectionLevel(this.state.tax.risk)) {
+    const s = this.state;
+    const x = s.tax;
+    const fine = x.hidden.mul(1 + HACIENDA.fine[level]).ceil();
+    const paid = Decimal.min(fine, s.money);
+    s.money = s.money.sub(paid);
+    const seized = paid.lt(fine);
+    x.hidden = new Decimal(0);
+    x.risk = level === 'minor' ? 0 : 10;
+    x.cleanFor = 0;
+    x.inspections++;
+    s.counters.inspections = (s.counters.inspections ?? 0) + 1;
+    let status = this.changeStatus(HACIENDA.status[level], false);
+    if (seized) status += this.changeStatus(HACIENDA.seizureStatus, false);
+    if (level === 'grave') this.addBuff('embargo', t('embargoBuff'), 'income', HACIENDA.embargo.mult, HACIENDA.embargo.seconds);
+    const prison = level === 'crime' && this.random() < HACIENDA.prisonChance;
+    this.invalidate();
+    this.emit({ type: 'inspection', level, fine: paid, status, prison, seized });
+    if (prison) this.goToJail('tax');
+    else this.changed();
   }
 
   // ——— Moral dilemmas ———
