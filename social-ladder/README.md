@@ -78,6 +78,11 @@ La lógica de críticos no ha cambiado: probabilidad y multiplicador siguen en `
 - **Rival, caja fuerte y casino:** rival que se adelanta solo, caja fuerte que se abre a base de clics, rasca y gana barato y ruleta (`src/data/casino.ts`). Cada partida cuesta medio punto de estatus (sin recompensa de dinero sucio, para que no se pueda explotar).
 - **Sin scroll:** la interfaz ocupa exactamente la pantalla (100dvh) en ordenador y móvil; la escena se encoge para dejar sitio a los controles.
 
+### 2.2b Seis partidos, sucesos absurdos y Hacienda
+
+- **Partidos (`src/data/parties.ts`):** PESOE, Podremos, POX, PEPE, **RESTAR** (parodia de Sumar: jornada de 37,5 h, herencia universal como ayuda, alquileres congelados, impuesto a las grandes herencias, jornada de 32 h) y **Democracia 22** (parodia de Democracia 21, de Miriam González: recogida de 10.000 firmas, solo en dos ciudades, sin impuestos a la vivienda para jóvenes, recorte del 90 % de asesores, rendición de cuentas quincenal ante los vecinos y movilidad social). Cada partido tiene 6 sucesos absurdos (3 buenos y 3 malos, lo comprueba un test) que saltan cada 100-160 s de Gobierno.
+- **Hacienda (`src/data/hacienda.ts`, botón 🏛 en la barra del Gobierno):** los ingresos pasivos pagan IRPF al tipo del partido y la fase (del 8 % del POX tardío al 40 % de Podremos tardío). Modos: *honrado* (devolución del 30 % y +0,5 de estatus cada 5 min; el riesgo baja), *ingeniería fiscal* (pagas la mitad; desde la clase media) y *evadir* (no pagas; el riesgo sube 0,3 %/s). Cada 45 s puede haber inspección (probabilidad ∝ riesgo^1,5 × celo del partido). Castigo según el riesgo: <40 % paralela (+50 %, -1 estatus); 40-79 % inspección (+100 %, -3 estatus, cuentas embargadas 30 s); ≥80 % delito fiscal (+150 %, -6 estatus y 30 % de cárcel, que reinicia la vida como la cárcel por estatus). Se puede regularizar con un 20 % de recargo (10 % con la amnistía del PEPE tardío) y las deudas prescriben tras 4 min honrado con riesgo 0. Las ganancias sin jugar no tributan.
+
 ### 2.3 Enganche: racha diaria, cofres, siguiente desbloqueo y liga semanal
 
 Todo el equilibrado está en `src/data/retention.ts`.

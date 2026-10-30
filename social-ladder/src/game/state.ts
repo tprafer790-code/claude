@@ -2,6 +2,7 @@ import { detectLanguage } from '../i18n';
 import { Decimal } from '../core/bignum';
 import type { Effect, Slot } from '../data/types';
 import type { EventOutcome } from '../data/events';
+import type { TaxMode } from '../data/hacienda';
 
 export const SAVE_VERSION = 1;
 
@@ -76,6 +77,24 @@ export interface Government {
   aidReadyAt: number;
   /** Seconds until right-wing governments trim inflation again. */
   deflationIn: number;
+  /** Seconds of play until the governing party's next absurd happening. */
+  happeningIn: number;
+}
+
+export interface TaxState {
+  mode: TaxMode;
+  /** 0–100: how suspicious the Treasury is. */
+  risk: number;
+  /** Unpaid tax not yet found by an inspection. */
+  hidden: Decimal;
+  /** Tax paid since the last refund (honest mode). */
+  paid: Decimal;
+  /** Seconds of play until the next inspection check / refund. */
+  checkIn: number;
+  refundIn: number;
+  /** Seconds of honest play at zero risk (prescription clock). */
+  cleanFor: number;
+  inspections: number;
 }
 
 export interface Family {
@@ -147,6 +166,7 @@ export interface GameState {
   /** Status points (-10..10): change how much net worth each promotion needs. */
   status: number;
   government: Government;
+  tax: TaxState;
   /** A vote is due (new life or new social class). */
   pendingVote: boolean;
   pendingDilemma: string | null;
@@ -216,7 +236,8 @@ export function createInitialState(now = Date.now()): GameState {
     lifeStartedAt: now,
     abilityReadyAt: {},
     status: 0,
-    government: { party: null, mandates: 0, subsidies: 0, okupa: false, notices: 0, perkIn: 30, housingBonus: false, electionIn: 600, aidReadyAt: 0, deflationIn: 60 },
+    government: { party: null, mandates: 0, subsidies: 0, okupa: false, notices: 0, perkIn: 30, housingBonus: false, electionIn: 600, aidReadyAt: 0, deflationIn: 60, happeningIn: 90 },
+    tax: { mode: 'honest', risk: 0, hidden: new Decimal(0), paid: new Decimal(0), checkIn: 45, refundIn: 300, cleanFor: 0, inspections: 0 },
     pendingVote: true,
     pendingDilemma: null,
     dilemmaTimeLeft: 0,

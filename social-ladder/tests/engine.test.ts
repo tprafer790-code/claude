@@ -10,6 +10,7 @@ import { EVENTS } from '../src/data/events';
 import { ACHIEVEMENTS } from '../src/data/achievements';
 import { SECRETS } from '../src/data/secrets';
 import { COMBOS } from '../src/data/combos';
+import { HACIENDA } from '../src/data/hacienda';
 import { UPGRADES } from '../src/data/upgrades';
 
 function makeEngine(start = 1_000_000_000_000, rand = 0.99) {
@@ -119,7 +120,8 @@ describe('businesses and upgrades', () => {
     expect(ten).toBeCloseTo(manual, 4);
     const before = engine.state.money;
     engine.tick(10);
-    expect(engine.state.money.sub(before).toNumber()).toBeCloseTo(BUSINESSES[0].baseIncome * 10, 5);
+    // The Treasury takes its cut of passive income (honest by default, before any vote).
+    expect(engine.state.money.sub(before).toNumber()).toBeCloseTo(BUSINESSES[0].baseIncome * 10 * (1 - HACIENDA.defaultRate), 5);
   });
   it('refuses purchases without money or rank', () => {
     const { engine } = makeEngine();

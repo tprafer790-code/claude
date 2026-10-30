@@ -73,7 +73,7 @@ function Game({ runtime }: { runtime: Runtime }) {
   const [eventOpen, setEventOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [jailed, setJailed] = useState(false);
+  const [jailed, setJailed] = useState<'status' | 'tax' | null>(null);
   const [fade, setFade] = useState(false);
   const [chestsOpen, setChestsOpen] = useState(false);
   const openMenu = (to?: Tab) => {
@@ -170,7 +170,25 @@ function Game({ runtime }: { runtime: Runtime }) {
           pushToast({ icon: 'scroll', title: t('attackTitle', { n: e.damage }), text: e.knockedOut ? `${e.text} ${t('knockedOut', { amount: money(e.bill) })}` : e.text, tone: 'info' });
           break;
         case 'heal': audio.achievement(); pushToast({ icon: 'star', title: t('healed'), text: `-${money(e.cost)}`, tone: 'good' }); break;
-        case 'jail': audio.prestige(); setMenuOpen(false); setJailed(true); break;
+        case 'jail': audio.prestige(); setMenuOpen(false); setJailed(e.reason); break;
+        case 'happening': {
+          if (e.tone === 'good') audio.coin(); else audio.denied();
+          pushToast({ icon: e.tone === 'good' ? 'bank' : 'scroll', title: PARTY_BY_ID[e.party]?.name ?? '', text: e.text, tone: e.tone === 'good' ? 'good' : 'info', sub: e.summary.join(' · ') });
+          break;
+        }
+        case 'taxRefund': audio.coin(); pushToast({ icon: 'bank', title: t('taxRefundTitle'), text: t('taxRefundText', { amount: money(e.amount) }), tone: 'good', sub: e.status ? t('statusDelta', { v: `+${e.status}` }) : undefined }); break;
+        case 'inspection':
+          audio.denied();
+          pushToast({
+            icon: 'scroll',
+            title: t(`inspectionTitle_${e.level}`),
+            text: t(`taxLetter_${e.level}`),
+            tone: e.level === 'crime' ? 'rare' : 'info',
+            sub: [t('inspectionFine', { amount: money(e.fine) }), t('statusDelta', { v: String(e.status) }), e.seized ? t('inspectionSeized') : '', e.level === 'crime' ? t(e.prison ? 'inspectionPrison' : 'inspectionLawyer') : ''].filter(Boolean).join(' · '),
+          });
+          break;
+        case 'regularize': audio.coin(); pushToast({ icon: 'bank', title: t('regularizeTitle'), text: t(e.amnesty ? 'amnestyText' : 'regularizeText', { amount: money(e.cost) }), tone: 'good' }); break;
+        case 'prescribed': audio.achievement(); pushToast({ icon: 'star', title: t('prescribedTitle'), text: t('prescribedText'), tone: 'rare' }); break;
         case 'encounterStart': audio.rare(); break;
         case 'encounterResult':
           if (e.choice !== 'leave') setFade(true);
@@ -255,7 +273,7 @@ function Game({ runtime }: { runtime: Runtime }) {
       {eventOpen && s.pendingEvent && <EventModal onClose={() => setEventOpen(false)} />}
       {settingsOpen && <SettingsModal runtime={runtime} onClose={() => setSettingsOpen(false)} />}
       {fade && <div className="fade-black" onAnimationEnd={() => setFade(false)}><span>{t('fadeText')}</span></div>}
-      {modal === 'jail' && <JailModal onClose={() => setJailed(false)} />}
+      {modal === 'jail' && <JailModal reason={jailed ?? 'status'} onClose={() => setJailed(null)} />}
       {chestsOpen && <ChestModal onClose={() => setChestsOpen(false)} />}
       {modal === 'vote' && <VoteModal />}
       {modal === 'login' && <LoginModal />}
