@@ -15,7 +15,8 @@
     "simulate": "vite-node scripts/simulate.ts",
     "e2e": "node scripts/e2e.mjs",
     "symmetry": "vite-node scripts/symmetry.ts",
-    "check": "npm run typecheck && npm run validate && npm test"
+    "check": "npm run typecheck && npm run validate && npm test",
+    "build:artifact": "npm run build && node scripts/artifact.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
