@@ -34,8 +34,8 @@ export const ES: CountryDef = {
   parties: (o) => [
     { id: 'pas', name: { es: 'Partido Avance Social', en: 'Social Advance Party' }, short: 'PAS', lean: -0.9, color: '#e0483e', isPlayer: o === 'left', isRival: o === 'right' },
     { id: 'pol', name: { es: 'Partido Orden y Libertad', en: 'Order & Liberty Party' }, short: 'POL', lean: 0.9, color: '#2f6fd6', isPlayer: o === 'right', isRival: o === 'left' },
-    { id: 'pla', name: { es: 'Plataforma Asamblearia', en: 'Assembly Platform' }, short: 'PLA', lean: -1.7, color: '#9b3fb5' },
-    { id: 'psm', name: { es: 'Patria Sin Matices', en: 'Fatherland Without Nuance' }, short: 'PSM', lean: 1.8, color: '#3b8a3b' },
+    { id: 'pla', name: { es: 'Plataforma Asamblearia', en: 'Assembly Platform' }, short: 'PLA', lean: -1.75, color: '#9b3fb5' },
+    { id: 'psm', name: { es: 'Patria Sin Matices', en: 'Fatherland Without Nuance' }, short: 'PSM', lean: 1.75, color: '#3b8a3b' },
     { id: 'cm', name: { es: 'Coalició Mediterrània', en: 'Mediterranean Coalition' }, short: 'CM', lean: 0.2, color: '#e9b11c', regional: true },
     { id: 'pcf', name: { es: 'Partido Cantábrico Foral', en: 'Cantabrian Foral Party' }, short: 'PCF', lean: 0.4, color: '#2aa198', regional: true },
   ],
@@ -66,4 +66,5 @@ export const ES: CountryDef = {
     sources: ['infobae.com (6-oct-2026)', 'es.euronews.com (2-oct-2026)'],
   },
   flag: { kind: 'es' },
+  calibration: 0.05,
 };

@@ -13,7 +13,9 @@
     "test": "vitest run",
     "validate": "vite-node scripts/validate.ts",
     "simulate": "vite-node scripts/simulate.ts",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "symmetry": "vite-node scripts/symmetry.ts",
+    "check": "npm run typecheck && npm run validate && npm test"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

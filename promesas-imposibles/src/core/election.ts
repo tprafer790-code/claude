@@ -122,7 +122,8 @@ function compute(ctx: Ctx): Raw {
     const player = parties.find((p) => p.isPlayer)!;
     const rival = parties.find((p) => p.isRival)!;
     const ps = seats[player.id];
-    const won = ps > seats[rival.id] || potentialMajority(ctx, seats);
+    // Gana quien puede sumar una mayoría de bloque y no queda muy por detrás del rival
+    const won = (potentialMajority(ctx, seats) && ps >= seats[rival.id] * 0.85) || ps >= seats[rival.id] * 1.15;
     return {
       first: sh[player.id], shares: sh, turnout: cast / elig, seats: { congress: seats }, won, playerShare: sh[player.id],
       detail: { es: `${ps} escaños de 350. Mayoría absoluta: 176.`, en: `${ps} seats of 350. Absolute majority: 176.` },
@@ -200,7 +201,8 @@ function potentialMajority(ctx: Ctx, seats: Record<string, number>): boolean {
   for (const p of ctx.parties) {
     if (p.isRival) continue;
     const player = ctx.parties.find((x) => x.isPlayer)!;
-    if (p.isPlayer || Math.abs(p.lean - player.lean) < 1.0 || p.regional) sum += seats[p.id];
+    const d = Math.abs(p.lean - player.lean);
+    if (p.isPlayer || d < 1.0 || (p.regional && d < 1.4)) sum += seats[p.id];
   }
   return sum >= 176;
 }
@@ -229,9 +231,14 @@ function fixTotal(m: Record<string, number>, total: number) {
 
 /** Media ideológica ponderada del país: se centra para que izquierda y derecha partan igualadas. */
 export function ideologyCenter(c: CountryDef): number {
-  let m = 0; let t = 0;
-  for (const g of GROUPS) { m += GROUP_IDEOLOGY[g].mean * c.groupSizes[g]; t += c.groupSizes[g]; }
-  return m / t;
+  // Incluye la composición de cada región y su desplazamiento local, ponderados por escaños o peso
+  let num = 0; let den = 0;
+  for (const r of c.regions) {
+    let m = 0; let t = 0;
+    for (const g of GROUPS) { const w = c.groupSizes[g] * (r.mix?.[g] ?? 1); m += GROUP_IDEOLOGY[g].mean * w; t += w; }
+    num += (m / t + r.shift) * r.seats; den += r.seats;
+  }
+  return num / den + (c.calibration ?? 0);
 }
 
 /** Entusiasmo de la base: un programa tibio moviliza menos a los propios (la participación cae hasta un 12 %). */

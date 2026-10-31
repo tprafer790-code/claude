@@ -109,8 +109,8 @@ Fuentes ✅ (leídas el 31-oct-2026; las páginas no muestran fecha): [SDK HTML5
 |---|---|
 | SDK `https://game-cdn.poki.com/scripts/v2/poki-sdk.js` + `PokiSDK.init()` | Solo en la compilación `npm run build:poki`. Capa adaptadora `src/platform/`. |
 | `gameLoadingFinished()` al terminar la carga | Llamado tras montar la interfaz. |
-| `gameplayStart()` en la primera interacción, `gameplayStop()` en pausas, menús, finales y escenas | Gestionado por `platform.setPlaying()` sin disparos duplicados. |
-| `commercialBreak()` en pausas naturales, silenciando audio y bloqueando entrada | Tras la noche electoral, cada 3 rondas de gobierno y al reintentar. Overlay que bloquea entrada y silencia. |
+| `gameplayStart()` en la primera interacción, `gameplayStop()` en pausas, menús, finales y escenas | `gameplayStart()`/`gameplayStop()` en `src/platform/poki.ts`, sin llamadas duplicadas. |
+| `commercialBreak()` en pausas naturales, silenciando audio y bloqueando entrada | Al salir de la noche electoral, cada 3 rondas de gobierno y en la revancha rápida (máx. 1/min). Bloquea la entrada y silencia. |
 | `rewardedBreak()` opcional, avisando antes, nunca imprescindible | No se usa en la v1. |
 | Descarga inicial < 8 MB | Todo el arte es SVG generado por código; audio sintetizado. |
 | Sin peticiones externas (ni Google Fonts ni CDN) | Fuentes del sistema; nada externo salvo el SDK de Poki. |

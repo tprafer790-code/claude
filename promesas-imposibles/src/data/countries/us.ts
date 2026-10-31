@@ -67,4 +67,5 @@ export const US: CountryDef = {
     sources: ['khaleejtimes.com / Reuters (19-oct-2026)', 'cfr.org (13-oct-2026)'],
   },
   flag: { kind: 'us' },
+  calibration: 0.015,
 };

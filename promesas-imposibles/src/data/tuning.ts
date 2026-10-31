@@ -27,7 +27,7 @@ export const TUNING = {
   groupNoise: 0.15,
   /** Ventaja del partido rival: en campaña (aparato) y en la reelección (desgaste del Gobierno) */
   rivalCampaignBonus: 0.2,
-  rivalReelectionBonus: 0.42,
+  rivalReelectionBonus: 0.7,
   /** Temperatura del reparto de voto (mayor = más disperso) */
   voteTemperature: 0.55,
 

@@ -1,0 +1,71 @@
+/* Animación por piezas, rígida y cómica (pasos discretos, como recortes de papel). */
+.ch { width: 100%; height: 100%; overflow: visible; display: block; }
+.ch.ch-flip { transform: scaleX(-1); }
+.ch g { transform-box: view-box; }
+.ch .m, .ch .eyes-happy, .ch .ch-sweat, .ch .ch-anger { display: none; }
+.ch .m-idle { display: inline; }
+.actor[data-mood="talk"] .m-idle, .actor[data-mood="happy"] .m-idle, .actor[data-mood="angry"] .m-idle,
+.actor[data-mood="nervous"] .m-idle, .actor[data-mood="sad"] .m-idle { display: none; }
+.actor[data-mood="talk"] .m-talk, .actor[data-mood="happy"] .m-happy, .actor[data-mood="angry"] .m-angry,
+.actor[data-mood="nervous"] .m-nervous, .actor[data-mood="sad"] .m-sad { display: inline; }
+.actor[data-mood="happy"] .eyes-open { display: none; }
+.actor[data-mood="happy"] .eyes-happy { display: inline; }
+.actor[data-mood="nervous"] .ch-sweat { display: inline; }
+.actor[data-mood="angry"] .ch-anger { display: inline; }
+
+/* Reposo: balanceo leve */
+.actor .ch-root { animation: ch-idle 1.6s steps(2) infinite; }
+@keyframes ch-idle { 0% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-2px) rotate(-1deg); } }
+.actor .ch-pupils { animation: ch-look 5s steps(1) infinite; }
+@keyframes ch-look { 0%, 70% { transform: translate(0, 0); } 72%, 85% { transform: translate(3px, 0); } 87%, 100% { transform: translate(-2px, 1px); } }
+
+/* Hablar: cabeza y boca a golpes */
+.actor[data-mood="talk"] .ch-head { animation: ch-talk-head .32s steps(2) infinite; }
+@keyframes ch-talk-head { 0% { transform: rotate(-3deg); } 50% { transform: rotate(3deg) translateY(-2px); } }
+.actor[data-mood="talk"] .m-talk-a { animation: ch-blink .22s steps(1) infinite; }
+.actor[data-mood="talk"] .m-talk-b { animation: ch-blink .22s steps(1) infinite reverse; }
+@keyframes ch-blink { 0% { opacity: 1; } 50% { opacity: 0; } }
+.actor[data-mood="talk"] .ch-armR { animation: ch-gesture .64s steps(2) infinite; }
+@keyframes ch-gesture { 0% { transform: rotate(0); } 50% { transform: rotate(-35deg); } }
+
+/* Celebrar: saltitos y brazos arriba */
+.actor[data-mood="happy"] .ch-root { animation: ch-jump .5s steps(3) infinite; }
+@keyframes ch-jump { 0% { transform: translateY(0); } 33% { transform: translateY(-16px) rotate(-3deg); } 66% { transform: translateY(-8px) rotate(3deg); } }
+.actor[data-mood="happy"] .ch-armL { transform: rotate(140deg); }
+.actor[data-mood="happy"] .ch-armR { transform: rotate(-140deg); }
+
+/* Enfadarse: temblor brusco y cejas */
+.actor[data-mood="angry"] .ch-root { animation: ch-shake .12s steps(2) infinite; }
+@keyframes ch-shake { 0% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+.actor[data-mood="angry"] .ch-browL { transform: rotate(18deg) translateY(4px); }
+.actor[data-mood="angry"] .ch-browR { transform: rotate(-18deg) translateY(4px); }
+.actor[data-mood="angry"] .ch-armL { transform: rotate(40deg); }
+.actor[data-mood="angry"] .ch-armR { transform: rotate(-40deg); }
+
+/* Nervioso: tiritona, pupilas que huyen, sudor */
+.actor[data-mood="nervous"] .ch-root { animation: ch-tremble .08s steps(2) infinite; }
+@keyframes ch-tremble { 0% { transform: translate(-1px, 0); } 50% { transform: translate(1px, -1px); } }
+.actor[data-mood="nervous"] .ch-pupils { animation: none; transform: translate(-4px, -2px); }
+.actor[data-mood="nervous"] .ch-browL { transform: rotate(-14deg) translateY(-4px); }
+.actor[data-mood="nervous"] .ch-browR { transform: rotate(14deg) translateY(-4px); }
+
+/* Triste */
+.actor[data-mood="sad"] .ch-head { transform: rotate(6deg) translateY(4px); }
+.actor[data-mood="sad"] .ch-browL { transform: rotate(-12deg); }
+.actor[data-mood="sad"] .ch-browR { transform: rotate(12deg); }
+
+/* Caminar: piernas en tijera y rebote */
+.actor.walking .ch-legL { animation: ch-legs .28s steps(2) infinite; }
+.actor.walking .ch-legR { animation: ch-legs .28s steps(2) infinite reverse; }
+@keyframes ch-legs { 0% { transform: rotate(-22deg); } 50% { transform: rotate(22deg); } }
+.actor.walking .ch-root { animation: ch-step .28s steps(2) infinite; }
+@keyframes ch-step { 0% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.actor.walking .ch-armL { animation: ch-legs .28s steps(2) infinite reverse; }
+.actor.walking .ch-armR { animation: ch-legs .28s steps(2) infinite; }
+
+/* Golpe de efecto: entrada en escena */
+.actor.pop { animation: ch-pop .35s steps(3); }
+@keyframes ch-pop { 0% { transform: scale(.6) rotate(-8deg); } 66% { transform: scale(1.1) rotate(4deg); } 100% { transform: scale(1); } }
+
+/* Movimiento reducido */
+.reduced-motion .actor *, .reduced-motion .actor { animation: none !important; transition: none !important; }

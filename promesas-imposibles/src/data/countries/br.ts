@@ -64,4 +64,5 @@ export const BR: CountryDef = {
     sources: ['infomoney.com.br (25/26-oct-2026)'],
   },
   flag: { kind: 'br' },
+  calibration: -0.015,
 };

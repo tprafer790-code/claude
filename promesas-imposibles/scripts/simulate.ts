@@ -4,7 +4,7 @@ import { playBot, type Strategy } from '../src/core/bot';
 import type { CountryId } from '../src/core/types';
 
 const N = Number(process.argv[2] ?? 60);
-const countries: CountryId[] = ['es', 'us', 'br'];
+const countries: CountryId[] = (process.argv[3]?.split(',') as CountryId[]) ?? ['es', 'us', 'br'];
 const strategies: Strategy[] = ['random', 'honest', 'corrupt', 'populist', 'technocrat', 'authoritarian'];
 const rows: string[] = [];
 for (const c of countries) {

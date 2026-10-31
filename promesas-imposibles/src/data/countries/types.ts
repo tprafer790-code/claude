@@ -56,4 +56,6 @@ export interface CountryDef {
   /** Instantánea real fechada (solo contexto, nunca mecánica) */
   reality: { date: string; lines: L[]; sources: string[] };
   flag: { kind: 'es' | 'us' | 'br' };
+  /** Ajuste fino del centro ideológico para que izquierda y derecha partan igualadas (ver scripts/symmetry.ts) */
+  calibration?: number;
 }
