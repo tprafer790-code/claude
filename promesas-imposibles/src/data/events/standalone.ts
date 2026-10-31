@@ -1,0 +1,397 @@
+// Eventos independientes (una etapa). Cada uno declara condiciones y repetición.
+import type { GameEvent } from '../../core/types';
+import { c, d, flag, g, t } from '../helpers';
+import { ev } from './build';
+
+export const STANDALONE_EVENTS: GameEvent[] = [
+  ev({
+    id: 'flood', category: 'disaster', hotspot: 'map', speaker: 'advisor', kind: 'main', weight: 1.2,
+    conditions: { minRound: 3, maxRound: 10 },
+    title: t('Emergencia: inundaciones', 'Emergency: floods'),
+    text: t('Lluvias torrenciales anegan pueblos enteros. Los vecinos achican agua con cubos y con tu nombre en la boca.', 'Torrential rain floods entire towns. Residents bail water with buckets and your name on their lips.'),
+    variants: {
+      es: { title: t('Emergencia: DANA', 'Emergency: cold-drop storm'), text: t('Una DANA arrasa varias comarcas. Las alertas al móvil llegaron tarde.', 'A cut-off low storm devastates several districts. Phone alerts arrived late.') },
+      us: { title: t('Emergencia: huracán', 'Emergency: hurricane'), text: t('Un huracán golpea la costa. Los gobernadores piden fondos federales ya.', 'A hurricane hits the coast. Governors demand federal funds now.') },
+      br: { text: t('Lluvias extremas en el sur desbordan ríos. Barrios enteros bajo el agua.', 'Extreme rain in the south overflows rivers. Whole neighbourhoods underwater.') },
+    },
+    choices: [
+      { id: 'deploy', label: t('Desplegar todos los recursos ya', 'Deploy every resource now'), tags: ['concede'], cost: { treasury: 3 }, result: t('Llegas con botas y helicópteros. Lo importante: llegas.', 'You arrive with boots and helicopters. What matters: you arrive.'), effects: [d('treasury', -3), d('popularity', 4), d('wellbeing', -2), d('security', 2), flag('handled_disaster')] },
+      { id: 'coordinate', label: t('Coordinar con las autoridades regionales', 'Coordinate with regional authorities'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Reuniones mientras sube el agua. Nadie sabe quién manda.', 'Meetings while the water rises. Nobody knows who is in charge.'), effects: [d('treasury', -1), d('wellbeing', -4), d('popularity', -2)], risk: { chance: 0.4, effects: [d('popularity', -5), c('citizenA', -10)], text: t('La ayuda tarda tres días. Hay imágenes de abandono.', 'Aid takes three days. There are images of neglect.') } },
+      { id: 'photo', label: t('Visita con chubasquero y cámaras', 'Visit in a raincoat with cameras'), tags: ['lie'], result: t('Te tiran barro. La imagen da la vuelta al mundo.', 'They throw mud at you. The image goes around the world.'), effects: [d('popularity', -5), d('wellbeing', -3), d('credibility', -3)] },
+    ],
+  }),
+  ev({
+    id: 'wildfire', category: 'disaster', hotspot: 'tv', speaker: 'journalist', weight: 1,
+    conditions: { minRound: 2, stats: { environment: [0, 55] } },
+    title: t('Ola de calor e incendios', 'Heatwave and wildfires'),
+    text: t('48 grados y los montes ardiendo. Tu asesora te prohíbe decir «hace un poco de calor».', '48 degrees and the hills on fire. Your adviser forbids you from saying "it is a bit warm".'),
+    choices: [
+      { id: 'brigades', label: t('Brigadas todo el año', 'Year-round fire crews'), tags: ['concede'], cost: { treasury: 2 }, result: t('Caro, pero el próximo verano ardía menos.', 'Expensive, but next summer less will burn.'), effects: [d('treasury', -2), d('environment', 3, 1), g('rural', 4)] },
+      { id: 'blame', label: t('Culpar a pirómanos', 'Blame arsonists'), tags: ['delay'], result: t('Algunos lo eran. Casi todo era el clima.', 'Some were. Most of it was the climate.'), effects: [d('credibility', -2), d('environment', -3)] },
+      { id: 'plan', label: t('Plan climático urbano', 'Urban climate plan'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Sombras, fuentes, horarios. Pequeños alivios.', 'Shade, fountains, schedules. Small reliefs.'), effects: [d('treasury', -1), g('urban', 3), g('pensioners', 3), d('environment', 2)] },
+    ],
+  }),
+  ev({
+    id: 'outbreak', category: 'disaster', hotspot: 'phone', speaker: 'economist', weight: 0.8,
+    conditions: { minRound: 4 },
+    title: t('Brote de «gripe del pato»', '"Duck flu" outbreak'),
+    text: t('Un virus estacional satura urgencias. Los patos niegan su implicación.', 'A seasonal virus overwhelms ERs. Ducks deny involvement.'),
+    choices: [
+      { id: 'reinforce', label: t('Reforzar la atención primaria', 'Reinforce primary care'), tags: ['concede'], cost: { treasury: 2 }, result: t('Las colas bajan. Los sanitarios respiran, con mascarilla.', 'Queues shrink. Health workers breathe, masked.'), effects: [d('treasury', -2), d('services', 3), g('pensioners', 3)] },
+      { id: 'campaign', label: t('Campaña de vacunación con famosos', 'Vaccination drive with celebrities'), tags: ['negotiate'], result: t('Un cantante se vacuna en directo y se desmaya. Récord de audiencia.', 'A singer gets vaccinated live and faints. Record ratings.'), effects: [d('services', 1), d('popularity', 2)] },
+      { id: 'downplay', label: t('Restarle importancia', 'Downplay it'), tags: ['lie'], result: t('Se complica. Los informativos abren con camillas en pasillos.', 'It gets worse. News opens with stretchers in corridors.'), effects: [d('services', -4), d('popularity', -3), d('credibility', -3)] },
+    ],
+  }),
+  ev({
+    id: 'blackout', category: 'economy', hotspot: 'phone', speaker: 'citizenC', weight: 0.8,
+    conditions: { minRound: 3 },
+    title: t('Apagón nacional', 'National blackout'),
+    text: t('Diez horas sin luz. La gente redescubre las cartas, la radio y a sus vecinos. No todos lo agradecen.', 'Ten hours without power. People rediscover cards, radio and their neighbours. Not all are grateful.'),
+    choices: [
+      { id: 'grid', label: t('Plan de inversión en la red', 'Grid investment plan'), tags: ['concede'], cost: { treasury: 3 }, result: t('Las torres eléctricas serán tu legado menos sexy.', 'Power lines will be your least sexy legacy.'), effects: [d('treasury', -3), d('economy', 3, 2), c('economist', 5)] },
+      { id: 'blame_company', label: t('Señalar a la eléctrica', 'Blame the utility'), tags: ['reject'], result: t('La eléctrica te señala a ti. Empate técnico.', 'The utility blames you. A technical draw.'), effects: [d('popularity', 1), g('business', -3)] },
+      { id: 'investigate', label: t('Comisión de investigación', 'Commission of inquiry'), tags: ['investigate'], result: t('Concluirá dentro de dos años que «hubo un apagón».', 'In two years it will conclude that "there was a blackout".'), effects: [d('integrity', 1), d('popularity', -1)] },
+    ],
+  }),
+  ev({
+    id: 'cyberattack', category: 'security', hotspot: 'desk', speaker: 'advisor', weight: 0.8,
+    conditions: { minRound: 5 },
+    title: t('Ciberataque', 'Cyberattack'),
+    text: t('Hackers bloquean la web de Hacienda y piden un rescate en criptomonedas. La contraseña era «admin123».', 'Hackers lock the tax agency website and demand crypto ransom. The password was "admin123".'),
+    choices: [
+      { id: 'refuse', label: t('No pagar y restaurar copias', 'Refuse and restore backups'), tags: ['reject'], result: t('Tres días caídos. Ningún euro para los delincuentes.', 'Three days down. Not a cent to criminals.'), effects: [d('economy', -1), d('security', 2), d('integrity', 1)] },
+      { id: 'pay', label: t('Pagar en secreto', 'Pay in secret'), tags: ['corrupt'], cost: { privateFunds: 2 }, requires: { stats: { privateFunds: [2, 999] } }, result: t('Vuelve la web. Y la sospecha.', 'The site returns. So does suspicion.'), effects: [d('privateFunds', -2), d('suspicion', 6)] },
+      { id: 'cyber', label: t('Crear una agencia de ciberseguridad', 'Create a cybersecurity agency'), tags: ['concede'], cost: { treasury: 2 }, result: t('Nueva contraseña: «admin1234». Es un comienzo.', 'New password: "admin1234". It is a start.'), effects: [d('treasury', -2), d('security', 4)] },
+    ],
+  }),
+  ev({
+    id: 'inflation_spike', category: 'economy', hotspot: 'desk', speaker: 'economist', kind: 'main', weight: 1.2,
+    conditions: { minRound: 2, maxRound: 9 }, repeat: { max: 1, cooldown: 99 },
+    title: t('Repunte de la inflación', 'Inflation spike'),
+    text: t('La cesta de la compra sube un 9 %. El aceite cotiza ya como el oro.', 'The shopping basket rises 9%. Olive oil now trades like gold.'),
+    variants: { us: { text: t('Gasolina y alimentos se disparan. Los votantes miran el surtidor como un enemigo.', 'Fuel and food soar. Voters stare at the pump like an enemy.') } },
+    choices: [
+      { id: 'vat', label: t('Rebajar el IVA de alimentos', 'Cut food sales tax'), tags: ['concede'], cost: { treasury: 2 }, result: t('Alivio en caja. La recaudación lo nota.', 'Relief at the till. Revenue notices.'), effects: [d('treasury', -2), d('wellbeing', 2), g('pensioners', 4), g('workers', 3)] },
+      { id: 'cheques', label: t('Cheque a familias vulnerables', 'Cheques for vulnerable families'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Bien dirigido, poco vistoso.', 'Well targeted, not flashy.'), effects: [d('treasury', -1), d('wellbeing', 2), g('workers', 2), c('economist', 6)] },
+      { id: 'nothing', label: t('Confiar en el banco central', 'Trust the central bank'), tags: ['delay'], result: t('Técnicamente correcto. Electoralmente, doloroso.', 'Technically correct. Electorally painful.'), effects: [d('popularity', -4), d('debt', -1), c('economist', 8)] },
+    ],
+  }),
+  ev({
+    id: 'bank_bailout', category: 'economy', hotspot: 'phone', speaker: 'tycoon', kind: 'main', weight: 0.9,
+    conditions: { minRound: 4, unlocked: ['debt'] },
+    title: t('Un banco en apuros', 'A bank in trouble'),
+    text: t('El Banco Prudente (ficticio) ha invertido en tulipanes digitales. Si cae, arrastra ahorros de millones.', 'Banco Prudente (fictional) invested in digital tulips. If it falls, it drags millions of savings with it.'),
+    choices: [
+      { id: 'bailout', label: t('Rescate con dinero público', 'Public bailout'), tags: ['concede'], cost: { treasury: 4 }, result: t('Se salva el banco. Los directivos cobran bonus de «estabilización».', 'The bank is saved. Executives get "stabilisation" bonuses.'), effects: [d('treasury', -4), d('debt', 5), d('economy', 2), g('workers', -4), c('tycoon', 10)] },
+      { id: 'bail_in', label: t('Que paguen accionistas y bonistas', 'Make shareholders and bondholders pay'), tags: ['reject'], result: t('Los mercados tiemblan un día y se acostumbran.', 'Markets tremble for a day, then adjust.'), effects: [d('economy', -3), g('business', -4), g('workers', 3), d('credibility', 3)] },
+      { id: 'merge', label: t('Fusión forzosa con otro banco', 'Forced merger with another bank'), tags: ['negotiate'], result: t('Nace el Banco Prudente Responsable. Cierra 300 oficinas.', 'Banco Prudente Responsable is born. It closes 300 branches.'), effects: [d('economy', -1), g('rural', -4), d('jobs', -2)] },
+    ],
+  }),
+  ev({
+    id: 'tech_tax_deal', category: 'economy', hotspot: 'door', speaker: 'tycoon',
+    conditions: { minRound: 3 },
+    title: t('La tecnológica quiere un trato', 'Big Tech wants a deal'),
+    text: t('Una gran tecnológica promete un centro de datos si le dejas tributar «en la nube». Literalmente.', 'A tech giant promises a data centre if you let it pay taxes "in the cloud". Literally.'),
+    choices: [
+      { id: 'accept', label: t('Aceptar el trato fiscal', 'Accept the tax deal'), tags: ['concede'], result: t('Cortas la cinta. El centro gasta el agua de tres pueblos.', 'You cut the ribbon. The centre uses three villages’ worth of water.'), effects: [d('jobs', 2), d('economy', 2), d('environment', -3), d('credibility', -2), g('rural', -2)] },
+      { id: 'counter', label: t('Exigir que pague como todos', 'Insist it pays like everyone'), tags: ['negotiate'], result: t('Amenaza con irse. Se queda. Paga algo más.', 'It threatens to leave. It stays. Pays a bit more.'), effects: [d('treasury', 1), d('credibility', 2)] },
+      { id: 'reject', label: t('Rechazarlo', 'Reject it'), tags: ['reject'], result: t('Se va al país vecino. El vecino te manda una postal.', 'It goes next door. The neighbour sends you a postcard.'), effects: [d('jobs', -1), g('youth', 2)] },
+    ],
+  }),
+  ev({
+    id: 'rating_downgrade', category: 'economy', hotspot: 'tv', speaker: 'economist', weight: 2,
+    conditions: { minRound: 4, stats: { debt: [85, 999] } }, repeat: { max: 2, cooldown: 4 },
+    title: t('Rebaja de la calificación', 'Credit downgrade'),
+    text: t('Una agencia de calificación baja tu nota a «BBB-, con cariño». Los intereses suben.', 'A rating agency downgrades you to "BBB-, with love". Interest rates rise.'),
+    choices: [
+      { id: 'adjust', label: t('Anunciar un ajuste creíble', 'Announce credible consolidation'), tags: ['concede'], result: t('Los mercados se calman; tus socios, no.', 'Markets calm down; your partners do not.'), effects: [d('debt', -4, 1), d('services', -2), { loyalty: { party: 'partners', delta: -6 } }, c('economist', 8)] },
+      { id: 'ignore', label: t('«Las agencias no votan»', '"Agencies do not vote"'), tags: ['reject'], result: t('No votan, pero cobran.', 'They do not vote, but they collect.'), effects: [d('treasury', -2), d('economy', -2)] },
+      { id: 'growth', label: t('Plan de crecimiento', 'Growth plan'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Promesas de crecimiento. Los mercados piden ver los números.', 'Promises of growth. Markets ask to see numbers.'), effects: [d('treasury', -1), d('economy', 2, 2)] },
+    ],
+  }),
+  ev({
+    id: 'pension_demand', category: 'social', hotspot: 'door', speaker: 'citizenA', weight: 1.1,
+    conditions: { minRound: 2 },
+    title: t('Los jubilados se plantan', 'Pensioners take a stand'),
+    text: t('Doña Pura encabeza una sentada de jubilados con cacerolas. Han traído bocadillos para tres días.', 'Doña Pura leads a pensioners’ sit-in with saucepans. They brought sandwiches for three days.'),
+    choices: [
+      { id: 'raise', label: t('Subir pensiones con el IPC', 'Index pensions to inflation'), tags: ['concede'], cost: { treasury: 2 }, result: t('Aplauso con cacerola. Tu economista cuenta hasta diez.', 'Saucepan applause. Your economist counts to ten.'), effects: [d('treasury', -2), g('pensioners', 8), c('citizenA', 12), d('debt', 2, 2)] },
+      { id: 'partial', label: t('Subida solo a las mínimas', 'Raise only minimum pensions'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Justo y discutible a partes iguales.', 'Fair and debatable in equal parts.'), effects: [d('treasury', -1), g('pensioners', 4), c('citizenA', 5)] },
+      { id: 'no', label: t('No hay margen', 'There is no room'), tags: ['reject'], result: t('Las cacerolas suenan en todos los informativos.', 'Saucepans echo on every newscast.'), effects: [g('pensioners', -8), c('citizenA', -15), d('popularity', -2)] },
+    ],
+  }),
+  ev({
+    id: 'hospital_lists', category: 'social', hotspot: 'tv', speaker: 'journalist', weight: 1,
+    conditions: { minRound: 3, stats: { services: [0, 50] } },
+    title: t('Listas de espera récord', 'Record waiting lists'),
+    text: t('Esperar al especialista ya cuesta 14 meses. Hay quien se cura solo, por aburrimiento.', 'Waiting for a specialist takes 14 months. Some people heal on their own, out of boredom.'),
+    choices: [
+      { id: 'hire', label: t('Contratar personal', 'Hire staff'), tags: ['concede'], cost: { treasury: 2 }, result: t('Más batas blancas, menos números rojos de espera.', 'More white coats, fewer red waiting figures.'), effects: [d('treasury', -2), d('services', 4, 1), g('public', 3)] },
+      { id: 'outsource', label: t('Derivar a la privada', 'Outsource to private clinics'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Rápido y caro. La pública se siente vaciada.', 'Fast and expensive. Public staff feel hollowed out.'), effects: [d('treasury', -1), d('services', 3), g('public', -4), g('business', 3)] },
+      { id: 'audit', label: t('Auditar las listas', 'Audit the lists'), tags: ['investigate'], result: t('Descubres 20 000 citas duplicadas. Mejora un poco.', 'You find 20,000 duplicate appointments. A small improvement.'), effects: [d('services', 1), d('integrity', 1)] },
+    ],
+  }),
+  ev({
+    id: 'farmers_protest', category: 'social', hotspot: 'map', speaker: 'citizenC', weight: 1.1,
+    conditions: { minRound: 2 },
+    title: t('Tractores en la autopista', 'Tractors on the motorway'),
+    text: t('Los agricultores cortan carreteras: precios de miseria, papeles infinitos y normativa verde «escrita en un ático».', 'Farmers block roads: rock-bottom prices, endless paperwork and green rules "written in a penthouse".'),
+    choices: [
+      { id: 'aid', label: t('Ayudas y precios mínimos', 'Aid and price floors'), tags: ['concede'], cost: { treasury: 2 }, result: t('Vuelven los tractores al campo. Por ahora.', 'Tractors return to the fields. For now.'), effects: [d('treasury', -2), g('rural', 7), g('urban', -1)] },
+      { id: 'simplify', label: t('Simplificar trámites, no la ley', 'Simplify paperwork, not the law'), tags: ['negotiate'], result: t('Un formulario menos. Gran victoria administrativa.', 'One form fewer. A great administrative victory.'), effects: [g('rural', 3), d('integrity', 1)] },
+      { id: 'relax', label: t('Relajar normas ambientales', 'Relax environmental rules'), tags: ['reject'], result: t('Fiesta en el campo, enfado en la ciudad.', 'Party in the countryside, anger in the city.'), effects: [g('rural', 6), g('youth', -4), d('environment', -4)] },
+    ],
+  }),
+  ev({
+    id: 'tourism_protest', category: 'social', hotspot: 'tv', speaker: 'citizenB', weight: 0.8,
+    conditions: { minRound: 3, countries: ['es', 'br'] },
+    title: t('Protesta contra el turismo masivo', 'Protest against mass tourism'),
+    text: t('Vecinos disparan pistolas de agua a turistas. Los turistas creen que es una atracción y pagan por ella.', 'Residents squirt water pistols at tourists. Tourists think it is an attraction and pay for it.'),
+    choices: [
+      { id: 'limit', label: t('Limitar pisos turísticos', 'Limit holiday flats'), tags: ['concede'], result: t('Vuelven vecinos al centro. Algún casero pierde un yate.', 'Residents return downtown. Some landlord loses a yacht.'), effects: [d('housing', 3), g('urban', 4), g('business', -4)] },
+      { id: 'tax', label: t('Tasa turística', 'Tourist tax'), tags: ['negotiate'], result: t('Ingresos extra. Los hoteles protestan con toallas.', 'Extra revenue. Hotels protest with towels.'), effects: [d('treasury', 1), g('business', -2)] },
+      { id: 'promote', label: t('Promocionar aún más turismo', 'Promote even more tourism'), tags: ['reject'], result: t('Más divisas y más pistolas de agua.', 'More foreign cash and more water pistols.'), effects: [d('economy', 2), d('housing', -2), g('urban', -3)] },
+    ],
+  }),
+  ev({
+    id: 'brain_drain', category: 'social', hotspot: 'phone', speaker: 'citizenB', weight: 0.9,
+    conditions: { minRound: 4, stats: { jobs: [0, 52] } },
+    title: t('Fuga de talento', 'Brain drain'),
+    text: t('Iker se va a trabajar a otro país. Te manda una foto de su sueldo y otra de su piso. Las dos duelen.', 'Iker moves abroad for work. He sends a photo of his salary and another of his flat. Both hurt.'),
+    variants: { us: { text: t('Tyler se muda a otro estado por un sueldo mejor y te manda una foto de su alquiler.', 'Tyler moves to another state for better pay and sends a photo of his rent.') } },
+    choices: [
+      { id: 'return_plan', label: t('Plan de retorno con incentivos', 'Return plan with incentives'), tags: ['concede'], cost: { treasury: 2 }, result: t('Algunos vuelven. Los que se quedaron preguntan por qué ellos no cobran.', 'Some return. Those who stayed ask why they get nothing.'), effects: [d('treasury', -2), g('youth', 5), d('jobs', 2, 2)] },
+      { id: 'research', label: t('Más fondos para investigación', 'More research funding'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Los laboratorios encienden las luces otra vez.', 'Labs switch the lights back on.'), effects: [d('treasury', -1), d('economy', 2, 3), g('urban', 2)] },
+      { id: 'shrug', label: t('«Viajar abre la mente»', '"Travel broadens the mind"'), tags: ['reject'], result: t('Frase del año, en el peor sentido.', 'Quote of the year, in the worst sense.'), effects: [g('youth', -6), c('citizenB', -15)] },
+    ],
+  }),
+  ev({
+    id: 'ai_layoffs', category: 'labor', hotspot: 'tv', speaker: 'unionist', weight: 0.9,
+    conditions: { minRound: 5 },
+    title: t('Despidos por automatización', 'Automation layoffs'),
+    text: t('Una aseguradora sustituye su centro de atención por un programa que solo sabe decir «entiendo su frustración».', 'An insurer replaces its call centre with software that only says "I understand your frustration".'),
+    choices: [
+      { id: 'retrain', label: t('Recolocación y formación', 'Redeployment and retraining'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Algunos aprenden a programar al programa.', 'Some learn to program the program.'), effects: [d('treasury', -1), d('jobs', 1, 2), c('unionist', 5)] },
+      { id: 'robot_tax', label: t('Tasa a la automatización', 'Automation levy'), tags: ['reject'], result: t('Ingresos y un debate filosófico eterno.', 'Revenue and an eternal philosophical debate.'), effects: [d('treasury', 1), g('business', -4), g('workers', 3)] },
+      { id: 'embrace', label: t('Abrazar la innovación', 'Embrace innovation'), tags: ['concede'], result: t('Productividad arriba, paro también.', 'Productivity up, unemployment too.'), effects: [d('economy', 2), d('jobs', -2), g('workers', -4)] },
+    ],
+  }),
+  ev({
+    id: 'viral_gaffe', category: 'media', hotspot: 'tv', speaker: 'advisor', weight: 1.2,
+    conditions: { minRound: 2 }, repeat: { max: 2, cooldown: 5 },
+    title: t('Metedura de pata viral', 'Viral gaffe'),
+    text: t('Te graban diciendo que el pan cuesta «unos dos o tres euros el kilo, creo». Medio país te corrige con tickets.', 'You are filmed saying bread costs "about two or three a kilo, I think". Half the country corrects you with receipts.'),
+    choices: [
+      { id: 'own', label: t('Reírte de ti mismo', 'Laugh at yourself'), tags: ['transparent'], result: t('Vas a una panadería y compras pan. Te lo cobran mal a propósito.', 'You go to a bakery and buy bread. They overcharge you on purpose.'), effects: [d('popularity', 2), d('credibility', 1)] },
+      { id: 'blame_edit', label: t('Decir que está manipulado', 'Claim it was edited'), tags: ['lie'], result: t('Aparece el vídeo original, en 4K.', 'The original video appears, in 4K.'), effects: [d('popularity', -3), d('credibility', -3)] },
+      { id: 'policy', label: t('Anunciar un plan contra la inflación', 'Announce an anti-inflation plan'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Conviertes el meme en medida. Algo es algo.', 'You turn the meme into a measure. It is something.'), effects: [d('treasury', -1), d('wellbeing', 1), d('popularity', 1)] },
+    ],
+  }),
+  ev({
+    id: 'fake_news', category: 'media', hotspot: 'tv', speaker: 'journalist', weight: 1,
+    conditions: { minRound: 3 },
+    title: t('Bulo masivo', 'Mass hoax'),
+    text: t('Circula que vas a prohibir las croquetas de la abuela. Hay cadenas de mensajes con mayúsculas.', 'A rumour says you will ban grandma’s croquettes. Chain messages in all caps are spreading.'),
+    variants: { us: { text: t('Circula que vas a prohibir las barbacoas de los domingos. Hay cadenas de mensajes con mayúsculas.', 'A rumour says you will ban Sunday barbecues. Chain messages in all caps are spreading.') } },
+    choices: [
+      { id: 'factcheck', label: t('Desmentido con datos y humor', 'Debunk with facts and humour'), tags: ['transparent'], result: t('Te haces una foto cocinando croquetas. Te quedan regular.', 'You take a photo frying croquettes. They turn out mediocre.'), effects: [d('popularity', 1), d('credibility', 2)] },
+      { id: 'law', label: t('Ley contra la desinformación', 'Disinformation law'), tags: ['authoritarian'], result: t('¿Quién decide qué es bulo? Tú. Ese es el problema.', 'Who decides what is a hoax? You. That is the problem.'), effects: [d('integrity', -6), c('journalist', -10), d('popularity', 1)] },
+      { id: 'ignore', label: t('Ignorarlo', 'Ignore it'), tags: ['delay'], result: t('Tu tía te pregunta en la comida familiar si es verdad.', 'Your aunt asks you at family lunch whether it is true.'), effects: [d('popularity', -2)] },
+    ],
+  }),
+  ev({
+    id: 'sports_photo', category: 'media', hotspot: 'tv', speaker: 'advisor', weight: 0.8,
+    conditions: { minRound: 2 },
+    title: t('¡La selección gana!', 'The national team wins!'),
+    text: t('El país entero celebra un título. Tu asesora ya tiene la camiseta preparada.', 'The whole country celebrates a title. Your adviser already has the shirt ready.'),
+    choices: [
+      { id: 'balcony', label: t('Salir al balcón con el equipo', 'Go out on the balcony with the team'), tags: ['concede'], result: t('Euforia. Durante 48 horas, nadie habla de la deuda.', 'Euphoria. For 48 hours, nobody mentions the debt.'), effects: [d('popularity', 4), d('credibility', -1)] },
+      { id: 'humble', label: t('Felicitar sin aprovecharte', 'Congratulate without exploiting it'), tags: ['reject'], result: t('Elegante. Invisible.', 'Classy. Invisible.'), effects: [d('credibility', 2)] },
+      { id: 'holiday', label: t('Declarar día festivo', 'Declare a public holiday'), tags: ['corrupt'], result: t('Fiesta nacional. Las empresas pierden un día.', 'National holiday. Businesses lose a day.'), effects: [d('popularity', 6), d('economy', -2), g('business', -3)] },
+    ],
+  }),
+  ev({
+    id: 'arms_contract', category: 'corruption', hotspot: 'door', speaker: 'tycoon', weight: 1,
+    conditions: { minRound: 5, unlocked: ['foreign'] },
+    title: t('Un contrato con comisión', 'A contract with a commission'),
+    text: t('Un intermediario ofrece blindados «a precio de amigo» y una comisión para tu fundación. «Todo el mundo lo hace.»', 'A broker offers armoured vehicles "at a friend’s price" and a commission for your foundation. "Everybody does it."'),
+    choices: [
+      { id: 'take', label: t('Aceptar la comisión', 'Take the commission'), tags: ['corrupt'], result: t('Los blindados llegan sin ruedas de repuesto. La comisión, completa.', 'The vehicles arrive without spare tyres. The commission arrives in full.'), effects: [d('privateFunds', 5), d('suspicion', 10), d('treasury', -2), d('integrity', -4), { favor: { creditor: 'tycoon', demand: 'arms', dueIn: 3 } }, { unlock: 'corruption' }] },
+      { id: 'tender', label: t('Concurso público', 'Public tender'), tags: ['reject'], result: t('Más lento y más barato. El intermediario te borra de su agenda.', 'Slower and cheaper. The broker deletes you from his contacts.'), effects: [d('integrity', 2), c('tycoon', -10), d('security', 1, 2)] },
+      { id: 'report', label: t('Denunciarlo a la fiscalía', 'Report him to prosecutors'), tags: ['investigate'], result: t('Titular positivo. Enemigo nuevo.', 'Positive headline. New enemy.'), effects: [d('credibility', 3), d('integrity', 3), c('tycoon', -25)] },
+    ],
+  }),
+  ev({
+    id: 'minister_yacht', category: 'corruption', hotspot: 'tv', speaker: 'journalist', weight: 1,
+    conditions: { minRound: 3 },
+    title: t('El ministro y el yate', 'The minister and the yacht'),
+    text: t('Tu ministro de Transportes (ficticio) aparece en un yate prestado por una constructora. Dice que «se mareaba en tierra».', 'Your (fictional) transport minister is photographed on a yacht lent by a construction firm. He says he "gets seasick on land".'),
+    choices: [
+      { id: 'fire', label: t('Cesarlo inmediatamente', 'Fire him immediately'), tags: ['reject'], result: t('Se va remando, simbólicamente.', 'He rows away, symbolically.'), effects: [d('credibility', 3), d('integrity', 2), { loyalty: { party: 'partners', delta: -4 } }] },
+      { id: 'defend', label: t('Defenderlo: «es un amigo»', 'Defend him: "he is a friend"'), tags: ['lie'], result: t('El amigo tenía tres amigos más con yate.', 'The friend had three more friends with yachts.'), effects: [d('popularity', -4), d('suspicion', 6), d('integrity', -3)] },
+      { id: 'inquiry', label: t('Investigación interna', 'Internal inquiry'), tags: ['investigate'], result: t('Tarda lo justo para que se olvide. Casi.', 'It takes just long enough to be forgotten. Almost.'), effects: [d('popularity', -1), d('suspicion', 2)] },
+    ],
+  }),
+  ev({
+    id: 'judge_appointment', category: 'institutions', hotspot: 'folder', speaker: 'partner', weight: 1,
+    conditions: { minRound: 6, unlocked: ['institutions'] },
+    title: t('Nombramientos judiciales', 'Judicial appointments'),
+    text: t('Toca renovar el máximo órgano judicial. Tu socio te pasa una lista de «personas de confianza».', 'The top judicial body is up for renewal. Your partner hands you a list of "trustworthy people".'),
+    variants: { us: { title: t('Vacante en el Tribunal Supremo', 'Supreme Court vacancy'), text: t('Se jubila un juez del Supremo. Tu partido quiere a alguien «seguro»; el Senado debe confirmarlo.', 'A Supreme Court justice retires. Your party wants someone "safe"; the Senate must confirm.') } },
+    choices: [
+      { id: 'merit', label: t('Elegir por mérito y consenso', 'Choose by merit and consensus'), tags: ['negotiate'], result: t('Pactas con la oposición. Nadie aplaude; las instituciones sí.', 'You strike a deal with the opposition. Nobody applauds; institutions do.'), effects: [d('integrity', 6), c('opposition', 5), c('partner', -6)] },
+      { id: 'loyal', label: t('Nombrar a los tuyos', 'Appoint your own people'), tags: ['authoritarian'], result: t('Tribunales amables. Prensa furiosa.', 'Friendly courts. Furious press.'), effects: [d('integrity', -10), flag('captured_courts'), c('partner', 8), c('journalist', -10)] },
+      { id: 'delay', label: t('Bloquear la renovación', 'Block the renewal'), tags: ['delay'], result: t('El órgano caduca. El bloqueo, no.', 'The body expires. The deadlock does not.'), effects: [d('integrity', -3)] },
+    ],
+  }),
+  ev({
+    id: 'emergency_powers', category: 'institutions', hotspot: 'desk', speaker: 'advisor', weight: 1.4,
+    conditions: { minRound: 7, unlocked: ['institutions'], stats: { unrest: [55, 100] } },
+    title: t('Poderes de emergencia', 'Emergency powers'),
+    text: t('Con protestas en la calle, tu asesora sugiere «gobernar por decreto una temporadita». Solo hasta que se calme todo.', 'With protests in the streets, your adviser suggests "governing by decree for a little while". Just until things calm down.'),
+    choices: [
+      { id: 'take', label: t('Asumir poderes especiales', 'Assume special powers'), tags: ['authoritarian'], result: t('Ya no hace falta negociar. Ni escuchar.', 'No more need to negotiate. Or listen.'), effects: [d('integrity', -15), d('unrest', -6), d('support', 10), flag('emergency_rule'), d('diplomacy', -6)] },
+      { id: 'dialogue', label: t('Mesa de diálogo nacional', 'National dialogue table'), tags: ['negotiate'], result: t('Lento, frustrante y democrático.', 'Slow, frustrating and democratic.'), effects: [d('unrest', -8), d('integrity', 2), d('popularity', -1)] },
+      { id: 'refuse', label: t('Rechazar la idea', 'Reject the idea'), tags: ['reject'], result: t('Tu asesora suspira: «Era una broma». No lo era.', 'Your adviser sighs: "It was a joke." It was not.'), effects: [d('integrity', 1), c('advisor', -4)] },
+    ],
+  }),
+  ev({
+    id: 'summit', category: 'diplomacy', hotspot: 'phone', speaker: 'partner', weight: 1,
+    conditions: { minRound: 6, unlocked: ['foreign'] },
+    title: t('Cumbre internacional', 'International summit'),
+    text: t('Cumbre de líderes. La foto de familia decide más que los comunicados.', 'Leaders’ summit. The family photo matters more than the communiqués.'),
+    choices: [
+      { id: 'center', label: t('Pelear por el centro de la foto', 'Fight for the centre of the photo'), tags: ['concede'], result: t('Sales en el centro. También sales empujando a un primer ministro.', 'You are in the centre. Also pushing a prime minister.'), effects: [d('popularity', 2), d('diplomacy', -2)] },
+      { id: 'deal', label: t('Trabajar un acuerdo energético', 'Work on an energy deal'), tags: ['negotiate'], result: t('Nadie lo ve en la tele. Tu factura de gas, sí.', 'Nobody sees it on TV. Your gas bill does.'), effects: [d('diplomacy', 5), d('economy', 2, 2)] },
+      { id: 'skip', label: t('No ir: «hay problemas en casa»', 'Skip it: "problems at home"'), tags: ['reject'], result: t('En casa lo aplauden. Fuera, te olvidan.', 'At home they applaud. Abroad, they forget you.'), effects: [d('popularity', 1), d('diplomacy', -4)] },
+    ],
+  }),
+  ev({
+    id: 'tariff_war', category: 'diplomacy', hotspot: 'desk', speaker: 'economist', kind: 'main', weight: 1.1,
+    conditions: { minRound: 6, unlocked: ['foreign'] },
+    title: t('Guerra arancelaria', 'Tariff war'),
+    text: t('Una potencia comercial impone aranceles a tus exportaciones. Tus quesos ya no viajan.', 'A trading power slaps tariffs on your exports. Your cheese no longer travels.'),
+    variants: {
+      us: { text: t('Socios comerciales responden a tus aranceles con los suyos. Los agricultores miran al cielo.', 'Trade partners answer your tariffs with their own. Farmers look to the sky.') },
+      br: { text: t('Una potencia impone aranceles a la soja y al café. El agronegocio exige respuesta.', 'A power slaps tariffs on soy and coffee. Agribusiness demands a response.') },
+    },
+    choices: [
+      { id: 'retaliate', label: t('Responder con aranceles', 'Retaliate with tariffs'), tags: ['authoritarian'], result: t('Orgullo nacional y precios más altos.', 'National pride and higher prices.'), effects: [d('popularity', 3), d('economy', -4), d('diplomacy', -4)] },
+      { id: 'negotiate', label: t('Negociar con aliados', 'Negotiate with allies'), tags: ['negotiate'], result: t('Acuerdo parcial. Los quesos vuelven a viajar, en clase turista.', 'Partial deal. Cheese travels again, in economy class.'), effects: [d('diplomacy', 4), d('economy', -1)] },
+      { id: 'compensate', label: t('Compensar a los exportadores', 'Compensate exporters'), tags: ['concede'], cost: { treasury: 3 }, result: t('Tapas el agujero con dinero público.', 'You plug the hole with public money.'), effects: [d('treasury', -3), g('rural', 5), g('business', 3)] },
+    ],
+  }),
+  ev({
+    id: 'migration_arrivals', category: 'social', hotspot: 'map', speaker: 'journalist', weight: 0.9,
+    conditions: { minRound: 4 },
+    title: t('Llegada de personas refugiadas', 'Arrival of refugees'),
+    text: t('Miles de personas huyen de un conflicto lejano y llegan a tu frontera. Los focos te buscan.', 'Thousands flee a distant conflict and reach your border. The cameras are looking for you.'),
+    choices: [
+      { id: 'welcome', label: t('Acogida organizada', 'Organised reception'), tags: ['concede'], cost: { treasury: 2 }, result: t('Centros de acogida, voluntarios, tensiones locales manejables.', 'Reception centres, volunteers, manageable local tensions.'), effects: [d('treasury', -2), d('diplomacy', 4), d('integrity', 2), g('rural', -2), d('jobs', 1, 4)] },
+      { id: 'share', label: t('Pedir reparto entre aliados', 'Ask allies to share the load'), tags: ['negotiate'], result: t('Cumbre de urgencia. Acuerdo de mínimos.', 'Emergency summit. Lowest-common-denominator deal.'), effects: [d('diplomacy', 2), d('popularity', -1)] },
+      { id: 'close', label: t('Cerrar la frontera', 'Close the border'), tags: ['reject'], result: t('Aplauso de una parte, condena internacional de otra.', 'Applause from some, international condemnation from others.'), effects: [d('diplomacy', -6), d('integrity', -3), g('pensioners', 3), g('urban', -3)] },
+    ],
+  }),
+  ev({
+    id: 'dam_project', category: 'economy', hotspot: 'map', speaker: 'tycoon', weight: 0.8,
+    conditions: { minRound: 4 },
+    title: t('La gran presa', 'The big dam'),
+    text: t('Una presa gigantesca daría energía y empleo. También inundaría un valle con tres pueblos y un ermitaño.', 'A giant dam would bring power and jobs. It would also flood a valley with three villages and a hermit.'),
+    choices: [
+      { id: 'build', label: t('Construirla', 'Build it'), tags: ['concede'], cost: { treasury: 3 }, result: t('Hormigón a raudales. El ermitaño hace huelga de hambre.', 'Concrete galore. The hermit goes on hunger strike.'), effects: [d('treasury', -3), d('jobs', 3), d('economy', 3, 3), d('environment', -6), g('rural', -3)] },
+      { id: 'smaller', label: t('Versión pequeña con consulta local', 'Smaller version with local consultation'), tags: ['negotiate'], cost: { treasury: 1 }, result: t('Media presa, medio acuerdo, ermitaño satisfecho.', 'Half a dam, half a deal, hermit satisfied.'), effects: [d('treasury', -1), d('economy', 1, 2), g('rural', 2)] },
+      { id: 'cancel', label: t('Descartarla', 'Cancel it'), tags: ['reject'], result: t('El valle sigue. Los empleos, no llegan.', 'The valley stays. The jobs do not come.'), effects: [d('environment', 2), c('tycoon', -6)] },
+    ],
+  }),
+  ev({
+    id: 'partner_withdraws', category: 'parliament', hotspot: 'door', speaker: 'partner', kind: 'main', weight: 3,
+    conditions: { minRound: 4, castTrust: { partner: [-100, -15] } }, repeat: { max: 1, cooldown: 99 },
+    title: t('Retirada de apoyos', 'Support withdrawn'),
+    text: t('«Hemos sido muy pacientes. Desde hoy, votaremos tema a tema. Bueno, en contra, tema a tema.»', '"We have been very patient. From today we vote case by case. Well, against, case by case."'),
+    variants: { us: { text: t('«La facción no te seguirá más. Desde hoy, votaremos con nuestra conciencia. Y con nuestros donantes.»', '"The faction will not follow you any more. From today we vote our conscience. And our donors."') } },
+    choices: [
+      { id: 'concede', label: t('Concederles una gran exigencia', 'Grant a major demand'), tags: ['concede'], cost: { treasury: 3 }, result: t('Vuelven. Más caros que antes.', 'They are back. More expensive than before.'), effects: [d('treasury', -3), c('partner', 25), { loyalty: { party: 'partners', delta: 25 } }, d('credibility', -2)] },
+      { id: 'alone', label: t('Gobernar en minoría', 'Govern as a minority'), tags: ['reject'], result: t('Cada ley será una aventura.', 'Every bill will be an adventure.'), effects: [{ loyalty: { party: 'partners', delta: -20 } }, flag('minority_rule')] },
+      { id: 'new_partner', label: t('Buscar otro socio', 'Look for another partner'), tags: ['negotiate'], result: t('Encuentras a alguien. Exige lo mismo, con otro acento.', 'You find someone. They demand the same, with a different accent.'), effects: [{ loyalty: { party: 'all', delta: 8 } }, c('partner', -10), d('integrity', -1)] },
+    ],
+  }),
+  ev({
+    id: 'promise_check', category: 'media', hotspot: 'tv', speaker: 'journalist', weight: 1.4,
+    conditions: { minRound: 4 }, repeat: { max: 3, cooldown: 3 },
+    title: t('Hemeroteca', 'From the archives'),
+    text: t('La periodista emite un vídeo tuyo prometiendo «{promise}». Pregunta, simplemente, «¿y?».', 'The journalist airs a clip of you promising "{promise}". She simply asks: "So?"'),
+    choices: [
+      { id: 'recommit', label: t('Renovar el compromiso con fecha', 'Recommit with a deadline'), tags: ['concede'], result: t('Fecha comprometida. Ahora sí que hay que cumplir.', 'Date committed. Now you really must deliver.'), effects: [d('credibility', 2), flag('recommitted')] },
+      { id: 'explain', label: t('Explicar por qué no se puede', 'Explain why it cannot be done'), tags: ['transparent'], result: t('Algunos lo entienden. Otros lo apuntan como incumplida.', 'Some understand. Others mark it as broken.'), effects: [d('credibility', -1), d('popularity', -1)] },
+      { id: 'spin', label: t('Decir que ya está cumplida', 'Say it is already done'), tags: ['lie'], result: t('El verificador de datos se frota las manos.', 'The fact-checker rubs her hands.'), effects: [d('credibility', -4), d('suspicion', 2), c('journalist', -6)] },
+    ],
+  }),
+  ev({
+    id: 'citizen_return', category: 'social', hotspot: 'door', speaker: 'citizenB', weight: 1.1,
+    conditions: { minRound: 5 },
+    title: t('Una cara conocida', 'A familiar face'),
+    text: t('Vuelve el joven del hurón de la campaña. «¿Se acuerda de mí? Yo de usted, sí.»', 'The young renter with the ferret from the campaign is back. "Remember me? I remember you."'),
+    choices: [
+      { id: 'listen', label: t('Escucharle con calma', 'Listen calmly'), tags: ['negotiate'], result: t('Te cuenta su vida. Te da una idea útil, gratis.', 'He tells you his life. He gives you a useful idea, for free.'), effects: [c('citizenB', 10), g('youth', 3), d('credibility', 1)] },
+      { id: 'selfie', label: t('Hacerte un selfi con el hurón', 'Take a selfie with the ferret'), tags: ['concede'], result: t('El hurón tiene más seguidores que tu ministerio.', 'The ferret has more followers than your ministry.'), effects: [d('popularity', 2), c('citizenB', -2)] },
+      { id: 'busy', label: t('«Ahora no puedo»', '"I cannot right now"'), tags: ['reject'], result: t('Se va. Lo cuenta en vídeo.', 'He leaves. He posts a video about it.'), effects: [c('citizenB', -12), g('youth', -3)] },
+    ],
+  }),
+  ev({
+    id: 'good_news_jobs', category: 'economy', hotspot: 'tv', speaker: 'economist', weight: 1.5,
+    conditions: { minRound: 4, stats: { jobs: [58, 100] } }, repeat: { max: 2, cooldown: 4 },
+    title: t('¡Baja el paro!', 'Unemployment falls!'),
+    text: t('Los datos de empleo son buenos. Tu economista sonríe, lo cual asusta a todo el mundo.', 'Jobs data is good. Your economist smiles, which frightens everyone.'),
+    choices: [
+      { id: 'brag', label: t('Celebrarlo a lo grande', 'Celebrate big'), tags: ['concede'], result: t('Te pasas. El dato del mes siguiente es peor.', 'You overdo it. Next month’s figure is worse.'), effects: [d('popularity', 3), d('credibility', -1)] },
+      { id: 'thank', label: t('Agradecerlo a trabajadores y empresas', 'Thank workers and businesses'), tags: ['negotiate'], result: t('Tono justo. Ambos se sienten protagonistas.', 'The right tone. Both feel like the heroes.'), effects: [d('popularity', 2), g('workers', 2), g('business', 2)] },
+      { id: 'reinvest', label: t('Reinvertir en formación', 'Reinvest in training'), tags: ['transparent'], cost: { treasury: 1 }, result: t('Menos fiesta, más futuro.', 'Less party, more future.'), effects: [d('treasury', -1), d('jobs', 2, 2)] },
+    ],
+  }),
+  ev({
+    id: 'protest_generic', category: 'social', hotspot: 'map', speaker: 'citizenB', weight: 1.5,
+    conditions: { minRound: 3, stats: { unrest: [60, 100] } }, repeat: { max: 2, cooldown: 3 },
+    title: t('Protestas masivas', 'Mass protests'),
+    text: t('Decenas de miles salen a la calle. Las pancartas ya no son graciosas.', 'Tens of thousands take to the streets. The banners are no longer funny.'),
+    choices: [
+      { id: 'meet', label: t('Recibir a los convocantes', 'Meet the organisers'), tags: ['negotiate'], result: t('Reunión tensa, algún compromiso.', 'Tense meeting, some commitments.'), effects: [d('unrest', -8), d('popularity', -1)] },
+      { id: 'police', label: t('Despliegue policial', 'Police deployment'), tags: ['authoritarian'], result: t('Orden en la calle, ira en las redes.', 'Order on the streets, rage online.'), effects: [d('unrest', -2), d('integrity', -4), g('youth', -5), g('pensioners', 2)] },
+      { id: 'concession', label: t('Anunciar una concesión', 'Announce a concession'), tags: ['concede'], cost: { treasury: 2 }, result: t('Bajan los decibelios.', 'The decibels drop.'), effects: [d('treasury', -2), d('unrest', -10), d('wellbeing', 1)] },
+    ],
+  }),
+  // Leyes de la oposición (propuestas contrarias a tu orientación)
+  ev({
+    id: 'opp_bill_taxcut', category: 'parliament', hotspot: 'desk', speaker: 'opposition', kind: 'main', scheduledOnly: true,
+    conditions: { orientation: 'left' },
+    title: t('Proposición de la oposición: bajada de impuestos', 'Opposition bill: tax cut'),
+    text: t('La oposición propone rebajar el impuesto sobre la renta. Sabe que es popular y que te pone en un aprieto.', 'The opposition proposes an income tax cut. It knows it is popular and puts you on the spot.'),
+    variants: { us: { text: t('El Congreso aprueba la rebaja fiscal de la oposición y te la manda a firmar.', 'Congress passes the opposition’s tax cut and sends it to your desk.'), choices: { support: { label: t('Firmarla', 'Sign it') }, oppose: { label: t('Vetarla', 'Veto it') } } } },
+    choices: [
+      { id: 'support', label: t('Apoyarla', 'Support it'), tags: ['support'], result: t('Ganas centro. Tus bases fruncen el ceño.', 'You win the centre. Your base frowns.'), effects: [{ passPolicy: 'tax_cut' }, c('opposition', 6), d('credibility', -2)] },
+      { id: 'oppose', label: t('Votar en contra', 'Vote against'), tags: ['reject'], result: t('Coherente. Te llaman «el de los impuestos».', 'Consistent. They call you "the tax one".'), effects: [d('popularity', -2), d('credibility', 2), c('opposition', -6)] },
+      { id: 'amend', label: t('Enmendarla: solo rentas bajas', 'Amend it: low incomes only'), tags: ['negotiate'], result: t('Aprobada a tu manera. Todos se atribuyen el mérito.', 'Passed your way. Everyone claims credit.'), effects: [g('workers', 4), d('treasury', -1), d('popularity', 2), c('opposition', -2)] },
+    ],
+  }),
+  ev({
+    id: 'opp_bill_wage', category: 'parliament', hotspot: 'desk', speaker: 'opposition', kind: 'main', scheduledOnly: true,
+    conditions: { orientation: 'right' },
+    title: t('Proposición de la oposición: salario mínimo', 'Opposition bill: minimum wage'),
+    text: t('La oposición propone una gran subida del salario mínimo. Popular, cara y diseñada para incomodarte.', 'The opposition proposes a big minimum wage rise. Popular, costly, and designed to make you squirm.'),
+    variants: { us: { text: t('El Congreso aprueba la subida del salario mínimo federal y te la manda a firmar.', 'Congress passes the federal minimum wage rise and sends it to your desk.'), choices: { support: { label: t('Firmarla', 'Sign it') }, oppose: { label: t('Vetarla', 'Veto it') } } } },
+    choices: [
+      { id: 'support', label: t('Apoyarla', 'Support it'), tags: ['support'], result: t('Los trabajadores te miran distinto. Tus empresarios, también.', 'Workers look at you differently. So do your business backers.'), effects: [{ passPolicy: 'min_wage' }, c('opposition', 6), d('credibility', -2)] },
+      { id: 'oppose', label: t('Votar en contra', 'Vote against'), tags: ['reject'], result: t('Coherente con tu programa. Impopular en el barrio.', 'Consistent with your platform. Unpopular in the neighbourhood.'), effects: [d('popularity', -2), d('credibility', 2), g('workers', -3)] },
+      { id: 'amend', label: t('Enmendarla: subida gradual por sectores', 'Amend it: gradual rise by sector'), tags: ['negotiate'], result: t('Una subida moderada que nadie celebra y todos aceptan.', 'A moderate rise nobody celebrates and everybody accepts.'), effects: [g('workers', 4), g('business', -2), d('popularity', 1)] },
+    ],
+  }),
+  ev({
+    id: 'favor_due', category: 'corruption', hotspot: 'phone', speaker: 'tycoon', kind: 'main', scheduledOnly: true,
+    title: t('Un favor pendiente', 'An outstanding favour'),
+    text: t('«Aquella comisión no era un regalo. Necesito que un ministerio mire hacia otro lado durante una inspección.»', '"That commission was not a gift. I need a ministry to look the other way during an inspection."'),
+    choices: [
+      { id: 'pay', label: t('Mirar hacia otro lado', 'Look the other way'), tags: ['corrupt'], result: t('La inspección encuentra «todo en orden». Literalmente nada.', 'The inspection finds "everything in order". Literally nothing.'), effects: [d('integrity', -5), d('suspicion', 8), { clearFavor: 'arms' }, c('tycoon', 10)] },
+      { id: 'refuse', label: t('Negarte', 'Refuse'), tags: ['reject'], result: t('Cuelga. Tu nombre empieza a circular en ciertos despachos.', 'He hangs up. Your name starts circulating in certain offices.'), effects: [{ refuseFavor: 'arms' }, d('evidence', 10, 0, t('El intermediario filtra la comisión.', 'The broker leaks the commission.')), c('tycoon', -25)] },
+      { id: 'return', label: t('Devolver la comisión discretamente', 'Quietly return the commission'), tags: ['transparent'], requires: { stats: { privateFunds: [5, 999] } }, cost: { privateFunds: 5 }, result: t('Devuelves el sobre. Él lo cuenta dos veces.', 'You return the envelope. He counts it twice.'), effects: [d('privateFunds', -5), { clearFavor: 'arms' }, d('suspicion', -5), c('tycoon', -10)] },
+    ],
+  }),
+];

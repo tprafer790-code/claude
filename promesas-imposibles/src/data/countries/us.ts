@@ -1,0 +1,70 @@
+import type { CountryDef } from './types';
+
+/** Estados Unidos: presidencialismo federal. El jugador firma o veta; no vota. */
+export const US: CountryDef = {
+  id: 'us',
+  name: { es: 'Estados Unidos', en: 'United States' },
+  adjective: { es: 'estadounidense', en: 'American' },
+  system: 'presidential-us',
+  titles: {
+    leader: { es: 'Presidencia', en: 'Presidency' },
+    candidate: { es: 'candidatura presidencial', en: 'presidential campaign' },
+    headOfState: { es: 'la propia Presidencia (jefatura de Estado y de Gobierno)', en: 'the President (head of state and government)' },
+    legislature: { es: 'Congreso (Cámara y Senado)', en: 'Congress (House and Senate)' },
+    fastTrack: { es: 'Orden ejecutiva (recurrible en tribunales)', en: 'Executive order (can be challenged in court)' },
+    fall: { es: 'Impeachment', en: 'Impeachment' },
+    vote: { es: 'Iniciativas estatales (no hay referéndum nacional)', en: 'State ballot initiatives (no national referendum)' },
+  },
+  chambers: [
+    { id: 'house', name: { es: 'Cámara', en: 'House' }, size: 435 },
+    { id: 'senate', name: { es: 'Senado', en: 'Senate' }, size: 100 },
+  ],
+  mainChamber: 'house',
+  groupSizes: { youth: 0.14, pensioners: 0.2, workers: 0.24, business: 0.1, rural: 0.14, urban: 0.12, public: 0.06 },
+  baseTurnout: 0.62,
+  turnoutSensitivity: 0.75,
+  compulsory: false,
+  regions: [
+    { id: 'wc', name: { es: 'Costa Oeste', en: 'West Coast' }, seats: 78, shift: -0.7, mix: { urban: 1.5, rural: 0.6 }, x: 8, y: 40 },
+    { id: 'ne', name: { es: 'Nordeste', en: 'Northeast' }, seats: 75, shift: -0.6, mix: { urban: 1.4, public: 1.2 }, x: 88, y: 26 },
+    { id: 'bi', name: { es: 'Interior demócrata', en: 'Blue interior' }, seats: 73, shift: -0.3, x: 66, y: 34 },
+    { id: 'rb', name: { es: 'Cinturón del Óxido', en: 'Rust Belt' }, seats: 44, shift: 0.02, mix: { workers: 1.4 }, x: 72, y: 30 },
+    { id: 'sb', name: { es: 'Cinturón del Sol', en: 'Sun Belt' }, seats: 49, shift: 0.05, mix: { youth: 1.1 }, x: 40, y: 66 },
+    { id: 'tx', name: { es: 'Texas', en: 'Texas' }, seats: 40, shift: 0.3, mix: { business: 1.3, rural: 1.2 }, x: 48, y: 78 },
+    { id: 'fl', name: { es: 'Florida', en: 'Florida' }, seats: 30, shift: 0.3, mix: { pensioners: 1.6 }, x: 84, y: 82 },
+    { id: 'ds', name: { es: 'Sur profundo', en: 'Deep South' }, seats: 68, shift: 0.65, mix: { rural: 1.5 }, x: 70, y: 64 },
+    { id: 'pl', name: { es: 'Llanuras y Montañas', en: 'Plains & Mountains' }, seats: 81, shift: 0.55, mix: { rural: 1.8, urban: 0.5 }, x: 34, y: 38 },
+  ],
+  parties: (o) => [
+    { id: 'pm', name: { es: 'Partido del Progreso (moderados)', en: 'Progress Party (moderates)' }, short: 'PRG-m', lean: -0.8, color: '#3a6fd8', faction: o === 'left' ? 'player' : 'rival', isPlayer: o === 'left', isRival: o === 'right' },
+    { id: 'pw', name: { es: 'Partido del Progreso (ala progresista)', en: 'Progress Party (progressive wing)' }, short: 'PRG-w', lean: -1.6, color: '#7b4fd0', faction: o === 'left' ? 'player' : 'rival' },
+    { id: 'lm', name: { es: 'Partido de la Libertad (moderados)', en: 'Liberty Party (moderates)' }, short: 'LIB-m', lean: 0.8, color: '#d8463a', faction: o === 'right' ? 'player' : 'rival', isPlayer: o === 'right', isRival: o === 'left' },
+    { id: 'lw', name: { es: 'Partido de la Libertad (ala dura)', en: 'Liberty Party (hardliners)' }, short: 'LIB-h', lean: 1.7, color: '#a3271f', faction: o === 'right' ? 'player' : 'rival' },
+  ],
+  roundPlan: ['budget', 'bill', 'event', 'opposition', 'bill', 'midterm', 'budget', 'event', 'bill', 'event', 'crisis', 'reelection'],
+  startStats: { debt: 72, jobs: 56, services: 44, security: 52, diplomacy: 50, unrest: 30 },
+  revenueBase: 13,
+  castNames: {
+    advisor: 'Dana Whitfield', economist: 'Marcus Bell', partner: 'Sen. Ruth Calloway', opposition: 'Brock Hensley',
+    journalist: 'Tess Navarro', unionist: 'Big Lou Kowalski', tycoon: 'Chet Vandermolen',
+    citizenA: 'Grandma Edna', citizenB: 'Tyler', citizenC: 'Rosa',
+  },
+  rules: [
+    { es: 'Ganas con 270 de 538 compromisarios. Los 50 estados se agrupan en 9 bloques en los que el ganador se lo lleva todo.', en: 'You win with 270 of 538 electors. The 50 states are grouped into 9 winner-take-all blocs.' },
+    { es: 'No votas leyes: el Congreso las aprueba y tú firmas o vetas. Anular un veto exige 2/3 en ambas cámaras.', en: 'You do not vote on bills: Congress passes them and you sign or veto. Overriding a veto needs 2/3 in both chambers.' },
+    { es: 'El Senado necesita 60 votos para cerrar el debate, salvo leyes fiscales por conciliación (51).', en: 'The Senate needs 60 votes to end debate, except fiscal bills via reconciliation (51).' },
+    { es: 'Cada partido tiene dos facciones con intereses propios: aquí no hay coaliciones, hay rebeliones internas.', en: 'Each party has two factions with their own interests: no coalitions here, only internal rebellions.' },
+    { es: 'A mitad de mandato (ronda 6) se renueva el Congreso.', en: 'Midway through the term (round 6) Congress is re-elected.' },
+  ],
+  reality: {
+    date: '2026-10-31',
+    lines: [
+      { es: 'Presidente (jefe de Estado y de Gobierno): Donald Trump, Partido Republicano.', en: 'President (head of state and government): Donald Trump, Republican Party.' },
+      { es: 'Cámara: republicanos 218–214 (2 vacantes). Senado: republicanos 53–47 (Reuters, 19-oct-2026).', en: 'House: Republicans 218–214 (2 vacancies). Senate: Republicans 53–47 (Reuters, 19 Oct 2026).' },
+      { es: 'Elecciones de mitad de mandato: 3 de noviembre de 2026.', en: 'Midterm elections: 3 November 2026.' },
+      { es: 'Temas: coste de la vida, combustible, recortes fiscales y sociales, inmigración, confianza electoral.', en: 'Issues: cost of living, fuel prices, tax and welfare cuts, immigration, election trust.' },
+    ],
+    sources: ['khaleejtimes.com / Reuters (19-oct-2026)', 'cfr.org (13-oct-2026)'],
+  },
+  flag: { kind: 'us' },
+};
