@@ -30,7 +30,12 @@
       -webkit-tap-highlight-color: transparent;
       touch-action: none;
     }
-    #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    #bg { position: fixed; left: 0; top: 0; z-index: 0; will-change: transform; background-color: #0e1a22;
+      background-repeat: repeat; pointer-events: none; }
+    #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 2; }
+    #vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(circle farthest-corner at center, rgba(3,5,12,0) 25%, rgba(3,5,12,0.35) 60%, rgba(3,5,12,0.82) 100%); }
+    .overlay, #pauseBtn, #loading { z-index: 10; }
     .overlay {
       position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
       padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
@@ -85,6 +90,15 @@
     @media (max-aspect-ratio: 1/1) { #home .shop { grid-template-columns: repeat(2, 1fr); } }
     #home .shop .item { padding: 0.35em 0.4em; }
     #home .shop .item button { margin: 0.15em 0 0; padding: 0.35em 0.8em; min-height: 36px; }
+    .night { align-items: center; gap: 0.5em; }
+    .night .desc { font-size: 0.8em; color: var(--muted); }
+    .tabs button { margin: 0.15em; padding: 0.35em 0.9em; min-height: 36px; }
+    .tabs button.on { background: linear-gradient(var(--gold), var(--gold-2)); color: var(--ink); }
+    .shop .item.sel { border-color: var(--gold); box-shadow: 0 0 12px rgba(255, 211, 107, 0.3); }
+    .swatch { width: 1.8em; height: 1.8em; border-radius: 50%; display: inline-block; }
+    .bar { width: 90%; height: 0.55em; background: #0b1220; border-radius: 4px; overflow: hidden; display: block; margin: 0.2em 0; }
+    .bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold-2), var(--gold)); }
+    #resMsg { font-size: 0.9em; }
     .pips { letter-spacing: 0.15em; color: var(--gold); }
     .nectar { color: var(--gold); font-weight: bold; }
     .msg { min-height: 1.3em; color: var(--gold); }
@@ -106,7 +120,9 @@
   </style>
 </head>
 <body>
+  <div id="bg"></div>
   <canvas id="game" aria-label="Lanternwing"></canvas>
+  <div id="vignette"></div>
   <button id="pauseBtn" aria-label="Pause">❚❚</button>
 
   <div id="levelUp" class="overlay"><div class="panel">
@@ -146,10 +162,19 @@
     <p data-i18n="tagline"></p>
     <div><span data-i18n="nectar"></span>: <span class="nectar" id="homeNectar"></span>
       · <span data-i18n="bestTime"></span>: <span class="nectar" id="homeBest"></span></div>
-    <h2 data-i18n="upgrades" style="font-size:1.2em;margin-top:0.6em"></h2>
+    <div class="row night">
+      <button id="nightPrev" class="secondary" aria-label="Previous night">◀</button>
+      <div><div id="nightLabel" class="nectar"></div><div id="nightDesc" class="desc"></div></div>
+      <button id="nightNext" class="secondary" aria-label="Next night">▶</button>
+      <button id="playBtn" data-i18n="play"></button>
+    </div>
+    <div class="row tabs">
+      <button class="tab secondary" data-tab="upgrades" data-i18n="upgrades"></button>
+      <button class="tab secondary" data-tab="moths" data-i18n="moths"></button>
+      <button class="tab secondary" data-tab="missions" data-i18n="missions"></button>
+    </div>
     <div class="shop" id="shop"></div>
-    <button id="playBtn" data-i18n="play"></button>
-    <p data-i18n="controlsHint" style="font-size:0.8em"></p>
+    <p data-i18n="controlsHint" style="font-size:0.8em;margin:0"></p>
   </div></div>
 
   <div id="loading">LANTERNWING</div>
@@ -157,6 +182,7 @@
   <script src="src/i18n.js"></script>
   <script src="src/sdk.js"></script>
   <script src="src/audio.js"></script>
+  <script src="src/meta.js"></script>
   <script src="src/game.js"></script>
 </body>
 </html>

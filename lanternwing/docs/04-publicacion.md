@@ -4,7 +4,7 @@
 
 | Requisito | Estado | Cómo se cumple |
 |---|---|---|
-| Descarga inicial ≤ 50 MB (≤ 20 MB portada móvil) | ✅ | 5 archivos, ~75 KB |
+| Descarga inicial ≤ 50 MB (≤ 20 MB portada móvil) | ✅ | 7 archivos, ~95 KB |
 | ≤ 1500 archivos, rutas relativas | ✅ | `src/*.js` con rutas relativas |
 | SDK v3 + `gameplayStart` | ✅ | `src/sdk.js` |
 | `gameplayStop` en cada pausa | ✅ | Pausa, subida de nivel, fin de partida, menús, cambio de pestaña |
@@ -23,7 +23,8 @@
 | Recompensado: sin recompensa en `adError` | ✅ | Probado |
 | No combinar midgame con "seguir jugando" recompensado | ✅ | El recompensado duplica el néctar; no hay "revivir" |
 | Jugable con bloqueador de anuncios y sin SDK | ✅ | Probado con el SDK bloqueado |
-| Guardado con módulo Data (≤ 1 MB) | ✅ | ~300 bytes; respaldo en localStorage |
+| Guardado con módulo Data (≤ 1 MB) | ✅ | < 1 KB; respaldo en localStorage |
+| Fluido en Chromebook de 4 GB | ✅ | 53-54 fps simulado (ver auditoría de rendimiento) |
 | PEGI 12 | ✅ | Fantasía sin violencia gráfica |
 | Legible en 800×450 a DPR 1 | ✅ | Capturas en las pruebas |
 

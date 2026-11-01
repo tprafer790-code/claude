@@ -96,6 +96,11 @@ console.log("SDK");
   check(await page.evaluate(() => LW.debug.save.nectar > 0), "néctar acumulado");
   await page.click("#toHomeBtn");
   check(await page.evaluate(() => LW.debug.state === "home"), "pantalla de mejoras sin anuncio");
+  check(await page.evaluate(() => LW.debug.save.missions.length === 3 && LW.debug.save.night === 2), "3 misiones activas y noche 2 desbloqueada tras la victoria");
+  for (const tab of ["moths", "missions", "upgrades"]) {
+    await page.click(`[data-tab="${tab}"]`);
+    check(await page.evaluate(() => document.querySelectorAll("#shop .item").length > 0), `pestaña ${tab} con contenido`);
+  }
   const before = (await page.evaluate(() => window.__sdkCalls.filter((c) => c === "requestAd:midgame").length));
   await page.click("#playBtn");
   const after = (await page.evaluate(() => window.__sdkCalls.filter((c) => c === "requestAd:midgame").length));

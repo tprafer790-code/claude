@@ -7,6 +7,7 @@
   const { t, setLocale } = window.LW.i18n;
   const P = window.LW.platform;
   const A = window.LW.audio;
+  const M = window.LW.meta;
 
   // ---------------------------------------------------------------------------
   // Constantes de diseño
@@ -85,36 +86,51 @@
   // Lienzo y escalado
   // ---------------------------------------------------------------------------
   const canvas = $("game");
-  const ctx = canvas.getContext("2d", { alpha: false });
-  let W = 0, H = 0, DPR = 1, maxDPR = 2, K = 1, UI = 1;
-  let vignette = null;
-  let bgPattern = null;
+  const ctx = canvas.getContext("2d");
+  const bgEl = $("bg");
+  let W = 0, H = 0, DPR = 1, K = 1, UI = 1;
+  // Escalera de calidad: resolución interna máxima del lienzo. Si el equipo no mantiene
+  // la fluidez, se baja un peldaño (menos píxeles que rellenar = más fotogramas).
+  const QUALITY = [2, 1, 0.75, 0.6];
+  let qualityLevel = 0;
+  let bgTile = null; // imagen del mosaico de fondo (data URL)
+  let bgTileCss = 256;
 
   function resize() {
     W = window.innerWidth;
     H = window.innerHeight;
-    DPR = Math.min(window.devicePixelRatio || 1, maxDPR);
+    DPR = Math.min(window.devicePixelRatio || 1, QUALITY[qualityLevel]);
     canvas.width = Math.round(W * DPR);
     canvas.height = Math.round(H * DPR);
     K = Math.min(W, H) / VIEW_UNITS; // píxeles CSS por unidad de mundo
     UI = clamp(Math.min(W, H) / 450, 1, 2.2);
-    buildVignette();
+    layoutBackground();
   }
 
-  function buildVignette() {
-    const c = document.createElement("canvas");
-    c.width = Math.max(1, Math.round(W / 4));
-    c.height = Math.max(1, Math.round(H / 4));
-    const g = c.getContext("2d");
-    const cx = c.width / 2, cy = c.height / 2;
-    const r = Math.hypot(cx, cy);
-    const grad = g.createRadialGradient(cx, cy, r * 0.25, cx, cy, r);
-    grad.addColorStop(0, "rgba(3,5,12,0)");
-    grad.addColorStop(0.6, "rgba(3,5,12,0.35)");
-    grad.addColorStop(1, "rgba(3,5,12,0.82)");
-    g.fillStyle = grad;
-    g.fillRect(0, 0, c.width, c.height);
-    vignette = c;
+  // El fondo y la viñeta son capas HTML que compone el navegador (GPU), no el lienzo:
+  // rellenar dos veces la pantalla completa por fotograma era el mayor coste medido.
+  // Con calidad reducida también se reduce el número de partículas.
+  function maxParticles() {
+    return DPR < 1 ? MAX_PARTICLES / 2 : MAX_PARTICLES;
+  }
+
+  function layoutBackground() {
+    // luz cálida del jugador (siempre en el centro, porque la cámara lo sigue)
+    const lr = Math.round(130 * K);
+    $("vignette").style.background =
+      "radial-gradient(circle " + lr + "px at center, rgba(255,207,115,0.2), rgba(255,207,115,0) 100%)," +
+      "radial-gradient(circle farthest-corner at center, rgba(3,5,12,0) 25%, rgba(3,5,12,0.35) 60%, rgba(3,5,12,0.82) 100%)";
+    if (!bgTile) return;
+    bgTileCss = 256 * K;
+    bgEl.style.width = W + bgTileCss * 2 + "px";
+    bgEl.style.height = H + bgTileCss * 2 + "px";
+    bgEl.style.backgroundSize = bgTileCss + "px " + bgTileCss + "px";
+  }
+
+  function moveBackground(x, y) {
+    const mod = (v) => ((v % bgTileCss) + bgTileCss) % bgTileCss;
+    const tx = mod(x) - bgTileCss, ty = mod(y) - bgTileCss;
+    bgEl.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0)";
   }
 
   // ---------------------------------------------------------------------------
@@ -147,9 +163,11 @@
     return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
   }
 
-  function makeEnemySprite(type, flash) {
+  // lite: versión sin halo y con lienzo más ajustado, para la calidad reducida
+  // (menos píxeles semitransparentes que mezclar cuando hay cientos de enemigos)
+  function makeEnemySprite(type, flash, lite) {
     const r = ENEMY_TYPES[type].r;
-    const pad = 1.6;
+    const pad = lite ? 1.2 : 1.6;
     const size = Math.ceil(r * 2 * pad * SPR_RES);
     const c = document.createElement("canvas");
     c.width = c.height = size;
@@ -160,13 +178,15 @@
     const rim = type === "boss" ? "#ff5fd2" : type === "skitter" ? "#53d8d0" : "#8a5cff";
     const eye = type === "skitter" ? "#c6fff9" : "#ff4d6d";
     // halo exterior para que la silueta destaque sobre el fondo oscuro
-    const grad = g.createRadialGradient(0, 0, r * 0.6, 0, 0, r * pad);
-    grad.addColorStop(0, hexA(rim, 0.45));
-    grad.addColorStop(1, hexA(rim, 0));
-    g.fillStyle = grad;
-    g.beginPath();
-    g.arc(0, 0, r * pad, 0, Math.PI * 2);
-    g.fill();
+    if (!lite) {
+      const grad = g.createRadialGradient(0, 0, r * 0.6, 0, 0, r * pad);
+      grad.addColorStop(0, hexA(rim, 0.45));
+      grad.addColorStop(1, hexA(rim, 0));
+      g.fillStyle = grad;
+      g.beginPath();
+      g.arc(0, 0, r * pad, 0, Math.PI * 2);
+      g.fill();
+    }
     g.fillStyle = body;
     g.strokeStyle = flash ? "#ffffff" : rim;
     g.lineWidth = Math.max(1.2, r * 0.12);
@@ -235,7 +255,10 @@
 
   const enemySprites = {};
   for (const type of Object.keys(ENEMY_TYPES)) {
-    enemySprites[type] = [makeEnemySprite(type, false), makeEnemySprite(type, true)];
+    enemySprites[type] = [
+      makeEnemySprite(type, false), makeEnemySprite(type, true),
+      makeEnemySprite(type, false, true), makeEnemySprite(type, true, true),
+    ];
   }
 
   function buildBackground() {
@@ -291,7 +314,9 @@
         g.fill();
       });
     }
-    bgPattern = ctx.createPattern(c, "repeat");
+    bgTile = c.toDataURL("image/png");
+    bgEl.style.backgroundImage = "url(" + bgTile + ")";
+    layoutBackground();
   }
 
   // ---------------------------------------------------------------------------
@@ -318,6 +343,8 @@
       Object.assign(d, s);
       d.up = Object.assign(defaultSave().up, s.up || {});
     }
+    M.migrate(d);
+    M.ensureMissions(d, rand);
     return d;
   }
   function persist() {
@@ -453,7 +480,8 @@
 
   function newRun() {
     const up = save.up;
-    const maxHp = 100 + up.vit * 10;
+    const moth = M.getMoth(save.moth) || M.MOTHS[0];
+    const maxHp = 100 + up.vit * 10 + (moth.perk.hp || 0);
     enemies = [];
     bullets = [];
     gems = [];
@@ -486,15 +514,55 @@
         flap: 0,
         hurtFlash: 0,
       },
-      weapons: { bolt: 1, halo: 0, pulse: 0, star: 0, fly: 0 },
+      weapons: { bolt: moth.weapon === "bolt" ? 2 : 1, halo: 0, pulse: 0, star: 0, fly: 0 },
       passives: { wing: 0, heart: 0, lens: 0, bloom: 0, tempo: 0, magnet: 0 },
       timers: { bolt: 0.4, pulse: 1.5, star: 1, haloAngle: 0 },
       tutorial: !save.tut ? 1 : 0,
       tutorialMoved: 0,
+      moth,
+      night: save.nightSel,
+      nm: M.nightMods(save.nightSel),
+      combo: 0,
+      comboTimer: 0,
+      bestCombo: 0,
+      bosses: 0,
+      missionTimer: 0,
+      completed: [],
+    };
+    if (moth.weapon !== "bolt") run.weapons[moth.weapon] = 1;
+    M.activate(save);
+  }
+
+  // Valores de la partida que usan las misiones.
+  function missionCtx(pending) {
+    let maxed = 0;
+    for (const id of WEAPONS) if (run.weapons[id] >= MAX_LEVEL) maxed++;
+    return {
+      kills: run.kills,
+      time: run.time,
+      level: run.level,
+      bosses: run.bosses,
+      nectar: run.nectar,
+      maxed,
+      bestCombo: run.bestCombo,
+      pendingKills: pending ? run.kills : 0,
     };
   }
 
+  function checkMissions(pending) {
+    const done = M.check(save, missionCtx(pending), rand);
+    if (done.length) {
+      run.completed.push(...done);
+      persist();
+      const d = done[0];
+      setBanner(t("missionDone") + "  +" + d.reward + " ●", 2.5);
+      A.sfx.levelUp();
+    }
+  }
+
   function xpNeed(l) {
+    // el primer nivel llega en pocos segundos: recompensa inmediata al empezar
+    if (l === 1) return 3;
     return Math.round(2 + l * 2.5 + l * l * 0.28);
   }
 
@@ -502,10 +570,10 @@
     const pa = run.passives, up = save.up;
     return {
       dmg: (1 + pa.lens * 0.12) * (1 + up.dmg * 0.06),
-      area: 1 + pa.bloom * 0.12,
-      cd: Math.pow(0.92, pa.tempo),
+      area: (1 + pa.bloom * 0.12) * (1 + (run.moth.perk.area || 0)),
+      cd: Math.pow(0.92, pa.tempo) * (1 - (run.moth.perk.cd || 0)),
       speed: 165 * (1 + pa.wing * 0.1) * (1 + up.spd * 0.05),
-      magnet: 110 * (1 + pa.magnet * 0.3) * (1 + up.mag * 0.15),
+      magnet: 110 * (1 + pa.magnet * 0.3) * (1 + up.mag * 0.15) * (1 + (run.moth.perk.magnet || 0)),
       regen: up.reg * 0.3,
     };
   }
@@ -526,7 +594,7 @@
       type,
       x, y, px: x, py: y,
       r: def.r,
-      hp: def.hp * (type === "boss" ? 1 + run.time / 150 : hpMul),
+      hp: def.hp * (type === "boss" ? 1 + run.time / 150 : hpMul) * run.nm.hp,
       maxHp: 0,
       speed: def.speed * (0.9 + rand() * 0.2) * (1 + run.time / 900),
       dmg: def.dmg,
@@ -560,7 +628,7 @@
 
   function updateSpawns(dt) {
     const tm = run.time;
-    let rate = 1.5 + tm * 0.046;
+    let rate = (1.5 + tm * 0.046) * run.nm.spawn;
     if (tm >= FINAL_SWARM) rate *= 1.6;
     run.spawnAcc += rate * dt;
     while (run.spawnAcc >= 1) {
@@ -618,6 +686,14 @@
 
   function killEnemy(e) {
     run.kills++;
+    // racha: bajas encadenadas sin pausa larga
+    run.combo++;
+    run.comboTimer = 1.0;
+    if (run.combo > run.bestCombo) run.bestCombo = run.combo;
+    if (run.combo % 100 === 0) {
+      run.nectar += 1;
+      burst(run.player.x, run.player.y, 10, "#ffd36b");
+    }
     A.sfx.kill();
     burst(e.x, e.y, e.boss ? 40 : e.type === "brute" ? 14 : 6, e.type === "skitter" ? "#53d8d0" : "#a98bff");
     dropGem(e.x, e.y, e.xp);
@@ -627,6 +703,7 @@
       burst(e.x, e.y, 6, "#ffd36b");
     }
     if (e.boss) {
+      run.bosses++;
       run.boss = null;
       // un jefe derrotado concede dos niveles extra
       grantXp(run.need - run.xp);
@@ -658,7 +735,7 @@
   }
 
   function burst(x, y, n, color) {
-    for (let i = 0; i < n && particles.length < MAX_PARTICLES; i++) {
+    for (let i = 0; i < n && particles.length < maxParticles(); i++) {
       const a = rand() * Math.PI * 2;
       const s = 40 + rand() * 160;
       particles.push({
@@ -863,6 +940,15 @@
     const p = run.player;
     const st = stats();
     run.time += dt;
+    if (run.comboTimer > 0) {
+      run.comboTimer -= dt;
+      if (run.comboTimer <= 0) run.combo = 0;
+    }
+    run.missionTimer -= dt;
+    if (run.missionTimer <= 0) {
+      run.missionTimer = 0.5;
+      checkMissions(true);
+    }
 
     // Jugador
     p.px = p.x;
@@ -1049,11 +1135,8 @@
   function render(alpha) {
     const p = run ? run.player : null;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if (!p) {
-      ctx.fillStyle = "#060a14";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!p) return;
     const lerp = (a, b) => a + (b - a) * alpha;
     camX = lerp(p.px, p.x);
     camY = lerp(p.py, p.y);
@@ -1066,22 +1149,17 @@
     const ox = canvas.width / 2 - camX * k + sx * DPR;
     const oy = canvas.height / 2 - camY * k + sy * DPR;
 
-    // Fondo en mosaico: el patrón se desplaza con la cámara
+    // Fondo en mosaico (capa HTML): se desplaza con la cámara
+    moveBackground(W / 2 - camX * K + sx, H / 2 - camY * K + sy);
     ctx.setTransform(k, 0, 0, k, ox, oy);
-    ctx.fillStyle = bgPattern;
     const vw = canvas.width / k, vh = canvas.height / k;
-    ctx.fillRect(camX - vw / 2 - 20, camY - vh / 2 - 20, vw + 40, vh + 40);
 
     const left = camX - vw / 2 - 60, right = camX + vw / 2 + 60;
     const top = camY - vh / 2 - 60, bottom = camY + vh / 2 + 60;
     const visible = (x, y) => x > left && x < right && y > top && y < bottom;
 
-    // Luz del jugador sobre el suelo
+    // (la luz del jugador sobre el suelo es parte de la capa #vignette)
     ctx.globalCompositeOperation = "lighter";
-    const pl = glow("#ffcf73", 120);
-    ctx.globalAlpha = 0.28;
-    ctx.drawImage(pl, camX - 120, camY - 120, 240, 240);
-    ctx.globalAlpha = 1;
 
     // Gemas
     const gSmall = glow("#7fe8ff", 7), gBig = glow("#b4a0ff", 11);
@@ -1095,11 +1173,12 @@
     ctx.globalCompositeOperation = "source-over";
 
     // Enemigos
+    const liteOff = DPR < 1 ? 2 : 0;
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i];
       const x = lerp(e.px, e.x), y = lerp(e.py, e.y);
       if (!visible(x, y)) continue;
-      const spr = enemySprites[e.type][e.flash > 0 ? 1 : 0];
+      const spr = enemySprites[e.type][(e.flash > 0 ? 1 : 0) + liteOff];
       const c = Math.cos(e.ang), s = Math.sin(e.ang);
       ctx.setTransform(k * c, k * s, -k * s, k * c, x * k + ox, y * k + oy);
       ctx.drawImage(spr.c, -spr.size / 2, -spr.size / 2, spr.size, spr.size);
@@ -1150,10 +1229,6 @@
 
     drawPlayer(p, camX, camY);
 
-    // Oscuridad en los bordes (sensación de noche, centra la atención)
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(vignette, 0, 0, canvas.width, canvas.height);
-
     drawHud();
   }
 
@@ -1167,8 +1242,8 @@
     if (!blink) {
       ctx.rotate(p.face + Math.PI / 2);
       const f = 0.65 + Math.abs(Math.sin(p.flap)) * 0.35;
-      ctx.fillStyle = "rgba(255, 236, 190, 0.92)";
-      ctx.strokeStyle = "#ffb347";
+      ctx.fillStyle = "rgba(255, 240, 210, 0.92)";
+      ctx.strokeStyle = run.moth.color;
       ctx.lineWidth = 1.5;
       // alas superiores e inferiores
       for (const side of [-1, 1]) {
@@ -1218,7 +1293,7 @@
     // Nivel y luz (vida)
     ctx.textAlign = "left";
     ctx.fillStyle = "#ffd36b";
-    ctx.fillText(t("level") + " " + run.level, pad, 14 * u);
+    ctx.fillText(t("level") + " " + run.level + (run.night > 1 ? "  ·  " + t("nightShort") + run.night : ""), pad, 14 * u);
     const bw = 120 * u, bh = 10 * u, by = 36 * u;
     ctx.fillStyle = "rgba(10,16,30,0.8)";
     ctx.fillRect(pad, by, bw, bh);
@@ -1239,6 +1314,21 @@
     ctx.fillRect(W / 2 - nw / 2, 42 * u, nw, 4 * u);
     ctx.fillStyle = "#ffb347";
     ctx.fillRect(W / 2 - nw / 2, 42 * u, (nw * run.time) / RUN_TIME, 4 * u);
+
+    // Racha de bajas (refuerzo inmediato: el número crece mientras se encadenan bajas)
+    if (run.combo >= 10) {
+      const pop = 1 + Math.max(0, run.comboTimer - 0.75) * 1.2;
+      ctx.textAlign = "left";
+      // tamaño de letra fijo y escala por transformación: cambiar la fuente en cada
+      // fotograma obliga al navegador a recalcularla y es caro
+      ctx.font = "bold " + Math.round(15 * u) + "px Trebuchet MS, sans-serif";
+      ctx.fillStyle = run.combo >= 100 ? "#ffd36b" : "#f4ecd8";
+      ctx.globalAlpha = Math.min(1, run.comboTimer / 0.4);
+      ctx.setTransform(d * pop, 0, 0, d * pop, pad * d, 54 * u * d);
+      ctx.fillText(t("combo") + " x" + run.combo, 0, 0);
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      ctx.globalAlpha = 1;
+    }
 
     // Bajas y néctar (derecha, dejando sitio al botón de pausa)
     ctx.textAlign = "right";
@@ -1324,6 +1414,13 @@
 
   function startRun() {
     newRun();
+    // primeros segundos: unas sombras ya visibles para que la acción empiece al instante
+    const p0 = run.player;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + rand();
+      const d = viewHalfDiag() * (0.55 + rand() * 0.2);
+      spawnEnemy("crawler", p0.x + Math.cos(a) * d, p0.y + Math.sin(a) * d);
+    }
     resetLoop();
     setState("play");
     showScreen(null);
@@ -1406,13 +1503,26 @@
     const timeBonus = Math.floor(run.time / 10);
     const killBonus = Math.floor(run.kills / 25);
     const base = run.nectar + timeBonus + killBonus + (won ? 25 : 0);
-    const earned = Math.round(base * (1 + save.up.gold * 0.1));
-    const newBest = run.time > save.best + 0.5;
+    const earned = Math.round(base * (1 + save.up.gold * 0.1) * run.nm.nectar);
+    const nb = save.nightBest[run.night] || 0;
+    const newBest = run.time > nb + 0.5;
     save.nectar += earned;
     save.runs++;
-    if (won) save.wins++;
-    if (newBest) save.best = run.time;
+    save.totalKills += run.kills;
+    save.bestCombo = Math.max(save.bestCombo, run.bestCombo);
+    if (newBest) save.nightBest[run.night] = run.time;
+    if (run.time > save.best) save.best = run.time;
     save.bestKills = Math.max(save.bestKills, run.kills);
+    run.unlockedNight = 0;
+    if (won) {
+      save.wins++;
+      if (run.night === save.night && save.night < M.MAX_NIGHT) {
+        save.night++;
+        save.nightSel = save.night;
+        run.unlockedNight = save.night;
+      }
+    }
+    checkMissions(false);
     persist();
     if (won || newBest) P.happytime();
     run.earned = earned;
@@ -1428,21 +1538,62 @@
     });
   }
 
+  function missionText(m) {
+    const n = m.type === "survive" ? fmtTime(m.target) : m.target;
+    return t("m_" + m.type).replace("{n}", n);
+  }
+
+  // Siguiente meta visible: la mejora más barata que aún no se puede pagar.
+  function nextGoal() {
+    let best = null;
+    for (const item of SHOP) {
+      const lvl = save.up[item.id];
+      if (lvl >= SHOP_MAX) continue;
+      const cost = shopCost(item, lvl);
+      if (!best || cost < best.cost) best = { name: t("u_" + item.id), cost };
+    }
+    for (const m of M.MOTHS) {
+      if (save.moths.indexOf(m.id) !== -1) continue;
+      if (!best || m.cost < best.cost) best = { name: t("moth_" + m.id), cost: m.cost };
+    }
+    return best;
+  }
+
   function showResults() {
     setState("results");
     const won = run.won;
     $("resTitle").textContent = won ? t("victory") : t("defeat");
-    $("resSub").textContent = won ? t("victorySub") : t("defeatSub");
+    // casi lo consigues: mostrar lo cerca que estuvo anima a reintentar
+    const left = RUN_TIME - run.time;
+    $("resSub").textContent = won
+      ? t("victorySub")
+      : left < 90
+      ? t("nearMiss").replace("{t}", fmtTime(left))
+      : t("defeatSub");
     const rows = [
+      [t("night"), run.night],
       [t("survived"), fmtTime(run.time)],
       [t("kills"), run.kills],
+      [t("bestCombo"), "x" + run.bestCombo],
       [t("levelReached"), run.level],
       [t("nectarEarned"), "● " + run.earned],
     ];
     $("resStats").innerHTML = rows
       .map((r) => "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td></tr>")
       .join("");
-    $("resMsg").textContent = run.newBest ? t("best") : "";
+    const msgs = [];
+    if (run.unlockedNight) msgs.push(t("nightUnlocked").replace("{n}", run.unlockedNight));
+    if (run.newBest) msgs.push(t("best"));
+    for (const d of run.completed) msgs.push("✓ " + missionText(d) + "  +" + d.reward + " ●");
+    const goal = nextGoal();
+    if (goal) {
+      msgs.push(
+        save.nectar >= goal.cost
+          ? t("goalReady").replace("{x}", goal.name)
+          : t("goalNext").replace("{n}", goal.cost - save.nectar).replace("{x}", goal.name)
+      );
+    }
+    $("resMsg").innerHTML = msgs.map((m) => "<div>" + m + "</div>").join("");
     const rb = $("rewardBtn");
     rb.style.display = P.state.rewardedAvailable ? "" : "none";
     rb.disabled = false;
@@ -1476,45 +1627,115 @@
 
   function abandonRun() {
     // salir al jardín conserva solo el néctar recogido, sin anuncio
-    if (run) {
+    if (run && state !== "results" && state !== "home") {
       save.nectar += run.nectar;
+      save.totalKills += run.kills;
       persist();
     }
     openHome();
   }
 
+  let homeTab = "upgrades";
+
   function openHome() {
     setState("home");
+    M.ensureMissions(save, rand);
     $("homeNectar").textContent = "● " + save.nectar;
-    $("homeBest").textContent = fmtTime(save.best);
-    const shop = $("shop");
-    shop.innerHTML = "";
+    $("homeBest").textContent = fmtTime(save.nightBest[save.nightSel] || 0);
+    $("nightLabel").textContent = t("night") + " " + save.nightSel + " / " + save.night;
+    $("nightDesc").textContent =
+      save.nightSel > 1 ? t("nightDesc").replace("{n}", Math.round((M.nightMods(save.nightSel).nectar - 1) * 100)) : t("nightDesc1");
+    $("nightPrev").disabled = save.nightSel <= 1;
+    $("nightNext").disabled = save.nightSel >= save.night;
+    document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === homeTab));
+    const box = $("shop");
+    box.innerHTML = "";
+    if (homeTab === "upgrades") renderUpgrades(box);
+    else if (homeTab === "moths") renderMoths(box);
+    else renderMissions(box);
+    showScreen("home");
+  }
+
+  function shopItem(box, name, desc, extra, btnText, disabled, onClick, cls) {
+    const div = document.createElement("div");
+    div.className = "item" + (cls ? " " + cls : "");
+    div.innerHTML = '<span class="name">' + name + "</span>" + '<span class="desc">' + desc + "</span>" + (extra || "");
+    if (btnText) {
+      const b = document.createElement("button");
+      b.textContent = btnText;
+      b.disabled = disabled;
+      if (disabled) b.className = "secondary";
+      b.addEventListener("click", onClick);
+      div.appendChild(b);
+    }
+    box.appendChild(div);
+  }
+
+  function renderUpgrades(box) {
     for (const item of SHOP) {
       const lvl = save.up[item.id];
       const cost = shopCost(item, lvl);
-      const div = document.createElement("div");
-      div.className = "item";
       const maxed = lvl >= SHOP_MAX;
-      div.innerHTML =
-        '<span class="name">' + t("u_" + item.id) + "</span>" +
-        '<span class="desc">' + t("u_" + item.id + "_d") + "</span>" +
-        '<span class="pips">' + "◆".repeat(lvl) + "◇".repeat(SHOP_MAX - lvl) + "</span>";
-      const b = document.createElement("button");
-      b.className = maxed ? "secondary" : "";
-      b.textContent = maxed ? t("maxed") : t("buy") + " ● " + cost;
-      b.disabled = maxed || save.nectar < cost;
-      b.addEventListener("click", () => {
-        if (save.nectar < cost || save.up[item.id] >= SHOP_MAX) return;
-        save.nectar -= cost;
-        save.up[item.id]++;
-        persist();
-        A.sfx.levelUp();
-        openHome();
-      });
-      div.appendChild(b);
-      shop.appendChild(div);
+      shopItem(
+        box,
+        t("u_" + item.id),
+        t("u_" + item.id + "_d"),
+        '<span class="pips">' + "◆".repeat(lvl) + "◇".repeat(SHOP_MAX - lvl) + "</span>",
+        maxed ? t("maxed") : t("buy") + " ● " + cost,
+        maxed || save.nectar < cost,
+        () => {
+          if (save.nectar < cost || save.up[item.id] >= SHOP_MAX) return;
+          save.nectar -= cost;
+          save.up[item.id]++;
+          persist();
+          A.sfx.levelUp();
+          openHome();
+        }
+      );
     }
-    showScreen("home");
+  }
+
+  function renderMoths(box) {
+    for (const m of M.MOTHS) {
+      const owned = save.moths.indexOf(m.id) !== -1;
+      const selected = save.moth === m.id;
+      const swatch = '<span class="swatch" style="background:radial-gradient(circle,#fff 0,' + m.color + ' 45%,transparent 72%)"></span>';
+      shopItem(
+        box,
+        t("moth_" + m.id),
+        t("w_" + m.weapon) + " · " + t("moth_" + m.id + "_d"),
+        swatch,
+        selected ? t("selected") : owned ? t("select") : t("unlock") + " ● " + m.cost,
+        selected || (!owned && save.nectar < m.cost),
+        () => {
+          if (!owned) {
+            if (save.nectar < m.cost) return;
+            save.nectar -= m.cost;
+            save.moths.push(m.id);
+            A.sfx.levelUp();
+          } else A.sfx.click();
+          save.moth = m.id;
+          persist();
+          openHome();
+        },
+        selected ? "sel" : ""
+      );
+    }
+  }
+
+  function renderMissions(box) {
+    for (const m of save.missions) {
+      const prog = Math.min(m.target, M.progress(m, save, null));
+      const pct = Math.round((100 * prog) / m.target);
+      shopItem(
+        box,
+        missionText(m),
+        "● " + M.reward(m.type, m.tier),
+        '<span class="bar"><span style="width:' + pct + '%"></span></span>' +
+          (M.MISSIONS[m.type].scope === "total" ? '<span class="desc">' + prog + " / " + m.target + "</span>" : '<span class="desc">' + t("oneNight") + "</span>"),
+        null
+      );
+    }
   }
 
   function updateSoundBtn() {
@@ -1551,6 +1772,7 @@
     $("restartBtn").addEventListener("click", () => {
       if (run) {
         save.nectar += run.nectar;
+        save.totalKills += run.kills;
         persist();
       }
       startRun();
@@ -1560,6 +1782,23 @@
     $("toHomeBtn").addEventListener("click", openHome);
     $("playBtn").addEventListener("click", startRun);
     $("rewardBtn").addEventListener("click", watchRewarded);
+    document.querySelectorAll(".tab").forEach((b) =>
+      b.addEventListener("click", () => {
+        homeTab = b.dataset.tab;
+        A.sfx.click();
+        openHome();
+      })
+    );
+    $("nightPrev").addEventListener("click", () => {
+      save.nightSel = Math.max(1, save.nightSel - 1);
+      persist();
+      openHome();
+    });
+    $("nightNext").addEventListener("click", () => {
+      save.nightSel = Math.min(save.night, save.nightSel + 1);
+      persist();
+      openHome();
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -1567,7 +1806,7 @@
   // ---------------------------------------------------------------------------
   let last = 0, acc = 0;
   let frameAvg = 16.7, slowTime = 0;
-  const perf = { fps: 60, frames: 0, quality: "high" };
+  const perf = { fps: 60, frames: 0, quality: "x2", updMs: 0, renMs: 0, bootMs: 0 };
 
   function resetLoop() {
     last = performance.now();
@@ -1585,19 +1824,24 @@
     if (state === "play") {
       acc += ms / 1000;
       let steps = 0;
+      const t0 = performance.now();
       while (acc >= STEP && steps < 5 && state === "play") {
         update(STEP);
         acc -= STEP;
         steps++;
       }
+      perf.updMs += (performance.now() - t0 - perf.updMs) * 0.05;
       if (steps >= 5) acc = 0;
       // si el equipo no da la talla, baja la resolución interna una vez
-      if (frameAvg > 24 && maxDPR > 1) {
+      if (frameAvg > 24 && QUALITY[QUALITY.length - 1] < DPR) {
         slowTime += ms / 1000;
         if (slowTime > 2) {
-          maxDPR = 1;
-          perf.quality = "low";
+          // baja al siguiente peldaño que de verdad reduzca la resolución actual
+          while (QUALITY[qualityLevel] >= DPR) qualityLevel++;
+          perf.quality = "x" + QUALITY[qualityLevel];
           resize();
+          slowTime = 0;
+          frameAvg = 16.7;
         }
       } else slowTime = 0;
     } else if (state === "ending") {
@@ -1610,8 +1854,10 @@
       }
       if (run.endTimer <= 0) finishRun();
     }
+    const t1 = performance.now();
     if (run) render(state === "play" ? acc / STEP : 1);
     else render(1);
+    perf.renMs += (performance.now() - t1 - perf.renMs) * 0.05;
   }
 
   // ---------------------------------------------------------------------------
@@ -1633,6 +1879,7 @@
     requestAnimationFrame(frame);
     // Requisito de Full Launch: el jugador entra directamente en la partida.
     startRun();
+    perf.bootMs = performance.now();
   }
 
   // Ganchos para las pruebas automatizadas (no afectan al juego).
@@ -1641,6 +1888,7 @@
     get run() { return run; },
     get enemies() { return enemies.length; },
     get bullets() { return bullets.length; },
+    counts: () => ({ enemies: enemies.length, bullets: bullets.length, gems: gems.length, particles: particles.length, rings: rings.length }),
     get perf() { return perf; },
     get save() { return save; },
     setSeed: (s) => { seed = s >>> 0 || 1; },

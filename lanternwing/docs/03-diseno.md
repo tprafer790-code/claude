@@ -10,7 +10,7 @@ Eres una **polilla-farolillo** que protege un jardín nocturno. Durante 5 minuto
 | Partida | 5 minutos, con victoria al amanecer |
 | Control | Un dedo (joystick flotante en cualquier punto), WASD/ZQSD o flechas; el ataque es automático |
 | Progresión dentro de la partida | Niveles con elección 1 de 3 entre 5 armas y 6 pasivas (máx. nivel 5 cada una) |
-| Progresión entre partidas | Néctar → 6 mejoras permanentes del jardín (5 niveles cada una) |
+| Progresión entre partidas | Néctar → 6 mejoras permanentes, 5 polillas desbloqueables, 5 noches de dificultad y misiones (ver [retención](06-retencion.md)) |
 | Estética | Noche, brillo cálido frente a siluetas violetas; todo dibujado por código |
 
 ## 2. Originalidad y derechos
@@ -78,8 +78,9 @@ Lectura: un jugador atento roza la victoria en las primeras partidas y la consig
 | Sprites pre-renderizados (brillos y enemigos) | Evita `shadowBlur` y degradados por fotograma, que son lo más caro en Canvas |
 | Rejilla espacial con *hash* | Colisiones casi lineales con 340 enemigos |
 | Eliminación por intercambio y topes de partículas y gemas | Sin picos de memoria ni recolector de basura |
-| Calidad adaptativa | Si el fotograma medio supera 24 ms durante 2 s, baja la resolución interna a 1× |
-| Sin recursos externos | 5 archivos, ~75 KB: carga instantánea, apto para portada móvil (≤ 20 MB) |
+| Calidad adaptativa | Si el fotograma medio supera 24 ms durante 2 s, baja la resolución interna un peldaño (2× → 1× → 0,75× → 0,6×) |
+| Sin recursos externos | 7 archivos, ~95 KB: carga instantánea, apto para portada móvil (≤ 20 MB) |
+| Fondo y viñeta como capas HTML; escalera de calidad 2× → 0,6× | Ver [auditoría de rendimiento](05-auditoria-rendimiento.md) |
 
 ## 7. Accesibilidad y plataforma
 
