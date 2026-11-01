@@ -1,0 +1,28 @@
+# THE SOCIAL LADDER - configuración para servidores Apache/LiteSpeed (Hostinger, IONOS, etc.)
+# Fuerza HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Tipos de archivo
+AddType font/woff2 .woff2
+AddType font/woff .woff
+AddType image/svg+xml .svg
+
+# Compresión
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
+</IfModule>
+
+# Caché: los archivos de assets/ llevan huella en el nombre, se pueden cachear 1 año.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|woff2?|svg)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+# Bloquea el acceso a la carpeta .git y a archivos ocultos de control
+RedirectMatch 404 /\.git
