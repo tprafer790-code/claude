@@ -46,6 +46,7 @@ export function castSpec(id: CastId, country: CountryId): CharSpec {
     case 'tycoon': return { skin: s(0), hair: 'slick', hairColor: '#e8e8e8', top: '#1d1d24', topAccent: '#f5c33b', bottom: '#1d1d24', shoes: '#6b3a1a', acc: ['shades', 'chain'], face: ['teeth'], pattern: 'suit', torso: 86 };
     case 'citizenA': return { skin: s(4), hair: 'granny', hairColor: '#dcdcf0', top: '#9b5fc0', topAccent: '#f27aa6', bottom: '#5a4a6a', shoes: '#3a2a3a', acc: ['pearls', 'glasses'], face: ['wrinkles', 'blush'], pattern: 'floral' };
     case 'citizenB': return { skin: s(3), hair: 'beanie', hairColor: '#2a6fd6', top: '#5a5a66', topAccent: '#f5c33b', bottom: '#3a5a8a', shoes: '#eeeeee', acc: ['ferret'], face: ['stubble'], pattern: 'hoodie' };
+    case 'caller': return { skin: s(3), hair: 'long', hairColor: '#5a3220', top: '#f27aa6', topAccent: '#ffffff', bottom: '#3a4a6a', shoes: '#c94a3a', acc: ['phone', 'scarf'], face: ['freckles'], pattern: 'cardigan' };
     case 'citizenC': return { skin: s(2), hair: 'afro', hairColor: '#2b1d14', top: '#f5c33b', topAccent: '#e2493b', bottom: '#3a3a4a', shoes: '#7a3a1a', acc: ['apron', 'earring'], pattern: 'plain' };
   }
 }

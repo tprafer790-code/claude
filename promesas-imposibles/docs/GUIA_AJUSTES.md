@@ -48,6 +48,7 @@ Cada país tiene un centro ideológico calculado a partir de sus grupos y region
 - **Eventos:** `src/data/events/` (`chains.ts` para cadenas, `standalone.ts`, `national.ts`). Cada evento declara condiciones (`conditions`), opciones (`choices`), efectos inmediatos o diferidos (`delay`), continuación (`chain`), repetición (`repeat`) y variantes por país (`variants`). `scheduledOnly: true` hace que solo aparezca si otra decisión lo programa.
 - **Políticas:** `src/data/policies.ts` (coste inicial y por ronda, retraso, ganadores, perdedores, riesgo, orientación).
 - **Debate:** tabla de eficacia `DEBATE_TABLE` y frases por candidatura en `src/data/debate.ts`.
+- **Historia de la promesa de vivienda:** textos ES/EN en `src/data/housingStory.ts` (emisora y subida del alquiler por país en `HOUSING_FLAVOR`, efecto de cada defensa en `HOUSING_DEBATE.defenses`); fuerza de la versión negociada en `src/core/housingDecision.ts`. Detalle en [`HISTORIA_VIVIENDA.md`](HISTORIA_VIVIENDA.md).
 - **Finales:** `src/data/endings.ts`; se evalúan en orden y gana el primero que cumple su condición.
 - **Textos de interfaz:** `src/i18n/strings.ts`. Para añadir un idioma, añade la clave a `Lang` y una traducción a cada entrada; si falta, se usa el inglés.
 - **Aspecto de personajes:** `CharSpec` en `src/art/characters.ts`. **Escenarios y posición de los objetos interactivos:** `src/art/scenes.ts` (`HOTSPOTS`; el tercio derecho de la sede y del despacho queda libre para la agenda lateral).

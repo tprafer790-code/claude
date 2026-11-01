@@ -7,6 +7,7 @@ import { evalCond } from './conditions';
 import { runMidterm } from './election';
 import { makeItem, pickEvent } from './events';
 import { CONCESSION_COST, Concession, partyDefs, policyLean, seatParties, Tally, voteOn } from './parliament';
+import { housingDue, noteHousingFell, noteHousingVote } from './housingStory';
 import { chance, randRange } from './rng';
 import { addFlag, applyEffects, avgSatisfaction, changeStat, clamp, groupTarget, hasFlag, partyDef, playerLean, recompute, SECTORS, uid } from './state';
 import type { DeltaRec, ElectionResult, GameState, L, Policy, RoundReport, StatId, SystemId } from './types';
@@ -56,7 +57,7 @@ export function concludeFormation(s: GameState, offers: Record<string, Concessio
   return { ok, tally, text };
 }
 
-function applyOffers(s: GameState, offers: Record<string, Concession[]>): void {
+export function applyOffers(s: GameState, offers: Record<string, Concession[]>): void {
   for (const [pid, list] of Object.entries(offers)) {
     const ps = s.parties.find((p) => p.id === pid);
     if (!ps) continue;
@@ -106,7 +107,11 @@ export function startRound(s: GameState): void {
   s.scheduled = s.scheduled.filter((x) => x.round > s.round);
   const items = [] as GameState['agenda'];
   let main = false;
+  // La promesa de la radio vuelve cuando se abre el área de vivienda: ocupa la decisión principal
+  const housing = housingDue(s);
+  if (housing) s.housing!.offeredRound = s.round;
   if (slot === 'budget') { items.push({ uid: uid(s, 'budget'), type: 'budget', hotspot: 'desk', resolved: false, main: true }); main = true; }
+  else if (slot === 'bill' && housing) { items.push({ uid: uid(s, 'housing'), type: 'housing', hotspot: 'phone', resolved: false, main: true, vars: { replacedBill: '1' } }); main = true; }
   else if (slot === 'bill') { items.push({ uid: uid(s, 'bill'), type: 'bill', hotspot: 'desk', resolved: false, main: true }); main = true; }
   else if (slot === 'opposition') {
     const id = s.orientation === 'left' ? 'opp_bill_taxcut' : 'opp_bill_wage';
@@ -129,6 +134,10 @@ export function startRound(s: GameState): void {
       if (e) { const it = makeItem(s, e, true); items.push(it); s.agenda = items; }
     }
     addFlag(s, 'final_crisis');
+    main = true;
+  }
+  if (housing && !items.some((x) => x.type === 'housing')) {
+    items.unshift({ uid: uid(s, 'housing'), type: 'housing', hotspot: 'phone', resolved: false, main: true });
     main = true;
   }
   if (!main) {
@@ -235,6 +244,7 @@ export function submitBill(s: GameState, id: string, offers: Record<string, Conc
   if (item) item.resolved = true;
   if (mode === 'fast') {
     const deltas = passPolicy(s, id);
+    noteHousingVote(s, id, true, undefined, 'fast');
     const expires = c.system === 'presidential-br' ? s.round + 2 : s.round + 1;
     s.fastTracked.push({ policy: id, expires });
     if (c.system === 'presidential-us') {
@@ -250,9 +260,11 @@ export function submitBill(s: GameState, id: string, offers: Record<string, Conc
   const weaken = Object.values(offers).some((l) => l.includes('amend')) ? 0.75 : 1;
   if (tally.passes) {
     const deltas = passPolicy(s, id, weaken);
+    noteHousingVote(s, id, true, tally, 'bill');
     s.decisions.push({ round: s.round, id, choice: 'pass', impact: 6, label: { es: `Ley aprobada: ${p.name.es}`, en: `Law passed: ${p.name.en}` } });
     return { passed: true, tally, deltas, text: { es: weaken < 1 ? 'Aprobada, con enmiendas que rebajan su alcance.' : 'Aprobada.', en: weaken < 1 ? 'Passed, with amendments that water it down.' : 'Passed.' } };
   }
+  noteHousingVote(s, id, false, tally, 'bill');
   const deltas = [{ stat: 'popularity' as StatId, delta: changeStat(s, 'popularity', -2), why: { es: 'Derrota parlamentaria', en: 'Parliamentary defeat' } }];
   s.decisions.push({ round: s.round, id, choice: 'fail', impact: 4, label: { es: `Ley rechazada: ${p.name.es}`, en: `Law rejected: ${p.name.en}` } });
   return { passed: false, tally, deltas, text: { es: 'Rechazada. La oposición lo celebra en el bar del Congreso.', en: 'Rejected. The opposition celebrates in the parliamentary bar.' } };
@@ -271,6 +283,7 @@ function checkFastTracked(s: GameState, notes: L[]): void {
     else {
       s.passed = s.passed.filter((x) => x !== f.policy);
       s.deferred = s.deferred.filter((d) => d.source !== f.policy);
+      noteHousingFell(s, f.policy, t);
       changeStat(s, 'popularity', -3); changeStat(s, 'credibility', -2);
       notes.push({ es: `${c.titles.legislature.es}: cae «${p.name.es}». Sus efectos pendientes se anulan.`, en: `${c.titles.legislature.en}: "${p.name.en}" falls. Its pending effects are cancelled.` });
     }

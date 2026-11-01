@@ -128,12 +128,12 @@ export class App {
   }
 
   actor(spec: CharSpec, x: number, opts: { flip?: boolean; size?: number; label?: string; bottom?: number } = {}): Actor { return new Actor(this.world, spec, x, opts); }
-  candidateActor(x: number, opts: { flip?: boolean; size?: number } = {}): Actor {
+  candidateActor(x: number, opts: { flip?: boolean; size?: number; bottom?: number } = {}): Actor {
     const a = this.actor(CANDIDATES[this.s!.candidate], x, { ...opts, label: this.s!.name });
     a.el.classList.add('is-player');
     return a;
   }
-  castActor(id: CastId, x: number, opts: { flip?: boolean; size?: number } = {}): Actor { return this.actor(castSpec(id, this.s!.country), x, { ...opts, label: this.castName(id) }); }
+  castActor(id: CastId, x: number, opts: { flip?: boolean; size?: number; bottom?: number } = {}): Actor { return this.actor(castSpec(id, this.s!.country), x, { ...opts, label: this.castName(id) }); }
   castName(id: CastId): string { return country(this.s!.country).castNames[id]; }
 
   /** Objetos interactivos visibles y con etiqueta (nunca solo al pasar el ratón). */
@@ -312,8 +312,8 @@ export class App {
   }
 
   /** Mensaje simple con un botón. */
-  async say(speaker: CastId | 'player' | null, text: string, opts: { title?: string; actor?: Actor | null; ok?: string; extra?: Node | null; kicker?: string } = {}): Promise<void> {
-    await this.dialog({ speaker, text, title: opts.title, actor: opts.actor, kicker: opts.kicker, extra: opts.extra, choices: [{ label: opts.ok ?? t('next') }] });
+  async say(speaker: CastId | 'player' | null, text: string, opts: { title?: string; actor?: Actor | null; ok?: string; extra?: Node | null; kicker?: string; cls?: string } = {}): Promise<void> {
+    await this.dialog({ speaker, text, title: opts.title, actor: opts.actor, kicker: opts.kicker, extra: opts.extra, cls: opts.cls, choices: [{ label: opts.ok ?? t('next') }] });
   }
 
   /** Lista de cambios con causa, flechas y colores (bueno/malo según el indicador). */

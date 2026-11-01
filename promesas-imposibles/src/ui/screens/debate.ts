@@ -9,6 +9,8 @@ import { logEvent } from '../../telemetry/playtestLog';
 import { btn, h, svgEl } from '../dom';
 import { UI_ICONS } from '../icons';
 import { ctx } from '../router';
+import { housingDebatePending } from '../../core/housingStory';
+import { housingDebate } from './housing';
 
 const CARDS: DebateCard[] = ['data', 'story', 'attack', 'deflect', 'promise'];
 
@@ -38,6 +40,12 @@ export async function runDebate(kind: 'campaign' | 'reelection'): Promise<void> 
   const setMeter = () => { (meter.querySelector('.fill') as HTMLElement).style.width = `${d.audience}%`; meter.setAttribute('aria-valuenow', String(Math.round(d.audience))); };
   app.layer.append(meter);
   setMeter();
+  // Rendición de cuentas: la grabación de la radio y la vuelta de la oyente
+  if (kind === 'reelection' && housingDebatePending(s)) {
+    await housingDebate(me, rival);
+    setMeter();
+    app.save('reelection');
+  }
 
   while (!debateOver(s)) {
     const move = d.moves[d.round];

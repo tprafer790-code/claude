@@ -2,8 +2,8 @@
 // Uso: npm run build && npm run build:poki && npm run e2e [-- --shots carpeta]
 // Juega partidas completas a través de la interfaz (clics, toques y teclado) y comprueba
 // iframe, móvil, tableta, almacenamiento bloqueado, bloqueador de anuncios, idioma y guardado.
-import { spawn } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -247,6 +247,120 @@ async function main() {
     }
     record('poki con SDK simulado', false, 'ninguna semilla llegó al gobierno');
   });
+
+
+  // 10. Historia de vivienda · la llamada: tiempo desde «Nueva partida» hasta que se registra la promesa,
+  // en escritorio y en móvil, y captura del encuadre (manos y caras visibles).
+  for (const [label, context] of [['escritorio', { viewport: { width: 1280, height: 720 } }], ['móvil', { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }]]) {
+    await run(`vivienda: llamada de radio ${label}`, () => withPage(browser, { init: settingsInit({}, 1234), context }, async (page, errors) => {
+      await page.goto(URL);
+      const t0 = Date.now();
+      await page.locator('.title-card .btn.primary').first().click();
+      await page.locator('.setup .card.country .btn.primary').nth(0).click();
+      await page.locator('.setup .card.cand .btn.primary').nth(1).click();
+      await page.locator('.setup .card.side .btn.primary').nth(0).click();
+      await page.locator('.dialog .choice').first().click();
+      await page.waitForSelector('.dialog.call .choice');
+      const nOpts = await page.locator('.dialog.call .choice').count();
+      const actors = await page.locator('.actor.closeup').count();
+      // Las dos figuras dentro de la pantalla y sin quedar tapadas por el diálogo (zona de manos y cara)
+      const vis = await page.evaluate(() => {
+        const dlg = document.querySelector('.dialog.call')?.getBoundingClientRect();
+        return [...document.querySelectorAll('.actor.closeup')].map((a) => {
+          const r = a.getBoundingClientRect();
+          const inView = r.left >= -2 && r.right <= innerWidth + 2 && r.top >= -2;
+          const face = { x: r.left + r.width / 2, y: r.top + r.height * 0.22 };
+          const hands = { x: r.left + r.width / 2, y: r.top + r.height * 0.6 };
+          const hidden = (pt) => !!dlg && pt.x > dlg.left && pt.x < dlg.right && pt.y > dlg.top && pt.y < dlg.bottom;
+          return inView && !hidden(face) && !hidden(hands);
+        });
+      });
+      if (shotDir) { await page.waitForTimeout(250); await page.screenshot({ path: `${shotDir}/vivienda-llamada-${label === 'móvil' ? 'movil' : 'escritorio'}.png` }); }
+      await page.locator('.dialog.call .choice').nth(0).click();
+      await page.waitForFunction(() => window.__PI_PROMISE_MS__ !== undefined);
+      const wall = Date.now() - t0;
+      const ms = await page.evaluate(() => window.__PI_PROMISE_MS__);
+      await page.locator('.dialog .choice').first().click();
+      await page.waitForSelector('.cork-note');
+      const save = await page.evaluate(() => JSON.parse(localStorage.getItem('promesas-imposibles:save') ?? '{}'));
+      const ok = errors.length === 0 && nOpts === 3 && actors === 2 && vis.every(Boolean) && save.state?.housing?.policy === 'rent_cap';
+      record(`vivienda: llamada de radio ${label}`, ok, `opciones=${nOpts} · figuras visibles=${vis.join('/')} · promesa registrada a los ${ms} ms (reloj ${wall} ms, robot sin tiempo de lectura)${errors.length ? ` · ${errors[0]}` : ''}`);
+    }));
+  }
+
+  // 11. Historia de vivienda · rendición de cuentas: se cargan partidas guardadas justo antes del debate de
+  // reelección (npm run housing), se pulsa «Continuar» y se recorre el intercambio final.
+  const hdir = resolve(root, 'test-results/housing');
+  if (!existsSync(`${hdir}/es-full.json`)) spawnSync('npx', ['vite-node', 'scripts/housing-story.ts'], { cwd: root, stdio: 'inherit' });
+  const exchanges = {};
+  for (const name of ['es-full', 'es-negotiated', 'es-postpone', 'us-full', 'br-negotiated']) {
+    await run(`vivienda: debate final ${name}`, () => withPage(browser, { init: settingsInit({}, 4000) }, async (page, errors) => {
+      const file = readFileSync(`${hdir}/${name}.json`, 'utf8');
+      const saved = JSON.parse(file);
+      await page.addInitScript((f) => { if (!sessionStorage.getItem('pi-loaded')) { localStorage.setItem('promesas-imposibles:save', f); sessionStorage.setItem('pi-loaded', '1'); } }, file);
+      await page.goto(URL);
+      await page.locator('.title-card .btn.primary', { hasText: 'Continuar' }).click();
+      await page.locator('.agenda .btn.primary[data-key="4"]').click();
+      await page.locator('.dialog .choice').nth(1).click(); // debate sin reloj
+      const lines = [];
+      let defended = false, after = 0, reloaded = false;
+      for (let i = 0; i < 14 && after < 2; i++) {
+        const dlg = page.locator('.dialog').last();
+        await dlg.locator('.choices.show .choice').first().waitFor();
+        const kicker = (await dlg.locator('.kicker').count()) ? (await dlg.locator('.kicker').innerText()).trim() : '';
+        const speaker = (await dlg.locator('.speaker b').count()) ? (await dlg.locator('.speaker b').innerText()).trim() : '';
+        const text = (await dlg.locator('.dlg-text').innerText()).trim();
+        const tape = (await dlg.locator('.tape').count()) ? (await dlg.locator('.tape').innerText()).replace(/\s+/g, ' ').trim() : '';
+        const cls = (await dlg.getAttribute('class')) ?? '';
+        const isDefense = /defiende tu gestión/i.test(kicker);
+        const isCaller = /Lola|Denise|Rosângela/.test(speaker);
+        const step = isDefense ? 'defensa' : tape ? 'grabacion' : cls.includes('whisper') ? 'susurro' : isCaller ? (defended ? 'respuesta' : 'oyente') : '';
+        if (shotDir && step) await page.screenshot({ path: `${shotDir}/vivienda-${name}-${step}.png` });
+        const choices = isDefense ? await dlg.locator('.choice .lbl').allInnerTexts() : [];
+        lines.push({ speaker, kicker, text, tape, whisper: cls.includes('whisper'), choices });
+        // Guardar y continuar a mitad del intercambio: se recarga justo antes de defenderse
+        if (isDefense && !reloaded && name === 'es-negotiated') {
+          reloaded = true;
+          await page.reload();
+          await page.locator('.title-card .btn.primary', { hasText: 'Continuar' }).click();
+          await page.locator('.agenda .btn.primary[data-key="4"]').click();
+          lines.push({ reload: true });
+          continue;
+        }
+        if (defended) after++;
+        await dlg.locator('.choices.show .choice').nth(isDefense ? Math.min(2, choices.length - 1) : 0).click();
+        if (isDefense) defended = true;
+      }
+      const st = await page.evaluate(() => JSON.parse(localStorage.getItem('promesas-imposibles:save') ?? '{}').state);
+      exchanges[name] = { outcome: st?.housing?.debate?.outcome, quote: saved.state.housing.quote.es, lines };
+      const tapeOk = lines.some((l) => l.tape && l.tape.includes(saved.state.housing.quote.es));
+      const callerOk = lines.some((l) => /Lola|Denise|Rosângela/.test(l.speaker ?? ''));
+      const whisper = lines.some((l) => l.whisper);
+      const ok = errors.length === 0 && defended && tapeOk && callerOk && !!st?.housing?.debate && (name !== 'es-negotiated' || reloaded);
+      record(`vivienda: debate final ${name}`, ok, `desenlace=${st?.housing?.debate?.outcome} · grabación literal=${tapeOk} · vuelve la oyente=${callerOk} · susurro=${whisper}${reloaded ? ' · recargado y continuado a mitad' : ''}${errors.length ? ` · ${errors[0]}` : ''}`);
+    }));
+  }
+  if (Object.keys(exchanges).length) writeFileSync(`${hdir}/intercambios-e2e.json`, JSON.stringify(exchanges, null, 2));
+
+  // 12. Historia de vivienda en inglés: misma partida guardada, interfaz en inglés.
+  await run('vivienda: debate final en inglés', () => withPage(browser, { init: settingsInit({ lang: 'en' }, 4001) }, async (page, errors) => {
+    const file = readFileSync(`${hdir}/us-negotiated.json`, 'utf8');
+    await page.addInitScript((f) => { if (!sessionStorage.getItem('pi-loaded')) { localStorage.setItem('promesas-imposibles:save', f); sessionStorage.setItem('pi-loaded', '1'); } }, file);
+    await page.goto(URL);
+    await page.locator('.title-card .btn.primary').first().click();
+    await page.locator('.agenda .btn.primary[data-key="4"]').click();
+    await page.locator('.dialog .choice').nth(1).click();
+    const texts = [];
+    for (let i = 0; i < 4; i++) {
+      const dlg = page.locator('.dialog').last();
+      await dlg.locator('.choices.show .choice').first().waitFor();
+      texts.push((await dlg.innerText()).replace(/\s+/g, ' '));
+      await dlg.locator('.choices.show .choice').first().click();
+    }
+    const joined = texts.join(' ');
+    const english = /Recording|listener|rent/i.test(joined) && !/Grabación|alquiler|oyente/.test(joined);
+    record('vivienda: debate final en inglés', errors.length === 0 && english, joined.slice(0, 160));
+  }));
 
   await browser.close();
   web.kill(); poki.kill();

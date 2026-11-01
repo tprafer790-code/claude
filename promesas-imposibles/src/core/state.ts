@@ -7,7 +7,7 @@ import type {
   CandidateId, CastId, CountryId, DeltaRec, Effect, GameState, GroupId, L, Lang, Orientation, StatId,
 } from './types';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 const RANGES: Partial<Record<StatId, [number, number]>> = {
   treasury: [0, 99], debt: [0, 200], privateFunds: [0, 99], funds: [0, 99], momentum: [-20, 20],

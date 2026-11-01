@@ -18,7 +18,7 @@ export type StatId = IndicatorId | DetailId;
 export type GroupId = 'youth' | 'pensioners' | 'workers' | 'business' | 'rural' | 'urban' | 'public';
 export type CastId =
   | 'advisor' | 'economist' | 'partner' | 'opposition' | 'journalist'
-  | 'unionist' | 'tycoon' | 'citizenA' | 'citizenB' | 'citizenC';
+  | 'unionist' | 'tycoon' | 'citizenA' | 'citizenB' | 'citizenC' | 'caller';
 
 export type AxisId = 'taxes' | 'services' | 'housing' | 'jobs' | 'security' | 'environment';
 /** -1 = enfoque de izquierdas, 0 = mixto, 1 = enfoque de derechas */
@@ -184,7 +184,7 @@ export interface Deferred { round: number; effects: Effect[]; why: L; source: st
 export interface AgendaItem {
   uid: string;
   vars?: Record<string, string>;
-  type: 'event' | 'bill' | 'budget' | 'campaign' | 'opposition-bill';
+  type: 'event' | 'bill' | 'budget' | 'campaign' | 'opposition-bill' | 'housing';
   eventId?: string;
   hotspot: HotspotId;
   resolved: boolean;
@@ -263,6 +263,8 @@ export interface GameState {
   /** Registro de decisiones para depuración y legado */
   decisions: { round: number; id: string; choice: string; impact: number; label: L }[];
   crises: { id: string; resolved: boolean }[];
+  /** Historia de la primera promesa de vivienda (llamada de radio → decisión de gobierno → debate) */
+  housing?: HousingStory;
   uidCounter: number;
   startedAt: number;
 }
@@ -279,3 +281,49 @@ export interface EndingResult {
 }
 
 export interface Outcome { text: L; deltas: DeltaRec[]; mood?: Mood; riskText?: L }
+
+export type BudgetLine = 'services' | 'housing' | 'security' | 'investment';
+export type HousingPolicyId = 'rent_cap' | 'rent_aid' | 'land_free';
+export type HousingMode = 'full' | 'negotiated' | 'postpone';
+/** Cómo terminó la promesa a ojos de la oyente en el debate de reelección. */
+export type HousingOutcome = 'working' | 'waiting' | 'rejected' | 'abandoned';
+
+export interface HousingAttempt {
+  round: number;
+  /** full/negotiated: decisión de la historia; bill/fast/ratify: por el circuito normal de leyes */
+  route: 'full' | 'negotiated' | 'bill' | 'fast' | 'ratify';
+  passed: boolean;
+  /** Partidos que votaron en contra (ids), de mayor a menor peso */
+  blockers: string[];
+  /** Resumen del recuento en la cámara principal */
+  yes: number;
+  no: number;
+}
+
+export interface HousingStory {
+  /** Opción elegida en la llamada (0-2) y política asociada */
+  option: number;
+  policy: HousingPolicyId;
+  stance: Stance;
+  /** Palabras exactas del candidato en la radio */
+  quote: L;
+  /** Milisegundos desde la creación de la partida hasta registrar la promesa */
+  promisedAfterMs: number;
+  stage: 'promised' | 'postponed' | 'passed' | 'rejected';
+  /** Modo con el que se aprobó, si se aprobó */
+  passedMode?: 'full' | 'negotiated' | 'other';
+  passedRound?: number;
+  /** Ronda en la que llegan los efectos de vivienda pactados */
+  effectsRound?: number;
+  /** Partida recortada para financiarla (o déficit) */
+  funding?: BudgetLine | 'deficit' | 'none';
+  /** Valores antes y después de la decisión, para el informe */
+  before?: { treasury: number; balance: number; housing: number; lines: Record<BudgetLine, number> };
+  after?: { treasury: number; balance: number; housing: number; lines: Record<BudgetLine, number> };
+  attempts: HousingAttempt[];
+  /** Ronda en la que se recuperó la promesa en el despacho */
+  offeredRound?: number;
+  postponedRound?: number;
+  /** Debate de reelección */
+  debate?: { outcome: HousingOutcome; defense: number; audience: number; credibility: number };
+}

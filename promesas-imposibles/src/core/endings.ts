@@ -1,5 +1,6 @@
 // Cálculo del final, el legado y las decisiones que más influyeron.
 import { ENDINGS, type EndingCtx } from '../data/endings';
+import { housingEpilogue } from './housingStory';
 import { hasFlag } from './state';
 import type { EndingResult, GameState, L } from './types';
 
@@ -43,6 +44,8 @@ export function computeEnding(s: GameState, phase: EndingCtx['phase'], won: bool
     if (s.crises.length) lines.push({ es: `Crisis: ${ctx.crisesResolved} gestionadas, ${ctx.crisesFailed} mal resueltas.`, en: `Crises: ${ctx.crisesResolved} handled, ${ctx.crisesFailed} badly handled.` });
     if (hasFlag(s, 'peace_signed')) lines.push({ es: 'Pasarás a la historia por cerrar la crisis de Varnia sin una guerra abierta.', en: 'History will remember you for ending the Varnia crisis without open war.' });
   }
+  const epi = housingEpilogue(s, phase === 'term' && !!s.housing?.offeredRound);
+  if (epi) lines.push(epi);
   const keyDecisions = [...s.decisions].sort((a, b) => b.impact - a.impact).slice(0, 3).map((d) => d.label);
   const score = Math.round(ctx.wellbeing * 0.4 + ctx.integrity * 0.25 + ctx.keptRatio * 20 + (won ? 15 : 0) - ctx.evidence * 0.2);
   return { id: def.id, title: def.title, text: def.text, lines, keyDecisions, score };

@@ -15,6 +15,7 @@ import { ctx, R } from '../router';
 import { runDebate } from './debate';
 import { infoPanel } from './info';
 import { costText, eventDialog } from './shared';
+import { corkNote } from './housing';
 
 const ACTIONS: CampaignAction[] = ['street', 'rally', 'canvass', 'ads', 'fundraise', 'darkads'];
 
@@ -23,6 +24,7 @@ R.campaign = () => {
   const s = app.s!;
   app.clearLayer();
   app.setScene('hq');
+  corkNote();
   const player = app.candidateActor(30);
   app.castActor('advisor', 50, { flip: true });
   app.enableWalking(player);

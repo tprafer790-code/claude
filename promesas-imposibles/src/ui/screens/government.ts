@@ -18,6 +18,9 @@ import { ctx, R } from '../router';
 import { runDebate } from './debate';
 import { infoPanel } from './info';
 import { eventDialog } from './shared';
+import { corkNote, housingDecision, retakeCard } from './housing';
+import { fill, housingRetakeable, storyVars } from '../../core/housingStory';
+import { HOUSING_DECISION } from '../../data/housingStory';
 
 type Offers = Record<string, Concession[]>;
 
@@ -139,6 +142,7 @@ R.office = () => {
 function itemTitle(it: AgendaItem): string {
   if (it.type === 'budget') return t('budgetTitle');
   if (it.type === 'bill') return t('billTitle');
+  if (it.type === 'housing') return tl(fill(HOUSING_DECISION.itemTitle, storyVars(ctx.app.s!)));
   const e = EVENT_BY_ID[it.eventId!];
   const v = e.variants?.[ctx.app.s!.country];
   return tl(v?.title ?? e.title).replace(/\{\w+\}/g, '…');
@@ -149,6 +153,7 @@ async function openItem(it: AgendaItem) {
   const s = app.s!;
   if (it.type === 'budget') { await budget(); }
   else if (it.type === 'bill') { await bill(); }
+  else if (it.type === 'housing') { await housingDecision(false); }
   else {
     app.clearLayer();
     const e = EVENT_BY_ID[it.eventId!];
@@ -234,8 +239,12 @@ function bill(): Promise<void> {
   return new Promise((resolve) => {
     const pols = availablePolicies(s);
     const chooser = () => {
+      const retake = housingRetakeable(s);
+      const shown = pols.filter((pol) => !retake || pol.id !== s.housing!.policy).slice(0, retake ? 8 : 9);
       const p = app.panel('bill modal scroll wide', h('h2', null, t('billTitle')), h('p', { class: 'hint' }, t('billHint')),
-        pols.length ? h('div', { class: 'cards policies' }, pols.slice(0, 9).map((pol, i) => policyCard(pol, () => { p.remove(); negotiate(pol); }, String(i + 1)))) : h('p', null, t('noBills')),
+        shown.length || retake ? h('div', { class: 'cards policies' },
+          retake ? retakeCard(() => { p.remove(); void housingDecision(true).then((done) => { if (done) resolve(); else chooser(); }); }, '1') : null,
+          shown.map((pol, i) => policyCard(pol, () => { p.remove(); negotiate(pol); }, String(i + (retake ? 2 : 1))))) : h('p', null, t('noBills')),
         btn(t('skipBill'), () => { p.remove(); const it = s.agenda.find((a) => a.type === 'bill' && !a.resolved); if (it) it.resolved = true; logEvent('decision', { id: 'bill_skip' }); resolve(); }, { cls: 'ghost' }));
     };
     const negotiate = (pol: Policy) => {
@@ -307,6 +316,7 @@ R.reelection = () => {
   if (s.debate?.kind === 'reelection' && debateOver(s)) { finishReelection(); return; }
   app.clearLayer();
   app.setScene('hq', { night: true });
+  corkNote();
   const player = app.candidateActor(36);
   app.castActor('advisor', 50, { flip: true });
   app.enableWalking(player);
