@@ -11,6 +11,22 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
+
+// Memoria residente (RSS) de todos los procesos del navegador, en MB: es lo que ocupa
+// el juego en la RAM del equipo (incluye el propio Chromium, por lo que es una cota superior).
+function browserRssMB() {
+  try {
+    const out = execSync("ps -eo rss=,args=", { encoding: "utf8" });
+    let kb = 0;
+    for (const line of out.split("\n")) {
+      if (/chrom|headless_shell/i.test(line) && !/ps -eo/.test(line)) kb += parseInt(line, 10) || 0;
+    }
+    return kb / 1024;
+  } catch (e) {
+    return NaN;
+  }
+}
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,11 +44,11 @@ await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const BASE = `http://127.0.0.1:${server.address().port}/`;
 
 const PROFILES = [
-  { name: "Escritorio 1366×768", viewport: { width: 1366, height: 768 }, dpr: 1, cpu: 1, mobile: false },
-  { name: "Escritorio 1920×1080 pantalla completa", viewport: { width: 1920, height: 1080 }, dpr: 1, cpu: 1, mobile: false },
-  { name: "Chromebook 4 GB (CPU ×4)", viewport: { width: 1366, height: 768 }, dpr: 1, cpu: 4, mobile: false },
-  { name: "Móvil gama media 851×393 DPR 2,75 (CPU ×4)", viewport: { width: 851, height: 393 }, dpr: 2.75, cpu: 4, mobile: true },
-  { name: "Móvil gama baja 800×450 DPR 2 (CPU ×6)", viewport: { width: 800, height: 450 }, dpr: 2, cpu: 6, mobile: true },
+  { name: "Escritorio 1366×768", viewport: { width: 1366, height: 768 }, dpr: 1, cpu: 1, mobile: false, ram: 8, cores: 8 },
+  { name: "Escritorio 1920×1080 pantalla completa", viewport: { width: 1920, height: 1080 }, dpr: 1, cpu: 1, mobile: false, ram: 8, cores: 8 },
+  { name: "Chromebook 4 GB (CPU ×4)", viewport: { width: 1366, height: 768 }, dpr: 1, cpu: 4, mobile: false, ram: 4, cores: 4 },
+  { name: "Móvil gama media 851×393 DPR 2,75 (CPU ×4)", viewport: { width: 851, height: 393 }, dpr: 2.75, cpu: 4, mobile: true, ram: 4, cores: 8 },
+  { name: "Móvil gama baja 800×450 DPR 2 (CPU ×6)", viewport: { width: 800, height: 450 }, dpr: 2, cpu: 6, mobile: true, ram: 2, cores: 4 },
 ];
 
 function stats(samples) {
@@ -102,6 +118,11 @@ const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
 for (const prof of PROFILES.filter((p) => !ONLY || p.name.includes(ONLY))) {
   const ctx = await browser.newContext({ viewport: prof.viewport, deviceScaleFactor: prof.dpr, isMobile: prof.mobile, hasTouch: prof.mobile });
   const page = await ctx.newPage();
+  // memoria y núcleos del equipo simulado (activa el modo de bajo consumo con ≤ 4 GB)
+  await page.addInitScript(([ram, cores]) => {
+    Object.defineProperty(navigator, "deviceMemory", { get: () => ram });
+    Object.defineProperty(navigator, "hardwareConcurrency", { get: () => cores });
+  }, [prof.ram, prof.cores]);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.route("https://sdk.crazygames.com/**", (r) => r.abort());
@@ -126,6 +147,7 @@ for (const prof of PROFILES.filter((p) => !ONLY || p.name.includes(ONLY))) {
     r.need = 1e12; // sin pantallas de subida de nivel durante la medición
     Object.keys(r.weapons).forEach((k) => (r.weapons[k] = 5));
     Object.keys(r.passives).forEach((k) => (r.passives[k] = 3));
+    if (r.evo) Object.keys(r.evo).forEach((k) => (r.evo[k] = true)); // peor caso: todas las evoluciones
     LW.debug.skipTo(262);
   });
   await page.waitForTimeout(QUICK ? 3000 : 6000);
@@ -137,16 +159,18 @@ for (const prof of PROFILES.filter((p) => !ONLY || p.name.includes(ONLY))) {
   await page.evaluate(() => {
     const r = LW.debug.run;
     Object.keys(r.weapons).forEach((k) => (r.weapons[k] = k === "bolt" ? 1 : 0));
+    if (r.evo) Object.keys(r.evo).forEach((k) => (r.evo[k] = false));
     LW.debug.skipTo(275);
   });
   await page.waitForTimeout(QUICK ? 3000 : 5000);
   const crowd = await measure(page, cdp, QUICK ? 5 : 8);
+  const rss = browserRssMB();
 
-  rows.push({ prof, loadMs, early, late, crowd, heapA, heapB, errors });
+  rows.push({ prof, loadMs, early, late, crowd, heapA, heapB, rss, errors });
   const L = late.stats;
   console.log(`${prof.name}: carga ${loadMs} ms | inicio ${early.stats.fps.toFixed(0)} fps | final ${L.fps.toFixed(0)} fps, p95 ${L.p95.toFixed(1)} ms, >33ms ${L.over33.toFixed(1)} %, ` +
     `sim ${late.upd.toFixed(1)} ms, dibujo ${late.ren.toFixed(1)} ms, enemigos ${late.maxEnemies}, calidad ${late.quality}, ` +
-    `multitud ${crowd.stats.fps.toFixed(0)} fps con ${crowd.maxEnemies} enemigos, heap ${(heapA / 1048576).toFixed(1)}→${(heapB / 1048576).toFixed(1)} MB, asignación ${late.allocMBs.toFixed(1)} MB/s, errores ${errors.length}`);
+    `multitud ${crowd.stats.fps.toFixed(0)} fps con ${crowd.maxEnemies} enemigos, heap ${(heapA / 1048576).toFixed(1)}→${(heapB / 1048576).toFixed(1)} MB, asignación ${late.allocMBs.toFixed(1)} MB/s, RAM navegador ${rss.toFixed(0)} MB, errores ${errors.length}`);
   await ctx.close();
 }
 await browser.close();
@@ -159,6 +183,6 @@ fs.writeFileSync(out, JSON.stringify(rows.map((r) => ({
   final: { fps: +r.late.stats.fps.toFixed(1), media: +r.late.stats.avg.toFixed(1), p95: +r.late.stats.p95.toFixed(1), p99: +r.late.stats.p99.toFixed(1), pct33: +r.late.stats.over33.toFixed(1),
     simMs: +r.late.upd.toFixed(2), dibujoMs: +r.late.ren.toFixed(2), enemigos: r.late.maxEnemies, calidad: r.late.quality, asignacionMBs: +r.late.allocMBs.toFixed(2) },
   multitud: { fps: +r.crowd.stats.fps.toFixed(1), p95: +r.crowd.stats.p95.toFixed(1), pct33: +r.crowd.stats.over33.toFixed(1), enemigos: r.crowd.maxEnemies, calidad: r.crowd.quality },
-  heapMB: [+(r.heapA / 1048576).toFixed(2), +(r.heapB / 1048576).toFixed(2)], errores: r.errors,
+  heapMB: [+(r.heapA / 1048576).toFixed(2), +(r.heapB / 1048576).toFixed(2)], ramNavegadorMB: Math.round(r.rss), errores: r.errors,
 })), null, 2));
 console.log("Resultados en " + out);

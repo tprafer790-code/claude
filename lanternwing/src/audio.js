@@ -7,6 +7,7 @@
   let sfxBus = null;
   let musicBus = null;
   let muted = false;
+  let musicOff = false;
   let adMuted = false;
   let musicTimer = null;
   let musicStep = 0;
@@ -28,7 +29,7 @@
     sfxBus.gain.value = 0.55;
     sfxBus.connect(master);
     musicBus = ctx.createGain();
-    musicBus.gain.value = 0.16;
+    musicBus.gain.value = musicOff ? 0 : 0.16;
     musicBus.connect(master);
     return ctx;
   }
@@ -46,6 +47,11 @@
     if (!master) return;
     const v = muted || adMuted ? 0 : 0.8;
     master.gain.setTargetAtTime(v, ctx.currentTime, 0.02);
+  }
+
+  function setMusic(on) {
+    musicOff = !on;
+    if (musicBus) musicBus.gain.setTargetAtTime(musicOff ? 0 : 0.16, ctx.currentTime, 0.05);
   }
 
   function setMuted(m) {
@@ -129,5 +135,5 @@
   }
 
   window.LW = window.LW || {};
-  window.LW.audio = { unlock, setMuted, setAdMuted, sfx, startMusic, stopMusic, get muted() { return muted; } };
+  window.LW.audio = { unlock, setMuted, setMusic, setAdMuted, sfx, startMusic, stopMusic, get muted() { return muted; } };
 })();
