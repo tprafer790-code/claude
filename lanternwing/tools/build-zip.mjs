@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(ROOT, "dist");
-const GAME_FILES = ["index.html", "src/i18n.js", "src/sdk.js", "src/audio.js", "src/game.js"];
+const GAME_FILES = ["index.html", "src/i18n.js", "src/sdk.js", "src/audio.js", "src/meta.js", "src/game.js"];
 
 fs.rmSync(DIST, { recursive: true, force: true });
 fs.mkdirSync(path.join(DIST, "lanternwing", "src"), { recursive: true });
