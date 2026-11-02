@@ -4,6 +4,8 @@ import { STAGE_BY_ID } from '../../data/stages';
 import { t } from '../../i18n';
 import { useEngine } from '../hooks';
 import { Icon } from './Icon';
+import { AnimatedMoney } from './AnimatedMoney';
+import { reducedMotion, TIER_FX, tierForStage } from '../../fx/intensity';
 
 export function TopBar({ onSettings }: { onSettings: () => void }) {
   const engine = useEngine();
@@ -27,7 +29,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
       <div className="wallet">
         <div className="cash" title={t('cash')}>
           <Icon id="coin" size={22} />
-          <span className="cash-value">{money(s.money)}</span>
+          <AnimatedMoney className="cash-value" value={s.money} bump={TIER_FX[tierForStage(stage.index)].counterBump} reduced={reducedMotion(s.settings)} />
         </div>
         <div className="rates">
           <span>
@@ -64,9 +66,51 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
         )}
       </div>
 
-      <button className="icon-btn settings-btn" onClick={onSettings} aria-label={t('settings')}>
-        <Icon id="tools" size={22} />
-      </button>
+      <div className="top-actions">
+        <button
+          className={`icon-btn mute-btn ${s.settings.muted ? 'off' : ''}`}
+          onClick={() => {
+            s.settings = { ...s.settings, muted: !s.settings.muted };
+            engine.changed();
+          }}
+          aria-label={s.settings.muted ? t('fxUnmute') : t('mute')}
+          aria-pressed={s.settings.muted}
+          title={s.settings.muted ? t('fxUnmute') : t('mute')}
+        >
+          <SpeakerIcon muted={s.settings.muted} />
+        </button>
+        <button className="icon-btn settings-btn" onClick={onSettings} aria-label={t('settings')}>
+          <Icon id="tools" size={22} />
+        </button>
+      </div>
     </header>
+  );
+}
+
+/** 11×11 pixel speaker, drawn with rects so it stays crisp at any zoom. */
+function SpeakerIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 11 11" shapeRendering="crispEdges" aria-hidden="true">
+      <rect x="1" y="4" width="2" height="3" fill="currentColor" />
+      <rect x="3" y="3" width="1" height="5" fill="currentColor" />
+      <rect x="4" y="2" width="1" height="7" fill="currentColor" />
+      <rect x="5" y="1" width="1" height="9" fill="currentColor" />
+      {muted ? (
+        <>
+          <rect x="7" y="4" width="1" height="1" fill="#ff3d3d" />
+          <rect x="9" y="4" width="1" height="1" fill="#ff3d3d" />
+          <rect x="8" y="5" width="1" height="1" fill="#ff3d3d" />
+          <rect x="7" y="6" width="1" height="1" fill="#ff3d3d" />
+          <rect x="9" y="6" width="1" height="1" fill="#ff3d3d" />
+        </>
+      ) : (
+        <>
+          <rect x="7" y="4" width="1" height="3" fill="currentColor" />
+          <rect x="9" y="2" width="1" height="7" fill="currentColor" />
+          <rect x="8" y="1" width="1" height="1" fill="currentColor" />
+          <rect x="8" y="9" width="1" height="1" fill="currentColor" />
+        </>
+      )}
+    </svg>
   );
 }

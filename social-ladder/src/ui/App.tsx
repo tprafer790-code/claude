@@ -7,7 +7,6 @@ import { setLanguage, t, type StringKey } from '../i18n';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements';
 import { SECRET_BY_ID } from '../data/secrets';
 import { COMBO_BY_ID } from '../data/combos';
-import { RANKS } from '../data/ranks';
 import { STAGE_BY_ID } from '../data/stages';
 import { money } from '../core/bignum';
 import { EngineContext, useEngine } from './hooks';
@@ -29,6 +28,9 @@ import { PromotionModal } from './modals/PromotionModal';
 import { SettingsModal } from './modals/SettingsModal';
 import type { IconId } from '../data/types';
 import { Icon } from './components/Icon';
+import { FxOverlay } from './components/FxOverlay';
+import { Celebration } from './components/Celebration';
+import { reducedMotion, tierForStage } from '../fx/intensity';
 
 type Tab = 'business' | 'upgrades' | 'objects' | 'ladder' | 'goals' | 'legacy' | 'ranking';
 const TABS: { id: Tab; label: StringKey; icon: IconId }[] = [
@@ -82,18 +84,18 @@ function Game({ runtime }: { runtime: Runtime }) {
   useEffect(() => {
     return engine.onEvent((e) => {
       switch (e.type) {
-        case 'click': audio.click(e.combo, e.crit); if (e.lucky) pushToast({ icon: 'coin', title: t('luckyFindTitle'), text: t('luckyFindText', { amount: money(e.lucky) }), tone: 'good' }); break;
-        case 'purchase': audio.purchase(); break;
+        case 'click': audio.click(e.combo, e.crit, e.crit && (e.combo > engine.derived.comboMax || !!e.lucky) ? 1.4 : 1); if (e.lucky) audio.rare(); if (e.lucky) pushToast({ icon: 'coin', title: t('luckyFindTitle'), text: t('luckyFindText', { amount: money(e.lucky) }), tone: 'good' }); break;
+        case 'purchase': audio.purchase(tierForStage(STAGE_BY_ID[engine.rank.stage].index)); break;
         case 'promotion': {
-          const r = RANKS[e.to];
-          audio.promotion(e.stageChanged);
+                    audio.promotion(e.stageChanged);
+          // Ordinary promotions get the full-screen celebration band (FxOverlay); a new social class opens its modal.
           if (e.stageChanged) setMajorPromo(e.to);
-          else pushToast({ icon: 'trophy', title: t('promoted'), text: r.name, tone: 'rank', sub: r.bonusText ?? t('rankIncome', { pct: Math.round(ECONOMY.rankIncomeBonus * 100) }) });
           break;
         }
         case 'achievement': {
           const a = ACHIEVEMENT_BY_ID[e.id];
-          audio.achievement();
+          if (Object.keys(engine.state.achievements).length % 10 === 0) audio.fanfare();
+          else audio.achievement();
           pushToast({ icon: a.icon, title: t('achievementToast', { name: a.name }), text: a.desc, tone: 'gold', sub: t('rankIncome', { pct: Math.round(ECONOMY.achievementIncomeBonus * 100) }) });
           break;
         }
@@ -137,7 +139,7 @@ function Game({ runtime }: { runtime: Runtime }) {
   const unlockAudio = () => audio.unlock();
 
   return (
-    <div className={`app stage-${stage.id}`} style={{ ['--accent' as string]: stage.accent, ['--accent-dark' as string]: stage.accentDark }} onPointerDown={unlockAudio}>
+    <div className={`app stage-${stage.id} ${reducedMotion(s.settings) ? 'reduced-motion' : ''}`} data-tier={tierForStage(stage.index)} style={{ ['--accent' as string]: stage.accent, ['--accent-dark' as string]: stage.accentDark }} onPointerDown={unlockAudio}>
       <TopBar onSettings={() => setSettingsOpen(true)} />
       <main className="layout">
         <section className="play">
@@ -168,6 +170,8 @@ function Game({ runtime }: { runtime: Runtime }) {
         </aside>
       </main>
       <Toasts />
+      <FxOverlay />
+      <Celebration />
       {offline && <OfflineModal summary={offline} onClose={() => setOffline(null)} />}
       {majorPromo !== null && <PromotionModal rankIndex={majorPromo} onClose={() => setMajorPromo(null)} />}
       {eventOpen && s.pendingEvent && <EventModal onClose={() => setEventOpen(false)} />}

@@ -7,6 +7,7 @@ import { t } from '../../i18n';
 import { Icon } from '../components/Icon';
 import { effectText } from '../effectText';
 import { useEngine } from '../hooks';
+import { isFresh } from '../../fx/fresh';
 
 type Sub = 'shop' | 'inventory' | 'combos';
 
@@ -42,7 +43,7 @@ export function ObjectsPanel() {
             const afford = s.money.gte(it.price);
             const req = REQUIRED_FOR[it.id];
             return (
-              <li key={it.id} className={`card item rarity-${it.rarity} ${missing === it.id ? 'needed' : ''} ${afford && !lockedByRank ? 'afford' : ''}`}>
+              <li key={it.id} data-fx={`item:${it.id}`} className={`card item rarity-${it.rarity} ${missing === it.id ? 'needed' : ''} ${afford && !lockedByRank ? 'afford' : ''} ${isFresh(`item:${it.id}`) ? 'fresh' : ''}`}>
                 <button className="card-main" disabled={lockedByRank || !afford} onClick={() => engine.buyItem(it.id)}>
                   <Icon id={lockedByRank ? 'lock' : it.icon} size={36} />
                   <div className="card-info">

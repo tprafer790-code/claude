@@ -21,11 +21,16 @@ export function pushToast(t: ToastData) {
 }
 
 export function Toasts() {
-  const [items, setItems] = useState<(ToastData & { id: number })[]>([]);
+  const [items, setItems] = useState<(ToastData & { id: number; leaving?: boolean })[]>([]);
   useEffect(() => {
+    // Slide out for 200 ms, then remove.
+    const dismiss = (id: number) => {
+      setItems((list) => list.map((x) => (x.id === id ? { ...x, leaving: true } : x)));
+      window.setTimeout(() => setItems((list) => list.filter((x) => x.id !== id)), 200);
+    };
     const l: Listener = (item) => {
       setItems((list) => [...list.slice(-3), item]);
-      window.setTimeout(() => setItems((list) => list.filter((x) => x.id !== item.id)), item.tone === 'rare' ? 7000 : 4200);
+      window.setTimeout(() => dismiss(item.id), item.tone === 'rare' ? 7000 : 4200);
     };
     listeners.add(l);
     return () => void listeners.delete(l);
@@ -33,7 +38,7 @@ export function Toasts() {
   return (
     <div className="toasts" aria-live="polite">
       {items.map((it) => (
-        <div key={it.id} className={`toast tone-${it.tone}`} onClick={() => setItems((l) => l.filter((x) => x.id !== it.id))}>
+        <div key={it.id} className={`toast tone-${it.tone} ${it.leaving ? 'leaving' : ''}`} onClick={() => setItems((l) => l.filter((x) => x.id !== it.id))}>
           <Icon id={it.icon} size={26} />
           <div>
             <div className="toast-title">{it.title}</div>

@@ -5,6 +5,7 @@ import type { BuyQty } from '../../game/engine';
 import { t } from '../../i18n';
 import { Icon } from '../components/Icon';
 import { useEngine } from '../hooks';
+import { isFresh } from '../../fx/fresh';
 
 const QTYS: BuyQty[] = [1, 10, 100, 'max'];
 
@@ -38,7 +39,7 @@ export function BusinessPanel() {
           const perUnit = income && owned ? income.div(owned) : null;
           const nextUp = engine.nextBusinessUpgradeAt(b.id);
           return (
-            <li key={b.id} className={`card biz ${afford ? 'afford' : ''} ${b.secret ? 'secret' : ''}`}>
+            <li key={b.id} data-fx={`business:${b.id}`} className={`card biz ${afford ? 'afford' : ''} ${b.secret ? 'secret' : ''} ${isFresh(`business:${b.id}`) ? 'fresh' : ''}`}>
               <button className="card-main" onClick={() => engine.buyBusiness(b.id, qty)} disabled={!afford}>
                 <Icon id={b.icon} size={36} />
                 <div className="card-info">

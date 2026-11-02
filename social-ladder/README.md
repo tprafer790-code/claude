@@ -45,11 +45,25 @@ El juego funciona **completo en modo local** sin configurar nada: guardado en `l
 | Prestigio | "Reinvención": reputación = ⌊∛(ganancias totales / 1e6)⌋, 10 ventajas permanentes |
 | Offline | 60 % de eficiencia, tope de 8 h (ampliables), resumen al volver |
 | Persistencia | Autoguardado cada 10 s, copia de seguridad, exportar/importar código, migración de versiones |
-| Presentación | Pixel art procedural, 8 escenarios, personaje que cambia según etapa y equipo, partículas, audio chiptune sintetizado (WebAudio) |
-| Accesibilidad | Movimiento reducido, volumen/silencio, teclado (Espacio/Enter), diseño responsive |
+| Presentación | Pixel art procedural con paleta arcade saturada, 8 escenarios con color de fondo y ambiente propios por clase social, personaje que cambia según etapa y equipo, audio chiptune sintetizado (WebAudio) |
+| Efectos | 4 niveles de intensidad visual ligados a la clase social (ver 2.1); números flotantes, partículas y ondas en un único lienzo reutilizado; contador de dinero animado; celebraciones de ascenso, cambio de clase, hallazgo raro, logro mayor y reinvención |
+| Interfaz viva | Paleta arcade (azul eléctrico #168BFF, morado neón #A855F7, rosa #FF3DAD, naranja #FF7A18, amarillo #FFE44D, verde neón #39F56A, cian #22E6E0, azul marino #10152E); fondo animado por clase social (manchas de color y polvo de píxeles), nubes y bandadas en el escenario; tarjetas que saltan al comprar y destellan al desbloquearse; barras de progreso con brillo; avisos que entran y salen; monedas que vuelan al contador; banda de celebración breve (ascenso, logro, secreto, combo ×100) que no bloquea el juego; hitos de combo en 5/10/25/50/100 |
+| Clic crítico | Sacudida breve de la zona de juego (75 ms; 100 ms y más fuerte si es excepcional), estallido naranja/rojo/dorado, ondas alrededor del botón, cifra grande y sonido propio. Con una habilidad de clic activa (*modo crítico*) cada clic sacude ligeramente la pantalla |
+| Accesibilidad | Movimiento reducido (también respeta la preferencia del sistema), interruptor de sacudida, volumen/silencio y botón de silencio en la barra superior, teclado (Espacio/Enter), diseño responsive |
 | Idiomas | Español e inglés; ~1.000 textos de contenido traducidos por identificador (`src/i18n/content.ts`), con test de cobertura. En español las cantidades usan la escala larga (K, M, mM = mil millones, B = billón, T = trillón…) y coma decimal |
 
-**Pruebas realizadas:** 36 tests unitarios en verde (incluida la cobertura completa de la traducción); build de producción sin errores; prueba en Chromium (escritorio 1366×800 y móvil 390×844): clics, compra, todas las pestañas, persistencia tras recargar, sin errores de consola ni desbordamiento horizontal.
+### 2.1 Intensidad visual progresiva
+
+| Nivel | Clases sociales | Qué cambia |
+|---|---|---|
+| Inicio | Supervivencia, Clase trabajadora | Interfaz tranquila, pocas partículas, números pequeños |
+| Medio | Clase media baja, Clase media | Más partículas, halo en el botón, ondas en los críticos |
+| Avanzado | Riqueza, Riqueza extrema | Partículas con brillo, destello que recorre el botón, aura del personaje, partículas de ambiente en el escenario |
+| Final | Poder absurdo, Más allá de la escalera | Ráfagas grandes, marco cian/violeta, varias ondas por crítico, destellos de pantalla en los eventos excepcionales |
+
+La lógica de críticos no ha cambiado: probabilidad y multiplicador siguen en `src/config/economy.ts` y en los efectos de objetos. Un crítico se considera *excepcional* (efecto más fuerte) si coincide con el combo al máximo, con una habilidad de clic activa o con un hallazgo afortunado.
+
+**Pruebas realizadas:** 39 tests unitarios en verde (incluida la cobertura completa de la traducción y los niveles de intensidad); build de producción sin errores; prueba en Chromium (escritorio 1366×800 y móvil 390×844): clics, críticos con sacudida y vuelta exacta a reposo, movimiento reducido sin sacudida, 300 clics rápidos y 40 críticos seguidos (las partículas tienen tope y el bucle de animación se detiene al terminar), compra, todas las pestañas, persistencia tras recargar, sin errores de consola ni desbordamiento horizontal.
 
 **Ritmo aproximado** (simulador, 1 clic/s, sin prestigio): Millonario ≈ 21 min, Multimillonario ≈ 43 min, Isla privada ≈ 1 h 50 min, Dueño de un país ≈ 5 h. Las etapas absurda y cósmica están pensadas para alcanzarse con varias reinvenciones. Todo es ajustable en `src/config/economy.ts`.
 
@@ -127,6 +141,7 @@ src/
     persistence.ts      Serialización, copia de seguridad, exportar/importar
     runtime.ts          Bucle a 10 Hz, autoguardado, detección de ausencia
   render/               Pixel art procedural (paleta, personaje, escenarios, iconos) + escena Phaser
+  fx/                   Efectos: niveles de intensidad, lienzo de partículas reutilizado, sacudida de pantalla
   audio/                Efectos y música sintetizados con WebAudio
   ui/                   Interfaz React (paneles, ventanas, notificaciones)
   online/               Capa Supabase opcional (carga diferida)
@@ -151,5 +166,6 @@ Principios: el motor es determinista e independiente del DOM (reloj y aleatoried
 - Equilibrado de las etapas absurda/cósmica validado solo con el simulador, no con jugadores.
 - Sin PWA/instalación offline ni notificaciones push.
 - Navegadores probados: Chromium (escritorio y móvil emulado). Safari y Firefox sin verificar.
+- Los efectos se han medido en Chromium sin aceleración gráfica; falta comprobarlos en un móvil real de gama baja.
 
 Ver también [`docs/ASSETS.md`](docs/ASSETS.md) para el origen del arte y el audio.

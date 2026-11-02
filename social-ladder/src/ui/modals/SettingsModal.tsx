@@ -45,6 +45,9 @@ export function SettingsModal({ runtime, onClose }: { runtime: Runtime; onClose:
         <label className="check">
           <input type="checkbox" checked={st.reducedMotion} onChange={(e) => set({ reducedMotion: e.target.checked })} /> {t('reducedMotion')}
         </label>
+        <label className="check">
+          <input type="checkbox" checked={st.screenShake && !st.reducedMotion} disabled={st.reducedMotion} onChange={(e) => set({ screenShake: e.target.checked })} /> {t('screenShake')}
+        </label>
         <label>
           {t('language')}
           <select value={st.language} onChange={(e) => set({ language: e.target.value as 'en' | 'es' })}>
