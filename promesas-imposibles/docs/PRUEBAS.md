@@ -8,8 +8,8 @@ Todas las pruebas son automáticas y se pueden repetir con los comandos indicado
 |---|---|---|
 | Tipos estrictos de TypeScript | `npm run typecheck` | Sin errores |
 | Validación de datos (referencias, ES/EN, mínimos) | `npm run validate` | Sin errores ni avisos. 64 eventos, 23 en cadenas, 19 con variantes o exclusivos de país, 5 en la rama de invasión, 25 políticas, 12 finales, 293 textos de interfaz |
-| Pruebas unitarias del motor | `npm test` | 29/29 |
-| Pruebas de extremo a extremo (Playwright, compilación de producción) | `npm run e2e` | 16/16 |
+| Pruebas unitarias del motor | `npm test` | 44/44 (29 del motor + 15 de la historia de vivienda, 1-nov-2026) |
+| Pruebas de extremo a extremo (Playwright, compilación de producción) | `npm run e2e` | 24/24 (16 + 8 de la historia de vivienda, 1-nov-2026) |
 | Compilación web | `npm run build` | 301 KB JS + 22 KB CSS (106 KB comprimido) |
 | Compilación Poki | `npm run build:poki` | Igual + etiqueta del SDK |
 | Herramientas de desarrollo fuera de producción | búsqueda en `dist/` | No aparecen |
@@ -35,6 +35,7 @@ Todas las pruebas son automáticas y se pueden repetir con los comandos indicado
 | Sin peticiones externas | e2e: ninguna petición fuera del propio servidor en las 6 partidas completas | ✅ |
 | Primera decisión en menos de 1 minuto | Elegir país es la primera pantalla tras «Nueva partida» | ✅ (por diseño) |
 | Duración ~60 minutos | **No medida** | ⚠️ Ver §4 |
+| Historia de la promesa de vivienda (1-nov-2026) | Ver [`HISTORIA_VIVIENDA.md`](HISTORIA_VIVIENDA.md) §2: partidas reproducibles, guardar y continuar, tres países, ES/EN, tiempo hasta la promesa | ✅ (tiempo humano estimado) |
 
 ## 3. Equilibrio (robots, 40 partidas por casilla)
 

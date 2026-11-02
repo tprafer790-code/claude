@@ -9,6 +9,7 @@ import { num, t, tl, type UIKey } from '../../i18n';
 import { btn, h, svgEl } from '../dom';
 import { statIcon } from '../icons';
 import { ctx } from '../router';
+import { folderLines } from './housing';
 
 export function infoPanel(kind: HotspotId): void {
   const app = ctx.app;
@@ -18,6 +19,8 @@ export function infoPanel(kind: HotspotId): void {
   let title = '';
   if (kind === 'folder') {
     title = t('promisesTitle');
+    const fh = folderLines();
+    if (fh) body.push(fh);
     body.push(h('ul', { class: 'promises' }, s.promises.map((p) => h('li', { class: `pr-${p.status}` }, h('b', null, t(`promise_${p.status}` as UIKey)), ' ', tl(promiseText(p))))));
     body.push(h('h3', null, t('deferredTitle')));
     body.push(s.deferred.length ? h('ul', { class: 'deferred' }, s.deferred.slice().sort((a, b) => a.round - b.round).map((d) => h('li', null, h('b', null, d.round - s.round <= 1 ? t('deferredNext') : t('deferredIn', { n: d.round - s.round })), ' · ', tl(d.why)))) : h('p', { class: 'muted' }, t('noDeferred')));

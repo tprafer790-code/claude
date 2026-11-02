@@ -47,7 +47,7 @@ export const US: CountryDef = {
   castNames: {
     advisor: 'Dana Whitfield', economist: 'Marcus Bell', partner: 'Sen. Ruth Calloway', opposition: 'Brock Hensley',
     journalist: 'Tess Navarro', unionist: 'Big Lou Kowalski', tycoon: 'Chet Vandermolen',
-    citizenA: 'Grandma Edna', citizenB: 'Tyler', citizenC: 'Rosa',
+    citizenA: 'Grandma Edna', citizenB: 'Tyler', citizenC: 'Rosa', caller: 'Denise Carter',
   },
   rules: [
     { es: 'Ganas con 270 de 538 compromisarios. Los 50 estados se agrupan en 9 bloques en los que el ganador se lo lleva todo.', en: 'You win with 270 of 538 electors. The 50 states are grouped into 9 winner-take-all blocs.' },

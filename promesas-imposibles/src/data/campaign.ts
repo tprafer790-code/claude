@@ -39,8 +39,8 @@ export const PROGRAMME: ProgrammeQuestion[] = [
     },
     options: [
       { stance: -1, label: t('Topar alquileres y construir vivienda pública', 'Cap rents and build public housing'), promise: t('Topar los alquileres', 'Cap rents'), reaction: t('Un inquilino llora. Un casero también, por otros motivos.', 'A renter cries. So does a landlord, for other reasons.'), groups: { youth: 6, urban: 3, business: -4 } },
-      { stance: 0, label: t('Ayudas directas al alquiler joven', 'Direct rent aid for young people'), promise: t('Una ayuda joven al alquiler', 'A youth rent allowance'), reaction: t('Bien recibido. Los caseros ya calculan la subida.', 'Well received. Landlords are already calculating the increase.'), groups: { youth: 4 } },
-      { stance: 1, label: t('Liberalizar suelo para construir más', 'Free up land to build more'), promise: t('Liberalizar el suelo', 'Deregulate land'), reaction: t('Las constructoras te mandan flores. Plantadas en un humedal.', 'Builders send you flowers. Planted in a wetland.'), groups: { business: 5, rural: 2, urban: -2 } },
+      { stance: 0, label: t('Ayudas directas al alquiler joven', 'Direct rent aid for young people'), promise: t('Una ayuda directa al alquiler', 'A direct rent allowance'), reaction: t('Bien recibido. Los caseros ya calculan la subida.', 'Well received. Landlords are already calculating the increase.'), groups: { youth: 4 } },
+      { stance: 1, label: t('Liberalizar suelo para construir más', 'Free up land to build more'), promise: t('Liberar suelo para construir', 'Free up land to build'), reaction: t('Las constructoras te mandan flores. Plantadas en un humedal.', 'Builders send you flowers. Planted in a wetland.'), groups: { business: 5, rural: 2, urban: -2 } },
     ],
   },
   {

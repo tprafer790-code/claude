@@ -15,6 +15,7 @@
     "simulate": "vite-node scripts/simulate.ts",
     "e2e": "node scripts/e2e.mjs",
     "symmetry": "vite-node scripts/symmetry.ts",
+    "housing": "vite-node scripts/housing-story.ts",
     "check": "npm run typecheck && npm run validate && npm test",
     "build:artifact": "npm run build && node scripts/artifact.mjs"
   },

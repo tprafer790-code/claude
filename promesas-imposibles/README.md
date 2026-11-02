@@ -31,12 +31,12 @@ npm run build && npm run build:poki && npm run e2e   # pruebas de extremo a extr
 | Fase | Qué haces |
 |---|---|
 | Preparación | País → candidatura (4 personajes, solo cambia el aspecto) y nombre → izquierda o derecha. La primera decisión llega en segundos. |
-| Programa | Seis preguntas de tu asesora. Cada respuesta es una promesa registrada; puedes llevarle la contraria. |
+| Programa | Primero, una llamada en directo a la radio: una oyente a la que le han subido el alquiler pregunta qué harías, y tu respuesta literal es la promesa 1 de 6. Luego, cinco preguntas de tu asesora. Cada respuesta es una promesa registrada; puedes llevarle la contraria. |
 | Campaña | 6 jornadas con 2 acciones: calle, mitin, puerta a puerta, anuncios, recaudación. Hitos fijos: reparto de voluntarios, la visita de un empresario con maletín (financiación irregular), entrevista en la tele y debate televisado (cartas contra gestos del rival, con reloj o sin él). |
 | Noche electoral | Escrutinio, escaños y **por qué**: cuántos puntos aportó cada factor. Si pierdes: final breve y revancha rápida. |
 | Formación | Negocias con cada partido (enmiendas, inversión, cargos o un sobre). En España necesitas la investidura; en EE. UU. y Brasil fijas tu base de apoyos. |
-| Gobierno | 12 rondas. Cada ronda: 1 decisión principal (presupuesto, ley, crisis) y 1–2 asuntos breves en los objetos del despacho. Los sistemas se desbloquean poco a poco. |
-| Reelección | Dos acciones, debate de revancha y elecciones. Final con legado y decisiones clave. |
+| Gobierno | 12 rondas. Cada ronda: 1 decisión principal (presupuesto, ley, crisis) y 1–2 asuntos breves en los objetos del despacho. Los sistemas se desbloquean poco a poco. En la ronda 3 vuelve la promesa de la radio: cumplirla entera, negociarla o aplazarla, con la votación y el presupuesto reales. |
+| Reelección | Dos acciones, debate de revancha y elecciones. El debate empieza con la grabación de tu llamada a la radio y la vuelta de la oyente, que te cuenta qué pasó con tu promesa. Final con legado y decisiones clave. |
 
 Controles: ratón, toque o teclado (flechas o A/D para caminar, Intro para usar el objeto cercano, 1–9 para elegir, Esc para pausar). Nada depende de pasar el ratón por encima.
 
@@ -62,6 +62,7 @@ ES/EN con selector (el inglés es el idioma de respaldo), volumen y silencio, mo
 - [`docs/GUIA_AJUSTES.md`](docs/GUIA_AJUSTES.md): dónde cambiar duración, dificultad, equilibrio y contenido.
 - [`docs/POKI.md`](docs/POKI.md): integración, riesgos de contenido y lo que falta antes de enviarlo.
 - [`docs/PRUEBAS.md`](docs/PRUEBAS.md): resultados de las pruebas y limitaciones.
+- [`docs/HISTORIA_VIVIENDA.md`](docs/HISTORIA_VIVIENDA.md): la historia de la promesa de vivienda (llamada, decisión de gobierno y rendición de cuentas), con sus comprobaciones. Partidas reproducibles: `npm run housing` ([`docs/vivienda-partidas.md`](docs/vivienda-partidas.md)).
 
 ## Registro local de pruebas
 

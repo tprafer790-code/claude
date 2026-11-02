@@ -12,6 +12,7 @@ import { gameplayStart } from '../../platform/poki';
 import { logEvent, logState } from '../../telemetry/playtestLog';
 import { btn, h, svgEl } from '../dom';
 import { ctx, R } from '../router';
+import { corkNote, markNewGame, radioCall } from './housing';
 
 const NAMES: Record<CountryId, string[]> = {
   es: ['Charo Vidal', 'Toni Calvo', 'Merche Lago', 'Julián Peña', 'Nuria Sanz', 'Paco Ferrer'],
@@ -26,7 +27,7 @@ let draft: Draft = {};
 
 export function setDraft(d: Draft) { draft = { ...d }; }
 
-R.setup = () => { draft = {}; stepCountry(); };
+R.setup = () => { draft = {}; markNewGame(); stepCountry(); };
 
 function frame(title: string, hint: string, body: Node, foot?: Node) {
   const app = ctx.app;
@@ -113,19 +114,23 @@ R.programme = () => { void programme(); };
 async function programme() {
   const app = ctx.app;
   const s = app.s!;
+  app.snapshotStats();
+  // Al entrar en la sede, la asesora pasa una llamada de radio: es la promesa de vivienda
+  if (!s.housing) await radioCall();
   app.clearLayer();
   app.setScene('hq');
+  corkNote();
   const player = app.candidateActor(22);
   const advisor = app.castActor('advisor', 62, { flip: true });
   app.renderHud();
-  app.snapshotStats();
-  if (!s.promises.length) await app.say('advisor', t('programmeIntro', { name: app.castName('advisor') }), { actor: advisor });
+  if (s.promises.length <= 1) await app.say('advisor', t('programmeIntro', { name: app.castName('advisor') }), { actor: advisor });
   const rec: Stance = s.orientation === 'left' ? -1 : 1;
-  for (let i = 0; i < PROGRAMME.length; i++) {
-    const q = PROGRAMME[i];
+  const rest = PROGRAMME.filter((q) => q.axis !== 'housing');
+  for (let i = 0; i < rest.length; i++) {
+    const q = rest[i];
     if (s.promises.some((p) => p.axis === q.axis)) continue;
     const idx = await app.dialog({
-      speaker: 'advisor', actor: advisor, kicker: t('programmeStep', { n: i + 1, total: PROGRAMME.length }), text: tl(q.ask[s.orientation]),
+      speaker: 'advisor', actor: advisor, kicker: t('programmeStep', { n: i + 2, total: PROGRAMME.length }), text: tl(q.ask[s.orientation]),
       choices: q.options.map((o) => ({ label: tl(o.label), sub: tl(o.promise), badge: o.stance === rec ? t('advisorRecommends') : undefined, cls: o.stance === rec ? 'rec' : '' })),
     });
     const opt = q.options[idx];

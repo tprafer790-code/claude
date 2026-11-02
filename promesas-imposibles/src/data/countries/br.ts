@@ -44,7 +44,7 @@ export const BR: CountryDef = {
   castNames: {
     advisor: 'Renata Albuquerque', economist: 'Otávio Lins', partner: 'Dep. Juvenal Pires', opposition: 'Augusto Vasconcelos',
     journalist: 'Bia Tavares', unionist: 'Zé Ferreira', tycoon: 'Dr. Heitor Macedo',
-    citizenA: 'Dona Cida', citizenB: 'Kauã', citizenC: 'Seu Raimundo',
+    citizenA: 'Dona Cida', citizenB: 'Kauã', citizenC: 'Seu Raimundo', caller: 'Rosângela Prado',
   },
   rules: [
     { es: 'Si nadie supera el 50 % de los votos válidos, hay segunda vuelta entre los dos primeros.', en: 'If nobody wins over 50% of valid votes, the top two go to a runoff.' },

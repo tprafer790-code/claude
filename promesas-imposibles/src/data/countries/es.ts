@@ -45,7 +45,7 @@ export const ES: CountryDef = {
   castNames: {
     advisor: 'Maite Ferrán', economist: 'Ramón Cifuentes', partner: 'Nerea Olaso', opposition: 'Gonzalo Arriaga',
     journalist: 'Lucía Montes', unionist: 'Paco Barrera', tycoon: 'Borja Delacroix',
-    citizenA: 'Doña Pura', citizenB: 'Iker', citizenC: 'Manoli',
+    citizenA: 'Doña Pura', citizenB: 'Iker', citizenC: 'Manoli', caller: 'Lola Rubio',
   },
   rules: [
     { es: 'Votas al Congreso, no al presidente: necesitas 176 síes en la primera votación de investidura o más síes que noes en la segunda.', en: 'Voters elect Congress, not the PM: you need 176 yes votes in the first investiture vote, or more yes than no in the second.' },

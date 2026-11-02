@@ -83,6 +83,17 @@ export const UI = {
 
   // Programa
   programmeTitle: t('El programa', 'The platform'),
+  onAir: t('En directo', 'On air'),
+  notNow: t('Ahora no', 'Not now'),
+  corkKept: t('Cumplida', 'Kept'),
+  corkWaiting: t('Aprobada · en camino', 'Passed · on its way'),
+  corkRejected: t('Rechazada', 'Rejected'),
+  corkPostponed: t('Aplazada', 'Postponed'),
+  accountabilityKicker: t('Debate de reelección · Hemeroteca', 'Re-election debate · From the archive'),
+  outcome_working: t('La medida ya funciona', 'The measure is working'),
+  outcome_waiting: t('Aprobada, pero sus efectos aún no han llegado', 'Passed, but its effects have not arrived yet'),
+  outcome_rejected: t('Se rechazó en votación', 'It was voted down'),
+  outcome_abandoned: t('Nunca llegó a votarse', 'It never came to a vote'),
   programmeStep: t('Promesa {n} de {total}', 'Promise {n} of {total}'),
   advisorRecommends: t('Lo que recomienda tu asesora', 'Your adviser’s pick'),
   disagree: t('Le llevas la contraria', 'You overrule her'),

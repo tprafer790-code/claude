@@ -52,5 +52,9 @@ export const CAST: Record<CastId, CastDef> = {
     id: 'citizenC', role: t('Pequeña comerciante', 'Small shop owner'), wants: t('Menos papeles, más clientes y la luz más barata.', 'Less paperwork, more customers, cheaper power.'), voice: 200,
     reactions: { kept: t('Le he puesto en el escaparate. Al lado de los botones.', 'I put you in the shop window. Next to the buttons.'), broken: t('Otro que vino a por la foto.', 'Another one who came for the photo.'), betrayed: t('Cierro el lunes. Gracias por nada.', 'I close on Monday. Thanks for nothing.'), helped: t('Le debo un descuento.', 'I owe you a discount.') },
   },
+  caller: {
+    id: 'caller', role: t('Oyente de la radio', 'Radio listener'), wants: t('Un alquiler que no suba cada vez que el casero se aburre.', 'A rent that does not go up whenever the landlord gets bored.'), voice: 280,
+    reactions: { kept: t('Lo dijo en la radio y lo hizo. Lo voy a contar en el trabajo.', 'You said it on the radio and you did it. I will tell everyone at work.'), broken: t('Me acuerdo de su voz. Yo sí me acuerdo.', 'I remember your voice. I do remember.'), betrayed: t('Le llamé creyendo que escuchaba.', 'I called thinking you were listening.'), helped: t('Gracias. De verdad.', 'Thank you. Really.') },
+  },
 };
 export const CAST_ORDER: CastId[] = ['advisor', 'economist', 'partner', 'opposition', 'journalist', 'unionist', 'tycoon', 'citizenA', 'citizenB', 'citizenC'];

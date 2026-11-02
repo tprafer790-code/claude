@@ -8,6 +8,8 @@ import { runElection } from './election';
 import { computeEnding } from './endings';
 import { eventView, resolveEvent } from './events';
 import { availablePolicies, billTally, closeRound, concludeFormation, startFormation, startRound, submitBill, submitBudget, type BudgetPlan } from './government';
+import { resolveHousing } from './housingDecision';
+import { housingDebatePending, housingOutcome, makeHousingPromise, resolveHousingDefense } from './housingStory';
 import { finalElection, startReelection } from './reelection';
 import { nextRaw } from './rng';
 import { createState } from './state';
@@ -41,13 +43,17 @@ function choose(bot: BotRng, strat: Strategy, choices: (Choice & { available: bo
   return av.sort((a, b) => score(b) - score(a))[0];
 }
 
-export function playBot(seed: number, country: CountryId, strat: Strategy, opts: { candidate?: CandidateId; orientation?: Orientation } = {}): BotResult {
+export interface BotOpts { candidate?: CandidateId; orientation?: Orientation; housingOption?: number; housingMode?: 'full' | 'negotiated' | 'postpone'; housingFunding?: 'services' | 'security' | 'investment' | 'deficit'; housingDefense?: number; stopAtReelection?: boolean }
+
+export function playBot(seed: number, country: CountryId, strat: Strategy, opts: BotOpts = {}): BotResult {
   const bot = new BotRng(seed ^ 0x5bd1e995);
   const orientation: Orientation = opts.orientation ?? (bot.next() < 0.5 ? 'left' : 'right');
   const s = createState({ seed, country, candidate: opts.candidate ?? bot.pick(['hippie', 'impecable', 'veterano', 'influencer']), name: 'Bot', orientation, lang: 'es' });
   const rec: Stance = orientation === 'left' ? -1 : 1;
   for (const q of PROGRAMME) {
     const st: Stance = strat === 'random' ? bot.pick([-1, 0, 1] as Stance[]) : strat === 'technocrat' ? 0 : rec;
+    // La vivienda se promete en la llamada de radio (opción 0, 1 o 2 = postura -1, 0, 1)
+    if (q.axis === 'housing') { makeHousingPromise(s, opts.housingOption ?? st + 1); continue; }
     s.promises.push({ axis: q.axis, stance: st, status: 'pending', round: 0 });
   }
   startCampaign(s);
@@ -90,6 +96,9 @@ export function playBot(seed: number, country: CountryId, strat: Strategy, opts:
       if (it.resolved || s.phase !== 'government') continue;
       if (it.type === 'budget') {
         const plan: BudgetPlan = { tax: strat === 'populist' ? 0 : 1, lines: { services: 1 + (bot.next() < 0.5 ? 1 : 0), housing: 1, security: 1, investment: strat === 'technocrat' ? 2 : 1 } };
+        // Si cumplió la promesa de vivienda con una partida, la mantiene (y mantiene el recorte que la financia)
+        const fund = s.housing?.passedMode === 'full' ? s.housing.funding : undefined;
+        if (fund) { plan.lines.housing = Math.max(plan.lines.housing, s.budget.lines.housing); if (fund !== 'deficit' && fund !== 'none') plan.lines[fund] = Math.min(plan.lines[fund], s.budget.lines[fund]); }
         const off: Record<string, Concession[]> = {};
         if (strat !== 'random') for (const p of s.parties) off[p.id] = ['amend'];
         submitBudget(s, plan, off);
@@ -102,6 +111,9 @@ export function playBot(seed: number, country: CountryId, strat: Strategy, opts:
         const off: Record<string, Concession[]> = {};
         if (!tally.passes) for (const v of tally.votes) if (v.vote !== 'yes') off[v.id] = ['amend'];
         submitBill(s, pick.id, off, pick.fastTrack && !tally.passes && strat !== 'honest' ? 'fast' : 'vote');
+      } else if (it.type === 'housing') {
+        const mode = opts.housingMode ?? (strat === 'honest' || strat === 'populist' ? 'full' : strat === 'technocrat' ? 'negotiated' : strat === 'random' ? bot.pick(['full', 'negotiated', 'postpone'] as const) : 'postpone');
+        resolveHousing(s, mode, opts.housingFunding ?? (strat === 'populist' ? 'deficit' : undefined));
       } else resolveItem(it);
     }
     if (s.phase !== 'government') break;
@@ -111,7 +123,12 @@ export function playBot(seed: number, country: CountryId, strat: Strategy, opts:
   if (s.phase === 'reelection') {
     startReelection(s);
     while (s.actionsLeft > 0) doAction(s, canAfford(s, 'rally') ? 'rally' : 'canvass', bot.pick(GROUPS));
+    if (opts.stopAtReelection) return finish(s, seed, country, strat, true);
     startDebate(s, 'reelection', false);
+    if (housingDebatePending(s)) {
+      const o = housingOutcome(s);
+      resolveHousingDefense(s, opts.housingDefense ?? (strat === 'random' ? Math.floor(bot.next() * 3) : strat === 'honest' ? (o === 'abandoned' ? 0 : o === 'working' ? 2 : 1) : 0));
+    }
     while (!debateOver(s)) playCard(s, debateChoice(s, bot, strat));
     finishDebate(s);
     finalElection(s);
