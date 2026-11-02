@@ -189,6 +189,84 @@ console.log("Partida con bot");
   await page.close();
 }
 
+// 3b. Novedades de jugabilidad: impulso, enemigos nuevos, objetos, evoluciones y ajustes
+console.log("Novedades");
+{
+  const { page, errors } = await openGame({ width: 1280, height: 720 });
+  const r = await page.evaluate(() => {
+    const D = LW.debug, out = {};
+    D.setSeed(7);
+    D.setInput([0, 0]);
+    D.clearEnemies();
+    D.run.time = 30;
+    // impulso: avanza, da invulnerabilidad y tiene recarga
+    const p = D.run.player;
+    p.dx = 1; p.dy = 0;
+    const x0 = p.x;
+    out.dash = D.dash();
+    D.spawn("brute", 30, 0);
+    const hp0 = p.hp;
+    D.step(8);
+    out.dashMoved = p.x - x0;
+    out.dashNoDamage = p.hp === hp0;
+    out.dashCd = D.dash() === false;
+    D.clearEnemies();
+    // escupidor: dispara esporas
+    p.hp = p.maxHp;
+    const sp = D.spawn("spitter", 300, 0);
+    sp.hp = sp.maxHp = 1e6; // que no lo disipen antes de disparar
+    for (let i = 0; i < 300 && D.orbs === 0 && D.state === "play"; i++) D.step(1);
+    out.orbs = D.orbs;
+    out.state = D.state;
+    D.clearEnemies();
+    return out;
+  });
+  check(r.dash && r.dashMoved > 40, `impulso desplaza a la polilla (${r.dashMoved.toFixed(0)} u)`);
+  check(r.dashNoDamage, "impulso sin daño al atravesar un enemigo");
+  check(r.dashCd, "impulso con recarga");
+  check(r.orbs > 0, `el escupidor lanza esporas (${r.orbs}, ${r.state})`);
+  const r2 = await page.evaluate(() => {
+    const D = LW.debug, out = {};
+    D.clearEnemies();
+    D.setInput([0, 0]);
+    const p = D.run.player;
+    // gemelo: alcanzado por el pulso hasta disiparse, deja 3 polillas
+    D.spawn("splitter", 60, 0);
+    D.run.weapons.pulse = 5;
+    for (let i = 0; i < 400 && D.enemies < 3 && D.state === "play"; i++) { p.hp = p.maxHp; D.step(1); }
+    out.split = D.enemies;
+    D.clearEnemies();
+    // objetos
+    p.hp = 20;
+    const picked = D.run.itemsPicked;
+    D.dropItem("moon", 5, 0);
+    D.step(2);
+    out.healed = p.hp > 40;
+    out.picked = D.run.itemsPicked - picked;
+    // evoluciones: arma al 5 + pasiva al 2 → carta de evolución
+    D.run.weapons.bolt = 5;
+    D.run.passives.lens = 2;
+    out.evoOpt = D.options().some((o) => o.kind === "evo" && o.id === "bolt");
+    // amanecer
+    D.run.time = 285;
+    D.step(1);
+    out.dawn = D.dawn;
+    return out;
+  });
+  check(r2.split >= 3, `el gemelo se divide al disiparse (${r2.split} enemigos)`);
+  check(r2.healed && r2.picked === 1, "la flor de luna cura y cuenta como objeto");
+  check(r2.evoOpt, "carta de evolución disponible con arma al 5 y pasiva al 2");
+  check(r2.dawn > 0.6, `el amanecer aclara la pantalla (${r2.dawn})`);
+  // ajustes en la pausa
+  await page.keyboard.press("KeyP");
+  await page.click("#musicBtn");
+  await page.click("#shakeBtn");
+  const set = await page.evaluate(() => ({ m: LW.debug.save.musicOff, s: LW.debug.save.shakeOff, txt: document.getElementById("musicBtn").textContent }));
+  check(set.m === true && set.s === true && /Off|No/.test(set.txt), "ajustes de música y temblor se guardan");
+  check(errors.length === 0, "sin errores: " + errors.join(" | "));
+  await page.close();
+}
+
 // 4. Sin SDK (bloqueado): el juego debe ser plenamente jugable
 console.log("Sin SDK");
 {

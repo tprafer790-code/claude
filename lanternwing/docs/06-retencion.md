@@ -42,7 +42,7 @@ La pantalla de resultados muestra ahora:
 
 | Sistema | Qué ofrece | Por qué retiene |
 |---|---|---|
-| **Misiones** (siempre 3 activas) | 9 tipos: bajas, supervivencia, nivel, jefes, néctar, armas al máximo, racha, bajas totales y victorias. Al cumplir una aparece otra más difícil, que solo empieza a contar en la partida siguiente | Siempre hay una meta a corto plazo. Al no encadenarse en la misma noche, dan motivo para volver |
+| **Misiones** (siempre 3 activas) | 12 tipos: bajas, supervivencia, nivel, jefes, néctar, armas al máximo, racha, evoluciones, segundos sin daño, objetos, bajas totales y victorias. Al cumplir una aparece otra más difícil, que solo empieza a contar en la partida siguiente | Siempre hay una meta a corto plazo. Al no encadenarse en la misma noche, dan motivo para volver |
 | **5 polillas** desbloqueables con néctar (150-650) | Cada una empieza con un arma distinta y una ventaja pequeña | Variedad de estilo de juego y un objetivo de ahorro a medio plazo |
 | **5 noches** de dificultad creciente | Se desbloquea una al ganar la anterior. Cada noche: +50 % de vida de las sombras, +20 % de aparición y +50 % de néctar | Reto a largo plazo; el jugador experto gana más néctar |
 | **Récord por noche** | Mejor tiempo guardado en cada noche | Superación personal |
@@ -77,4 +77,4 @@ Recomendación: publicar, esperar unas 2 semanas de datos y ajustar los costes d
 | Recompensa diaria | Encaja mejor tras confirmar la retención básica; añade complejidad de fechas y zonas horarias |
 | Revivir con anuncio | Prohibido combinarlo con el *midgame* al final de la partida |
 | Tabla de clasificación | Requiere la API de cuentas de CrazyGames (Full Launch) |
-| Evolución de armas (arma al máximo + pasiva concreta) | Buena opción para una segunda actualización |
+| ~~Evolución de armas~~ | Incorporada en la versión 2 ([detalle](07-version-2.md)) |

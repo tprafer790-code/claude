@@ -17,7 +17,7 @@
   const MAX_NIGHT = 5;
   function nightMods(n) {
     const k = Math.max(0, n - 1);
-    return { hp: 1 + 0.5 * k, spawn: 1 + 0.2 * k, nectar: 1 + 0.5 * k };
+    return { hp: 1 + 0.5 * k, spawn: 1 + 0.2 * k, nectar: 1 + 0.5 * k, dmg: 1 + 0.15 * k };
   }
 
   // Misiones: 3 activas a la vez; al completarse se sustituyen por otra de nivel superior.
@@ -30,6 +30,9 @@
     nectarRun: { scope: "run", targets: [8, 15, 25, 40, 60, 90], reward: 35 },
     maxWeapon: { scope: "run", targets: [1, 1, 2, 2, 3, 3], reward: 45 },
     combo: { scope: "run", targets: [50, 100, 200, 350, 500, 700], reward: 35 },
+    evolve: { scope: "run", targets: [1, 1, 2, 2, 3, 3], reward: 60 },
+    noHit: { scope: "run", targets: [30, 45, 60, 90, 120, 150], reward: 40 },
+    items: { scope: "run", targets: [1, 2, 3, 4, 5, 6], reward: 30 },
     totalKills: { scope: "total", targets: [500, 1500, 3000, 6000, 10000, 16000], reward: 60 },
     wins: { scope: "total", targets: [1, 2, 4, 6, 9, 12], reward: 80 },
   };
@@ -98,6 +101,9 @@
       case "nectarRun": return c.nectar || 0;
       case "maxWeapon": return c.maxed || 0;
       case "combo": return c.bestCombo || 0;
+      case "evolve": return c.evolved || 0;
+      case "noHit": return Math.floor(c.noHitBest || 0);
+      case "items": return c.items || 0;
       case "totalKills": return save.totalKills + (c.pendingKills || 0);
       case "wins": return save.wins;
       default: return 0;

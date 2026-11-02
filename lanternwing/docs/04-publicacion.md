@@ -24,7 +24,7 @@
 | No combinar midgame con "seguir jugando" recompensado | ✅ | El recompensado duplica el néctar; no hay "revivir" |
 | Jugable con bloqueador de anuncios y sin SDK | ✅ | Probado con el SDK bloqueado |
 | Guardado con módulo Data (≤ 1 MB) | ✅ | < 1 KB; respaldo en localStorage |
-| Fluido en Chromebook de 4 GB | ✅ | 53-54 fps simulado (ver auditoría de rendimiento) |
+| Fluido en Chromebook de 4 GB | ✅ | Modo de bajo consumo automático con ≤ 4 GB de RAM; ver auditoría de rendimiento y [versión 2](07-version-2.md) |
 | PEGI 12 | ✅ | Fantasía sin violencia gráfica |
 | Legible en 800×450 a DPR 1 | ✅ | Capturas en las pruebas |
 
@@ -35,7 +35,7 @@
 3. Subir el zip y revisarlo con la **QA Tool** del portal.
 4. Rellenar los metadatos:
    - **Descripción** (propuesta en inglés, abajo).
-   - **Controles**: "Drag anywhere / WASD / Arrow keys to move. P to pause. Attacks are automatic."
+   - **Controles**: "Drag anywhere / WASD / Arrow keys to move. Space / Shift or the on-screen button to dash. P to pause. Attacks are automatic."
    - **Orientación**: horizontal (funciona también en vertical).
    - **¿Guarda progreso?**: sí.
    - **Compatible con móvil**: sí.
@@ -45,7 +45,7 @@
 
 ### Descripción propuesta
 
-> **Lanternwing** is a cozy-yet-frantic night survival game. You are a tiny lantern moth guarding a sleeping garden. Fly through swarms of shadow beetles while your light fights back on its own, collect glowing dew to level up and combine blessings like Petal Halo, Glow Pulse and Firefly Friends. Survive five minutes until dawn, earn nectar and grow your garden's power for the next night.
+> **Lanternwing** is a cozy-yet-frantic night survival game. You are a tiny lantern moth guarding a sleeping garden. Fly through swarms of shadow beetles, dash past spore-spitting flowers and the charging Elder Shade while your light fights back on its own. Collect glowing dew to level up, combine blessings like Petal Halo, Glow Pulse and Firefly Friends, and evolve them into Sunlance, Supernova or the Swarm Queen. Survive five minutes until dawn, earn nectar, unlock new moths and harder nights.
 
 ## 3. Pruebas automatizadas
 
