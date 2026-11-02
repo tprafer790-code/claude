@@ -1,15 +1,24 @@
 # Estilo de escritura — versión para Gemini
 
-Sirve de dos maneras. Elige la que prefieras.
+## Opción 1 — Como skill (si tu cuenta la incluye)
 
-## Opción A — Gem personalizado (recomendada, queda guardado)
+Gemini admite skills en formato `SKILL.md`.
+
+1. En Gemini pulsa **Switch to Spark** (modo agente) en la barra lateral.
+2. Abre **Skills** y pulsa **Upload**.
+3. Selecciona el archivo `SKILL.md` de esta carpeta, o un `.zip` que lo contenga.
+4. Si aparece desactivada, usa **More → Enable**. Para invocarla, escribe `/estilo-de-escritura` o deja que Spark la elija.
+
+Según la documentación consultada, Spark exige una cuenta personal de Google con Google AI Pro o Ultra, ser mayor de 18 años y no estar en el EEE, Reino Unido, Suiza ni Nigeria. Las cuentas de trabajo o centro educativo usan los skills a través de Gemini Enterprise. La disponibilidad en la versión gratuita no está confirmada: compruébalo en tu cuenta. En Gemini CLI los skills también existen. Si no ves la opción, usa las alternativas siguientes.
+
+## Opción 2 — Gem personalizado (queda guardado)
 
 1. En Gemini: **Explorar Gems → Nuevo Gem**.
 2. Nombre: `Escribe como yo`.
 3. En **Instrucciones**, pega el bloque de abajo.
 4. Guarda y úsalo cuando quieras.
 
-## Opción B — Una conversación suelta
+## Opción 3 — Una conversación suelta
 
 Pega el bloque de abajo como primer mensaje.
 

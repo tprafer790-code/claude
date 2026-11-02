@@ -1,15 +1,23 @@
 # Estilo de escritura — versión para ChatGPT
 
-Sirve de dos maneras. Elige la que prefieras.
+## Opción 1 — Como skill (si tu plan la incluye)
 
-## Opción A — GPT personalizado (recomendada, queda guardado)
+ChatGPT admite skills que siguen el estándar Agent Skills, el mismo formato que `SKILL.md`.
+
+1. En la barra lateral abre **Plugins** y entra en la pestaña **Skills**.
+2. Pulsa **Crear → Subir desde tu ordenador** y selecciona el archivo `SKILL.md` de esta carpeta.
+3. ChatGPT la analiza al subirla. Si aparece como *Needs Review* o *Blocked*, revisa el aviso antes de usarla.
+
+Según la ayuda de OpenAI, los skills personales están disponibles de forma general en Business, Enterprise, Healthcare y Edu, además de Codex y la API. La página no confirma su disponibilidad en los planes gratuito o Plus: compruébalo en tu cuenta. Si no ves la pestaña Skills, usa las opciones siguientes.
+
+## Opción 2 — GPT personalizado (queda guardado)
 
 1. En ChatGPT: **Explorar GPT → Crear**.
 2. Nombre: `Escribe como yo`.
 3. En **Instrucciones**, pega el bloque de abajo.
 4. Guarda y úsalo cuando quieras. Las muestras se pegan una sola vez en la conversación; si quieres que persistan, guarda la ficha de estilo que genere en la sección **Conocimientos** del GPT.
 
-## Opción B — Una conversación suelta
+## Opción 3 — Una conversación suelta
 
 Pega el bloque de abajo como primer mensaje.
 
