@@ -1,0 +1,21 @@
+{
+  "name": "testpilot",
+  "version": "0.1.0",
+  "description": "TESTPILOT Fase 1: motor local de pruebas web autonomo y self-healing (CLI Node.js)",
+  "private": true,
+  "main": "init.js",
+  "scripts": {
+    "start": "node init.js",
+    "browsers": "playwright install chromium"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.7.0",
+    "dotenv": "^18.0.10",
+    "playwright": "^1.65.0",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
