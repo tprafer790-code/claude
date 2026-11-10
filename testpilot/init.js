@@ -362,14 +362,172 @@ function requireFields(action, fields) {
   }
 }
 
+// --- Verificacion estricta de estado ---------------------------------------
+// Un click sobre un boton roto no lanza ningun error en Playwright: el elemento
+// existe y se pulsa, pero la web no reacciona. Para detectarlo se compara el
+// estado de la interfaz antes y despues de cada accion interactiva.
+
+const VERIFIED_ACTIONS = new Set(['click', 'fill', 'select']);
+const STATE_POLL_MS = 250;
+const STATE_WAIT_MS = 1500;
+
+class NoChangeError extends Error {
+  constructor(actionType) {
+    super(`La acción ${actionType} no produjo ningún cambio en la interfaz`);
+    this.name = 'NoChangeError';
+  }
+}
+
+/**
+ * Se ejecuta DENTRO de la pagina (codigo fijo). Devuelve el estado visible
+ * como diccionario plano { clave: valor }: titulo, scroll, cada linea de texto
+ * renderizado y cada control interactivo con su valor y sus atributos de estado.
+ * Los textos y valores viajan como hash: no sale de la pagina ningun dato
+ * (contraseñas, tarjetas) y la comparacion es igual de fiable.
+ */
+function stateSnapshotInPage() {
+  const hash = (str) => {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  };
+  const state = { title: document.title, scroll: Math.round(window.scrollX) + ',' + Math.round(window.scrollY) };
+  const body = document.body;
+  if (!body) return state;
+
+  // Texto renderizado (innerText ya excluye lo oculto con display:none).
+  // Cada linea se guarda por su posicion: asi un texto que cambia solo (un
+  // reloj, un contador) ocupa siempre la misma clave y se reconoce como volatil.
+  let lineIndex = 0;
+  for (const raw of (body.innerText || '').split('\n')) {
+    const line = raw.replace(/\s+/g, ' ').trim();
+    if (line) state['t:' + lineIndex++] = hash(line);
+  }
+
+  // Numero de elementos con caja visible: detecta lo que aparece o desaparece
+  // sin texto (imagenes, modales, menus).
+  let visible = 0;
+  for (const el of body.getElementsByTagName('*')) {
+    if (el.getClientRects().length > 0) visible++;
+  }
+  state.visible = visible;
+
+  // Controles: valor y atributos de estado. Aqui es donde fill/select dejan huella.
+  const ARIA = ['aria-expanded', 'aria-pressed', 'aria-checked', 'aria-selected', 'aria-hidden', 'aria-current', 'aria-invalid'];
+  const controls = body.querySelectorAll(
+    'a, button, input, select, textarea, details, dialog, [role], [aria-expanded], [contenteditable]');
+  let index = 0;
+  for (const el of controls) {
+    if (el.getClientRects().length === 0) continue;
+    const parts = [
+      el.tagName,
+      el.getAttribute('type') || '',
+      'value' in el ? hash(String(el.value)) : '',
+      'checked' in el ? String(el.checked) : '',
+      'selectedIndex' in el ? String(el.selectedIndex) : '',
+      el.disabled ? 'disabled' : '',
+      el.open ? 'open' : '',
+      typeof el.className === 'string' ? el.className : '',
+    ];
+    for (const attr of ARIA) parts.push(el.getAttribute(attr) || '');
+    if (el.isContentEditable) parts.push(hash(el.textContent || ''));
+    state['c:' + index++] = parts.join('|');
+  }
+  return state;
+}
+
+// Ventanas nuevas, descargas y dialogos nativos tambien son una reaccion de la
+// web aunque el DOM no cambie. Se cuentan por pagina (una sola suscripcion).
+const uiEventCounters = new WeakMap();
+function getUiEvents(page) {
+  let counter = uiEventCounters.get(page);
+  if (!counter) {
+    counter = { count: 0 };
+    uiEventCounters.set(page, counter);
+    page.on('dialog', (dialog) => { counter.count++; dialog.dismiss().catch(() => {}); });
+    page.on('download', () => { counter.count++; });
+    page.on('popup', () => { counter.count++; });
+  }
+  return counter;
+}
+
+/** Estado de la pagina y de todos sus iframes (incluidos los cross-origin). */
+async function captureState(page) {
+  const state = { url: page.url() };
+  const frames = page.frames();
+  await Promise.all(frames.map(async (frame, i) => {
+    state[`f${i}:url`] = frame.url();
+    try {
+      const part = await frame.evaluate(stateSnapshotInPage);
+      for (const [key, value] of Object.entries(part)) state[`f${i}:${key}`] = String(value);
+    } catch (_) {
+      state[`f${i}:estado`] = 'no accesible'; // el frame esta navegando o se ha cerrado
+    }
+  }));
+  return state;
+}
+
+function changedKeys(before, after) {
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  return [...keys].filter((key) => before[key] !== after[key]);
+}
+
+/**
+ * Estado previo a la accion. Se toman dos muestras separadas: lo que cambia
+ * entre ellas sin haber tocado nada (carruseles, contadores, anuncios) se
+ * anota como "volatil" y no cuenta despues como efecto de la accion.
+ */
+async function captureBaseline(page, target) {
+  // Playwright desplaza el elemento a la vista antes de pulsarlo. Se hace ya
+  // para que ese desplazamiento no se confunda con una reaccion de la web.
+  if (target) await target.scrollIntoViewIfNeeded({ timeout: 1500 }).catch(() => {});
+  const first = await captureState(page);
+  await page.waitForTimeout(STATE_POLL_MS);
+  const state = await captureState(page);
+  return { state, volatile: new Set(changedKeys(first, state)), events: getUiEvents(page).count };
+}
+
+/** Lanza NoChangeError si, tras la accion, la interfaz sigue igual. */
+async function assertStateChanged(page, action, target, baseline) {
+  const deadline = Date.now() + STATE_WAIT_MS;
+  for (;;) {
+    if (getUiEvents(page).count > baseline.events) return;
+    const after = await captureState(page);
+    if (after.url !== baseline.state.url) return;
+    if (changedKeys(baseline.state, after).some((key) => !baseline.volatile.has(key))) return;
+    if (Date.now() >= deadline) break;
+    await page.waitForTimeout(STATE_POLL_MS); // margen para animaciones y renders tardios
+  }
+
+  // fill/select sobre un campo que ya tenia ese valor: no hay cambio, pero la
+  // accion ha cumplido su funcion.
+  if (target && (action.action === 'fill' || action.action === 'select')) {
+    const current = await target
+      .evaluate((el) => [el.value, el.selectedOptions && el.selectedOptions[0] ? el.selectedOptions[0].label : null])
+      .catch(() => []);
+    if (current.includes(String(action.value))) return;
+  }
+  throw new NoChangeError(action.action);
+}
+
+/** JSON de la accion para la consola, recortado (las URL data: son muy largas). */
+function brief(action) {
+  const text = JSON.stringify(action);
+  return text.length > 160 ? text.slice(0, 157) + '...' : text;
+}
+
+/** Selector CSS al que apunta la accion (por selector propio o por id_visual). */
+function resolveSelector(action, marks) {
+  if (action.selector) return String(action.selector);
+  if (action.id_visual === undefined) return null;
+  const mark = marks[String(action.id_visual)];
+  if (!mark) throw new Error(`El id_visual "${action.id_visual}" no existe en el marcado actual.`);
+  return mark.selector || mark.fallbackSelector;
+}
+
 /** Traduce id_visual / selector (+ frame opcional) a un Locator de Playwright. */
 function resolveTarget(page, action, marks) {
-  let selector = action.selector;
-  if (!selector && action.id_visual !== undefined) {
-    const mark = marks[String(action.id_visual)];
-    if (!mark) throw new Error(`El id_visual "${action.id_visual}" no existe en el marcado actual.`);
-    selector = mark.selector || mark.fallbackSelector;
-  }
+  const selector = resolveSelector(action, marks);
   if (!selector) return null;
 
   // Iframes (Stripe, Redsys...): frameLocator atraviesa iframes cross-origin
@@ -389,6 +547,10 @@ function resolveTarget(page, action, marks) {
  *   - onFailure devuelve otra cosa -> la ejecucion se detiene.
  * onExhausted(contexto) se llama igual cuando la lista se agota sin fallos,
  * para que el planificador pueda continuar un plan parcial.
+ *
+ * Tras click/fill/select se verifica que la interfaz ha cambiado; si no, la
+ * accion cuenta como fallida. Si la MISMA accion falla asi dos veces seguidas,
+ * el orquestador aborta sin volver a consultar al planificador.
  */
 async function runActions(page, actions, options = {}) {
   const { onFailure = null, onExhausted = null, maxHeals = 3 } = options;
@@ -398,6 +560,8 @@ async function runActions(page, actions, options = {}) {
   let marks = options.marks || (await injectSetOfMark(page));
   const done = [];
   let heals = 0;
+  let lastNoChangeKey = null; // accion que acaba de fallar por "sin cambios"
+  getUiEvents(page);
 
   while (true) {
     if (queue.length === 0) {
@@ -413,6 +577,7 @@ async function runActions(page, actions, options = {}) {
     }
 
     const action = queue[0];
+    let actionKey = null;
     try {
       if (!action || typeof action !== 'object' || Array.isArray(action)) {
         throw new Error('Cada accion debe ser un objeto JSON.');
@@ -427,10 +592,15 @@ async function runActions(page, actions, options = {}) {
         throw new Error(`La accion "${action.action}" requiere "id_visual" o "selector".`);
       }
 
+      actionKey = [action.action, JSON.stringify(action.frame || ''), resolveSelector(action, marks)].join('|');
+
       // Las marcas se retiran antes de actuar para no interferir con la pagina.
       await clearSetOfMark(page);
+      const baseline = VERIFIED_ACTIONS.has(action.action) ? await captureBaseline(page, target) : null;
       await handler({ page, action, target });
       await settle(page);
+      if (baseline) await assertStateChanged(page, action, target, baseline);
+      lastNoChangeKey = null;
 
       // En el historial se guarda el selector estable en lugar del id_visual,
       // que solo era valido para el marcado de ese instante.
@@ -442,13 +612,13 @@ async function runActions(page, actions, options = {}) {
         done.push(action);
       }
       queue.shift();
-      console.log(`[ok]    ${JSON.stringify(action)}`);
+      console.log(`[ok]    ${brief(action)}`);
 
       // La pagina ha podido cambiar: los id_visual se recalculan.
       marks = await injectSetOfMark(page);
     } catch (error) {
       const message = String((error && error.message) || error).split('\n')[0];
-      console.error(`[fallo] ${JSON.stringify(action)} -> ${message}`);
+      console.error(`[fallo] ${brief(action)} -> ${message}`);
 
       let observation = null;
       try {
@@ -465,6 +635,17 @@ async function runActions(page, actions, options = {}) {
         pending: queue.slice(),
         ...(observation || {}),
       };
+
+      if (error instanceof NoChangeError) {
+        if (actionKey && actionKey === lastNoChangeKey) {
+          failure.abortReason = 'El orquestador abortó la prueba: la misma acción se repitió y volvió a no producir ningún cambio.';
+          console.error(`[abort] ${failure.abortReason}`);
+          return { ok: false, done, failure, heals };
+        }
+        lastNoChangeKey = actionKey;
+      } else {
+        lastNoChangeKey = null;
+      }
 
       if (!onFailure || heals >= maxHeals) return { ok: false, done, failure, heals };
 
@@ -617,8 +798,9 @@ async function main() {
       run.failed = { action: failure.failedAction, error: failure.error };
       run.pending = failure.pending.slice(1); // la primera pendiente es la que ha fallado
       run.screenshotBase64 = failure.screenshotBase64 || null;
-      run.summary = `La prueba se detuvo en el paso ${result.done.length + 1}: ${failure.error}`;
-      console.log(`Detenido en: ${JSON.stringify(failure.failedAction)} (${failure.error})`);
+      run.summary = `La prueba se detuvo en el paso ${result.done.length + 1}: ${failure.error}.` +
+        (failure.abortReason ? ` ${failure.abortReason}` : '');
+      console.log(`Detenido en: ${brief(failure.failedAction)} (${failure.error})`);
     } else if (plannerEnabled && !hasFile && !finished) {
       run.summary = `Se ejecutaron ${result.done.length} pasos sin errores, pero el planificador no confirmó que el objetivo se haya cumplido (límite de ${CONFIG.maxHeals} consultas o bloqueo).`;
       console.log(`Acciones ejecutadas: ${result.done.length}, pero el planificador no ha confirmado el objetivo.`);
@@ -671,5 +853,6 @@ module.exports = {
   clearSetOfMark,
   captureViewport,
   observe,
+  captureState,
   runActions,
 };

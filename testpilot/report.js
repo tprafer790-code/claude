@@ -69,7 +69,10 @@ function describeAction(action) {
   if (action.frame) target = `${[].concat(action.frame).join(' » ')} » ${target}`;
 
   let detail = '';
-  if (action.action === 'goto') detail = action.url;
+  if (action.action === 'goto') {
+    const url = String(action.url);
+    detail = url.startsWith('data:') ? 'página de prueba interna' : url.length > 90 ? url.slice(0, 87) + '...' : url;
+  }
   else if (action.action === 'fill' || action.action === 'select') detail = `"${action.value}"`;
   else if (action.action === 'press') detail = action.key;
   else if (action.action === 'scroll') detail = `${action.direction === 'up' ? 'arriba' : 'abajo'} ${action.amount || 500} px`;
