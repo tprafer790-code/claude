@@ -8,10 +8,10 @@
  *   3. Set-of-Mark: marcas numeradas sobre los elementos interactivos visibles
  *   4. Interprete de acciones JSON (sin eval / Function / child_process)
  *
- * La llamada a la API de Anthropic NO esta implementada todavia: el punto de
- * enganche es el callback `onFailure` de runActions().
+ *   5. Self-healing: si una accion falla, Claude (claude.js) recibe la captura
+ *      marcada y devuelve un nuevo array JSON, que se guarda en el archivo.
  *
- * Uso:  node init.js [url] [ruta-acciones.json]
+ * Uso:  node init.js [url] [ruta-acciones.json] [--goal "objetivo de la prueba"]
  */
 
 const fs = require('fs');
@@ -23,7 +23,10 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 
 const CONFIG = {
-  apiKey: process.env.ANTHROPIC_API_KEY || '', // se usara en el Paso 2
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+  model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
+  goal: process.env.TEST_GOAL || '',
+  maxHeals: Number(process.env.MAX_HEALS) || 5,
   targetUrl: process.env.TARGET_URL || 'https://example.com',
   headless: String(process.env.HEADLESS || 'false').toLowerCase() === 'true',
   chromiumPath: process.env.CHROMIUM_PATH || undefined,
@@ -338,7 +341,9 @@ const ACTION_HANDLERS = {
   scroll: async ({ page, action }) => {
     const sign = action.direction === 'up' ? -1 : 1;
     const amount = Number.isFinite(Number(action.amount)) ? Number(action.amount) : SCROLL_STEP;
-    await page.mouse.wheel(0, sign * amount);
+    // scrollBy es inmediato; mouse.wheel se aplica con retraso y el marcado
+    // posterior fotografiaba la pagina antes de que terminara de moverse.
+    await page.evaluate((dy) => window.scrollBy(0, dy), sign * amount);
   },
   wait: async ({ page, action }) => {
     await page.waitForTimeout(Math.min(Number(action.ms) || 1000, 30000));
@@ -378,12 +383,13 @@ function resolveTarget(page, action, marks) {
 /**
  * Ejecuta el array de acciones. Si una falla: captura el error, vuelve a
  * marcar y fotografiar la pagina y llama a onFailure(contexto).
- *   - onFailure devuelve un array -> sustituye a las acciones pendientes
- *     (ahi ira la llamada a Claude en el Paso 2).
+ *   - onFailure devuelve un array -> sustituye a las acciones pendientes.
  *   - onFailure devuelve otra cosa -> la ejecucion se detiene.
+ * onExhausted(contexto) se llama igual cuando la lista se agota sin fallos,
+ * para que el planificador pueda continuar un plan parcial.
  */
 async function runActions(page, actions, options = {}) {
-  const { onFailure = null, maxHeals = 3 } = options;
+  const { onFailure = null, onExhausted = null, maxHeals = 3 } = options;
   if (!Array.isArray(actions)) throw new Error('El archivo de acciones debe contener un array JSON.');
 
   let queue = actions.slice();
@@ -391,7 +397,19 @@ async function runActions(page, actions, options = {}) {
   const done = [];
   let heals = 0;
 
-  while (queue.length > 0) {
+  while (true) {
+    if (queue.length === 0) {
+      // Plan agotado: si hay planificador, se le pregunta si queda algo.
+      if (!onExhausted || heals >= maxHeals) break;
+      heals++;
+      const observation = await observe(page, `estado-${Date.now()}.jpg`);
+      marks = observation.marks;
+      const next = await onExhausted({ done, pending: [], ...observation });
+      if (!Array.isArray(next) || next.length === 0) break;
+      queue = next.slice();
+      continue;
+    }
+
     const action = queue[0];
     try {
       if (!action || typeof action !== 'object' || Array.isArray(action)) {
@@ -412,7 +430,15 @@ async function runActions(page, actions, options = {}) {
       await handler({ page, action, target });
       await settle(page);
 
-      done.push(action);
+      // En el historial se guarda el selector estable en lugar del id_visual,
+      // que solo era valido para el marcado de ese instante.
+      const mark = action.selector ? null : marks[String(action.id_visual)];
+      if (mark && mark.selector) {
+        const { id_visual: _omit, ...rest } = action;
+        done.push({ ...rest, selector: mark.selector });
+      } else {
+        done.push(action);
+      }
       queue.shift();
       console.log(`[ok]    ${JSON.stringify(action)}`);
 
@@ -438,24 +464,43 @@ async function runActions(page, actions, options = {}) {
         ...(observation || {}),
       };
 
-      if (!onFailure || heals >= maxHeals) return { ok: false, done, failure };
+      if (!onFailure || heals >= maxHeals) return { ok: false, done, failure, heals };
 
       heals++;
       const healed = await onFailure(failure);
-      if (!Array.isArray(healed)) return { ok: false, done, failure };
+      if (!Array.isArray(healed)) return { ok: false, done, failure, heals };
       queue = healed.slice();
     }
   }
 
-  return { ok: true, done, failure: null };
+  return { ok: true, done, failure: null, heals };
 }
 
 // ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
+function parseArgs(argv) {
+  const positional = [];
+  let goal = CONFIG.goal;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--goal') goal = argv[++i] || '';
+    else positional.push(argv[i]);
+  }
+  return {
+    url: positional[0] || CONFIG.targetUrl,
+    actionsFile: path.resolve(positional[1] || path.join(__dirname, 'actions.json')),
+    goal: goal.trim(),
+  };
+}
+
+function saveActions(file, actions) {
+  fs.writeFileSync(file, JSON.stringify(actions, null, 2) + '\n');
+  console.log(`[json]  ${path.basename(file)} actualizado (${actions.length} acciones).`);
+}
+
 async function main() {
-  const url = process.argv[2] || CONFIG.targetUrl;
-  const actionsFile = path.resolve(process.argv[3] || path.join(__dirname, 'actions.json'));
+  const { url, actionsFile, goal } = parseArgs(process.argv.slice(2));
+  const llmEnabled = Boolean(goal && CONFIG.apiKey);
 
   const { browser, page } = await launchBrowser();
   let exitCode = 0;
@@ -477,23 +522,83 @@ async function main() {
     fs.writeFileSync(path.join(CONFIG.outputDir, 'som-map.json'), JSON.stringify(observation.marks, null, 2));
     console.log(`Set-of-Mark: ${Object.keys(observation.marks).length} elementos -> output/som.jpg y output/som-map.json`);
 
-    if (fs.existsSync(actionsFile)) {
-      const actions = JSON.parse(fs.readFileSync(actionsFile, 'utf8'));
-      const result = await runActions(page, actions, { marks: observation.marks });
-      console.log(result.ok
-        ? `Acciones completadas: ${result.done.length}`
-        : `Detenido en: ${JSON.stringify(result.failure.failedAction)} (${result.failure.error})`);
-      if (!result.ok) exitCode = 1;
+    const hasFile = fs.existsSync(actionsFile);
+    if (!hasFile && !goal) {
+      console.log('Sin archivo de acciones ni objetivo (--goal): solo se ha generado el marcado.');
+      return;
+    }
+    if (goal && !CONFIG.apiKey) {
+      console.warn('[aviso] Hay objetivo pero falta ANTHROPIC_API_KEY en .env: se ejecuta sin self-healing.');
+    }
+    if (!hasFile && !llmEnabled) {
+      throw new Error('No existe archivo de acciones y no se puede generar sin ANTHROPIC_API_KEY.');
+    }
+    console.log(llmEnabled ? `Self-healing: activo (modelo ${CONFIG.model})` : 'Self-healing: inactivo (falta --goal o la clave)');
+
+    // Consulta a Claude y deja el archivo JSON al dia. Devuelve el array de
+    // acciones pendientes, o null si hay que detenerse.
+    let finished = false; // Claude ha declarado el objetivo cumplido
+    let planChanged = false;
+    const askClaude = async (context) => {
+      const { requestPlan } = require('./claude.js');
+      let plan;
+      try {
+        plan = await requestPlan({
+          model: CONFIG.model,
+          goal,
+          url: context.url || page.url(),
+          marks: context.marks || {},
+          screenshotBase64: context.screenshotBase64,
+          done: context.done || [],
+          failure: context.failedAction ? context : null,
+        });
+      } catch (error) {
+        console.error(`[claude] ${error.message}`);
+        return null;
+      }
+      if (plan.status === 'done') { finished = true; return []; }
+      if (plan.status === 'blocked') return null;
+      planChanged = true;
+      saveActions(actionsFile, [...(context.done || []), ...plan.actions]);
+      return plan.actions;
+    };
+
+    let actions;
+    if (hasFile) {
+      actions = JSON.parse(fs.readFileSync(actionsFile, 'utf8'));
     } else {
-      console.log('Sin archivo de acciones: solo se ha generado el marcado.');
+      console.log('Sin archivo de acciones: se pide el plan inicial a Claude.');
+      actions = await askClaude({ ...observation, done: [] });
+      if (!actions) throw new Error('No se pudo obtener un plan inicial.');
+    }
+
+    const result = await runActions(page, actions, {
+      marks: observation.marks,
+      maxHeals: CONFIG.maxHeals,
+      onFailure: llmEnabled ? askClaude : null,
+      // Con archivo propio y sin fallos no se consulta a Claude: se respeta el guion.
+      onExhausted: llmEnabled && !hasFile ? askClaude : null,
+    });
+
+    // Al terminar, el archivo queda con lo realmente ejecutado y selectores estables.
+    if (result.ok && planChanged) saveActions(actionsFile, result.done);
+
+    if (!result.ok) {
+      console.log(`Detenido en: ${JSON.stringify(result.failure.failedAction)} (${result.failure.error})`);
+      exitCode = 1;
+    } else if (llmEnabled && !hasFile && !finished) {
+      console.log(`Acciones ejecutadas: ${result.done.length}, pero Claude no ha confirmado el objetivo (limite de ${CONFIG.maxHeals} consultas o bloqueo).`);
+      exitCode = 1;
+    } else {
+      console.log(`Acciones completadas: ${result.done.length}${finished ? ' - objetivo confirmado por Claude.' : ''}`);
     }
   } catch (error) {
     console.error(`ERROR: ${error.message}`);
     exitCode = 1;
   } finally {
     await browser.close();
+    process.exitCode = exitCode;
   }
-  process.exitCode = exitCode;
 }
 
 if (require.main === module) {
