@@ -8,8 +8,10 @@
  *   3. Set-of-Mark: marcas numeradas sobre los elementos interactivos visibles
  *   4. Interprete de acciones JSON (sin eval / Function / child_process)
  *
- *   5. Self-healing: si una accion falla, Claude (claude.js) recibe la captura
+ *   5. Self-healing: si una accion falla, el planificador recibe la captura
  *      marcada y devuelve un nuevo array JSON, que se guarda en el archivo.
+ *      Planificador = Claude (claude.js) o, sin clave de API, simulado (mock.js).
+ *   6. Informe HTML auto-contenido al terminar (report.js).
  *
  * Uso:  node init.js [url] [ruta-acciones.json] [--goal "objetivo de la prueba"]
  */
@@ -500,11 +502,36 @@ function saveActions(file, actions) {
 
 async function main() {
   const { url, actionsFile, goal } = parseArgs(process.argv.slice(2));
-  const llmEnabled = Boolean(goal && CONFIG.apiKey);
+  // Con objetivo hay planificador. Sin clave de API se usa el simulado (mock.js),
+  // que no llama a ninguna API; con clave, Claude (claude.js).
+  const plannerEnabled = Boolean(goal);
+  const simulated = !CONFIG.apiKey;
+  const plannerName = simulated ? 'mock' : 'claude';
 
-  const { browser, page } = await launchBrowser();
-  let exitCode = 0;
+  // Todo lo que necesita el informe se va anotando aqui durante la ejecucion.
+  const run = {
+    url,
+    goal,
+    device: DEVICE_NAME,
+    mode: !plannerEnabled ? 'sin planificador' : simulated ? 'simulado' : 'real',
+    model: CONFIG.model,
+    actionsFile,
+    startedAt: new Date(),
+    finishedAt: null,
+    status: 'fallo',
+    summary: '',
+    done: [],
+    failed: null,
+    pending: [],
+    plannerLog: [],
+    screenshotBase64: null,
+  };
+  let writeReport = true;
+  let browser = null;
+  let page = null;
+
   try {
+    ({ browser, page } = await launchBrowser());
     console.log(`Dispositivo: ${DEVICE_NAME} | headless: ${CONFIG.headless}`);
     console.log(`Abriendo:    ${url}`);
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
@@ -525,22 +552,21 @@ async function main() {
     const hasFile = fs.existsSync(actionsFile);
     if (!hasFile && !goal) {
       console.log('Sin archivo de acciones ni objetivo (--goal): solo se ha generado el marcado.');
+      writeReport = false; // no ha habido prueba: no hay nada que informar
+      run.status = 'exito';
       return;
     }
-    if (goal && !CONFIG.apiKey) {
-      console.warn('[aviso] Hay objetivo pero falta ANTHROPIC_API_KEY en .env: se ejecuta sin self-healing.');
-    }
-    if (!hasFile && !llmEnabled) {
-      throw new Error('No existe archivo de acciones y no se puede generar sin ANTHROPIC_API_KEY.');
-    }
-    console.log(llmEnabled ? `Self-healing: activo (modelo ${CONFIG.model})` : 'Self-healing: inactivo (falta --goal o la clave)');
+    if (!plannerEnabled) console.log('Planificador: inactivo (no se ha indicado --goal). Se ejecuta el guion tal cual.');
+    else if (simulated) console.log('Planificador: SIMULADO (ANTHROPIC_API_KEY vacia). No se llama a ninguna API.');
+    else console.log(`Planificador: Claude (modelo ${CONFIG.model})`);
 
-    // Consulta a Claude y deja el archivo JSON al dia. Devuelve el array de
-    // acciones pendientes, o null si hay que detenerse.
-    let finished = false; // Claude ha declarado el objetivo cumplido
+    // Consulta al planificador y deja el archivo JSON al dia. Devuelve el
+    // array de acciones pendientes, o null si hay que detenerse.
+    let finished = false; // el planificador ha declarado el objetivo cumplido
     let planChanged = false;
-    const askClaude = async (context) => {
-      const { requestPlan } = require('./claude.js');
+    const askPlanner = async (context) => {
+      const { requestPlan } = require(simulated ? './mock.js' : './claude.js');
+      const trigger = context.failedAction ? 'fallo' : (context.done || []).length ? 'continuar' : 'inicial';
       let plan;
       try {
         plan = await requestPlan({
@@ -553,9 +579,11 @@ async function main() {
           failure: context.failedAction ? context : null,
         });
       } catch (error) {
-        console.error(`[claude] ${error.message}`);
+        console.error(`[${plannerName}] ${error.message}`);
+        run.plannerLog.push({ trigger, status: 'error', reason: error.message });
         return null;
       }
+      run.plannerLog.push({ trigger, status: plan.status, reason: plan.reason });
       if (plan.status === 'done') { finished = true; return []; }
       if (plan.status === 'blocked') return null;
       planChanged = true;
@@ -567,37 +595,66 @@ async function main() {
     if (hasFile) {
       actions = JSON.parse(fs.readFileSync(actionsFile, 'utf8'));
     } else {
-      console.log('Sin archivo de acciones: se pide el plan inicial a Claude.');
-      actions = await askClaude({ ...observation, done: [] });
+      console.log('Sin archivo de acciones: se pide el plan inicial al planificador.');
+      actions = await askPlanner({ ...observation, done: [] });
       if (!actions) throw new Error('No se pudo obtener un plan inicial.');
     }
 
     const result = await runActions(page, actions, {
       marks: observation.marks,
       maxHeals: CONFIG.maxHeals,
-      onFailure: llmEnabled ? askClaude : null,
-      // Con archivo propio y sin fallos no se consulta a Claude: se respeta el guion.
-      onExhausted: llmEnabled && !hasFile ? askClaude : null,
+      onFailure: plannerEnabled ? askPlanner : null,
+      // Con archivo propio y sin fallos no se consulta al planificador: se respeta el guion.
+      onExhausted: plannerEnabled && !hasFile ? askPlanner : null,
     });
 
     // Al terminar, el archivo queda con lo realmente ejecutado y selectores estables.
     if (result.ok && planChanged) saveActions(actionsFile, result.done);
 
+    run.done = result.done;
     if (!result.ok) {
-      console.log(`Detenido en: ${JSON.stringify(result.failure.failedAction)} (${result.failure.error})`);
-      exitCode = 1;
-    } else if (llmEnabled && !hasFile && !finished) {
-      console.log(`Acciones ejecutadas: ${result.done.length}, pero Claude no ha confirmado el objetivo (limite de ${CONFIG.maxHeals} consultas o bloqueo).`);
-      exitCode = 1;
+      const failure = result.failure;
+      run.failed = { action: failure.failedAction, error: failure.error };
+      run.pending = failure.pending.slice(1); // la primera pendiente es la que ha fallado
+      run.screenshotBase64 = failure.screenshotBase64 || null;
+      run.summary = `La prueba se detuvo en el paso ${result.done.length + 1}: ${failure.error}`;
+      console.log(`Detenido en: ${JSON.stringify(failure.failedAction)} (${failure.error})`);
+    } else if (plannerEnabled && !hasFile && !finished) {
+      run.summary = `Se ejecutaron ${result.done.length} pasos sin errores, pero el planificador no confirmó que el objetivo se haya cumplido (límite de ${CONFIG.maxHeals} consultas o bloqueo).`;
+      console.log(`Acciones ejecutadas: ${result.done.length}, pero el planificador no ha confirmado el objetivo.`);
     } else {
-      console.log(`Acciones completadas: ${result.done.length}${finished ? ' - objetivo confirmado por Claude.' : ''}`);
+      run.status = 'exito';
+      run.summary = `Se completaron los ${result.done.length} pasos de la prueba` +
+        (finished ? ' y el planificador confirmó el objetivo.' : '.') +
+        (result.heals && planChanged ? ' Se reparó automáticamente al menos un paso.' : '');
+      console.log(`Acciones completadas: ${result.done.length}${finished ? ' - objetivo confirmado por el planificador.' : ''}`);
     }
   } catch (error) {
+    // Error critico: fuera del interprete (navegador, navegacion, firma, JSON ilegible...).
+    run.status = 'fallo';
+    run.summary = `Error crítico: ${error.message}`;
     console.error(`ERROR: ${error.message}`);
-    exitCode = 1;
   } finally {
-    await browser.close();
-    process.exitCode = exitCode;
+    // Captura para el informe si aun no hay ninguna (exito, o error critico).
+    if (writeReport && !run.screenshotBase64 && page) {
+      try {
+        await clearSetOfMark(page);
+        run.screenshotBase64 = await captureViewport(page);
+      } catch (_) { /* la pagina ya no esta disponible */ }
+    }
+    if (browser) await browser.close().catch(() => {});
+
+    if (writeReport) {
+      run.finishedAt = new Date();
+      try {
+        const { generateReport } = require('./report.js');
+        const file = generateReport(run, CONFIG.outputDir);
+        console.log(`Informe:     ${path.relative(process.cwd(), file)}`);
+      } catch (error) {
+        console.error(`No se pudo generar el informe: ${error.message}`);
+      }
+    }
+    process.exitCode = run.status === 'exito' ? 0 : 1;
   }
 }
 
