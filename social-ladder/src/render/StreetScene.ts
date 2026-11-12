@@ -11,6 +11,17 @@ import { money, type Decimal } from '../core/bignum';
 import { STATUS_DANGER } from '../data/social';
 import { flyToCash } from '../ui/components/FxOverlay';
 import { heroAnchor, sceneSignal } from './sceneBus';
+import { buildLayeredStage, coneTexture, glowTexture, hasLayeredStage, streakTexture, type Flicker, type LayeredStage, type StageLife, STAGE_LIFE } from './stageLayers';
+
+interface Layers {
+  sky: Phaser.GameObjects.TileSprite;
+  far: Phaser.GameObjects.TileSprite;
+  mid: Phaser.GameObjects.TileSprite;
+  moon: Phaser.GameObjects.Image;
+  moonHalo: Phaser.GameObjects.Image;
+  topFill: Phaser.GameObjects.Rectangle;
+  moonX: number;
+}
 
 const HERO_X = 84;
 const GROUND_RIDES: PropId[] = ['chainless_bicycle', 'secondhand_bicycle', 'motorcycle', 'used_car', 'sports_car'];
@@ -47,6 +58,13 @@ export class StreetScene extends Phaser.Scene {
   private idleObjs: Phaser.GameObjects.GameObject[] = [];
   private idleTimers: Phaser.Time.TimerEvent[] = [];
   private lastPoke = 0;
+  private layers?: Layers;
+  private stageTimers: Phaser.Time.TimerEvent[] = [];
+  private shadow!: Phaser.GameObjects.Ellipse;
+  private parallaxX = 0;
+  private pointerAt = -1e9;
+  private moths: { obj: Phaser.GameObjects.Rectangle; a: number; s: number; rx: number; ry: number }[] = [];
+  private mothCenter = { x: 0, y: 0 };
 
   constructor() {
     super('street');
@@ -58,7 +76,11 @@ export class StreetScene extends Phaser.Scene {
 
   create() {
     this.makeStaticTextures();
+    this.shadow = this.add.ellipse(HERO_X, GROUND_Y + 1, 16, 3, 0x000000, 0.35).setDepth(9.5);
     this.hero = this.add.sprite(HERO_X, GROUND_Y + 1, 'hero_0', 0).setOrigin(0.5, 1).setDepth(10);
+    this.input.on('pointermove', () => (this.pointerAt = this.time.now));
+    // Soft vignette pulls the eye to the middle of the street (WebGL only).
+    if (this.game.renderer.type === Phaser.WEBGL) this.cameras.main.postFX?.addVignette(0.5, 0.5, 0.95, 0.28);
     this.hero.setInteractive({ useHandCursor: true, pixelPerfect: false });
     this.hero.on('pointerdown', () => {
       this.engine.interact('hero');
@@ -89,7 +111,13 @@ export class StreetScene extends Phaser.Scene {
     }).setDepth(30);
 
     this.unsub.push(this.engine.onEvent((e) => this.onGameEvent(e)));
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unsub.forEach((u) => u()));
+    const unsubscribe = () => {
+      this.unsub.forEach((u) => u());
+      this.unsub = [];
+    };
+    // A destroyed game (remount, hot reload) never shuts its scenes down, so listen for both.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribe);
+    this.events.once(Phaser.Scenes.Events.DESTROY, unsubscribe);
     this.syncWorld(true);
 
     // Ambient life
@@ -164,6 +192,14 @@ export class StreetScene extends Phaser.Scene {
       tex.add(0, 0, 0, 0, 9, 18);
       tex.add(1, 0, 9, 0, 9, 18);
     }
+    const canvases: [string, () => HTMLCanvasElement][] = [
+      ['glow', glowTexture],
+      ['cone', coneTexture],
+      ['streak', streakTexture],
+      ['drop', () => solid(1, 3, '#a9bde8')],
+      ['splash', () => solid(3, 1, '#c8d6f2')],
+    ];
+    for (const [k, make] of canvases) if (!this.textures.exists(k)) this.textures.addCanvas(k, make());
     if (!this.textures.exists('puff')) {
       const c = document.createElement('canvas');
       c.width = 4;
@@ -228,8 +264,20 @@ export class StreetScene extends Phaser.Scene {
   private buildStage(index: number, animate: boolean) {
     this.stageIndex = index;
     const key = `stage_${index}`;
+    const layeredKey = `${key}_layered`;
     let layout: StageScene;
-    if (!this.textures.exists(key)) {
+    let layered: LayeredStage | undefined;
+    if (hasLayeredStage(index)) {
+      layered = this.registry.get(layeredKey) as LayeredStage | undefined;
+      if (!layered) {
+        layered = buildLayeredStage(index)!;
+        this.textures.addCanvas(key, layered.base);
+        for (const part of ['sky', 'far', 'mid', 'moon'] as const) this.textures.addCanvas(`${key}_${part}`, layered[part]);
+        if (layered.neon) this.textures.addCanvas(`${key}_neon`, layered.neon.canvas);
+        this.registry.set(layeredKey, layered);
+      }
+      layout = layered.scene;
+    } else if (!this.textures.exists(key)) {
       const built = buildStage(index);
       this.textures.addCanvas(key, built.canvas);
       this.registry.set(key, built.scene);
@@ -250,9 +298,15 @@ export class StreetScene extends Phaser.Scene {
       o.destroy();
     });
     this.stageObjects = [];
+    this.stageTimers.forEach((t) => t.remove());
+    this.stageTimers = [];
+    this.moths = [];
+    this.layers = undefined;
     this.pigeon = undefined;
     this.aura = undefined;
-    this.extendBackground(key, layout);
+    this.extendBackground(key, layout, !!layered);
+    if (layered) this.addLayers(key, layered);
+    else if (STAGE_LIFE[index]) this.addLife(key, STAGE_LIFE[index]!, layout.sky);
 
     // Sky object (sun / moon / earth) — a secret hotspot.
     const skyZone = this.add.zone(layout.sky.x, layout.sky.y, 22, 22).setInteractive({ useHandCursor: true }).setDepth(5);
@@ -313,7 +367,7 @@ export class StreetScene extends Phaser.Scene {
       const night = index === 0;
       for (let i = 0; i < 3; i++) {
         const scale = i === 0 ? 2 : 1;
-        const cl = this.add.image(rand(this.view.left, this.view.right), 3 + i * 7 + Math.random() * 4, 'drift_cloud').setOrigin(0, 0).setScale(scale).setDepth(1)
+        const cl = this.add.image(rand(this.view.left, this.view.right), 3 + i * 7 + Math.random() * 4, 'drift_cloud').setOrigin(0, 0).setScale(scale).setDepth(this.layers ? -2.5 : 1)
           .setAlpha(night ? 0.22 : 0.75 - i * 0.12).setTint(night ? 0xa855f7 : index >= 5 ? 0xfff6c8 : 0xffffff);
         const speed = 3 + i * 2 + Math.random() * 2;
         const travel = () => {
@@ -498,12 +552,281 @@ export class StreetScene extends Phaser.Scene {
     const cy = WORLD_H / 2 - Math.max(0, visH - WORLD_H) * 0.2;
     cam.centerOn(cx, cy);
     this.view = { left: cx - visW / 2, right: cx + visW / 2, top: cy - visH / 2, bottom: cy + visH / 2 };
+    this.layoutLayers();
+  }
+
+  /** Stretches the parallax strips across whatever part of the world is visible. */
+  private layoutLayers() {
+    const L = this.layers;
+    if (!L) return;
+    const x = Math.floor(this.view.left) - 16;
+    const w = Math.ceil(this.view.right - this.view.left) + 32;
+    for (const t of [L.sky, L.far, L.mid]) {
+      t.setPosition(x, 0);
+      t.setSize(w, WORLD_H);
+    }
+    L.topFill.setPosition(x, Math.min(0, Math.floor(this.view.top) - 2)).setSize(w, Math.max(0, -Math.floor(this.view.top) + 2));
+    this.applyParallax();
+  }
+
+  /** Offsets the far layers against the street; nearer layers move less. */
+  private applyParallax() {
+    const L = this.layers;
+    if (!L) return;
+    const d = this.parallaxX * 5;
+    L.sky.tilePositionX = L.sky.x - Math.round(d * 0.95);
+    L.far.tilePositionX = L.far.x - Math.round(d * 0.7);
+    L.mid.tilePositionX = L.mid.x - Math.round(d * 0.4);
+    L.moon.x = L.moonX + Math.round(d * 0.9);
+    L.moonHalo.x = L.moon.x;
+  }
+
+  /** Sky, skyline and rooftops behind the alley, plus its live lights and weather. */
+  private addLayers(key: string, st: LayeredStage) {
+    const rm = this.reducedMotion();
+    const skyTop = (st.sky.getContext('2d')!.getImageData(0, 0, 1, 1).data);
+    const L: Layers = {
+      topFill: this.add.rectangle(0, 0, 1, 1, (skyTop[0] << 16) | (skyTop[1] << 8) | skyTop[2]).setOrigin(0, 0).setDepth(-4),
+      sky: this.add.tileSprite(0, 0, WORLD_W, WORLD_H, `${key}_sky`).setOrigin(0, 0).setDepth(-4),
+      moonHalo: this.add.image(st.scene.sky.x, st.scene.sky.y, 'glow').setScale(1.6).setTint(0xfff1c9).setAlpha(0.2).setBlendMode(Phaser.BlendModes.ADD).setDepth(-3.5),
+      moon: this.add.image(st.scene.sky.x, st.scene.sky.y, `${key}_moon`).setDepth(-3.4),
+      far: this.add.tileSprite(0, 0, WORLD_W, WORLD_H, `${key}_far`).setOrigin(0, 0).setDepth(-2),
+      mid: this.add.tileSprite(0, 0, WORLD_W, WORLD_H, `${key}_mid`).setOrigin(0, 0).setDepth(-1),
+      moonX: st.scene.sky.x,
+    };
+    this.layers = L;
+    this.stageObjects.push(L.topFill, L.sky, L.moonHalo, L.moon, L.far, L.mid);
+    if (!rm) this.tweens.add({ targets: L.moonHalo, alpha: { from: 0.14, to: 0.26 }, scale: { from: 1.5, to: 1.7 }, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    this.layoutLayers();
+
+    // Far windows switch on and off: the city is awake.
+    const farTex = this.textures.get(`${key}_far`) as Phaser.Textures.CanvasTexture;
+    const fctx = st.far.getContext('2d')!;
+    if (!rm) this.stageTimers.push(this.time.addEvent({ delay: 900, loop: true, callback: () => {
+      const w = st.farWindows[Math.floor(Math.random() * st.farWindows.length)];
+      w.lit = !w.lit && Math.random() < 0.6;
+      fctx.fillStyle = w.lit ? st.farLit : st.farWall;
+      fctx.fillRect(w.x, w.y, 1, 1);
+      farTex.refresh();
+    } }));
+
+    this.addLife(key, st, st.scene.sky);
+  }
+
+  /** Live lights, steam, weather and passing traffic for any stage. */
+  private addLife(key: string, st: StageLife & { neon?: LayeredStage['neon'] }, skyPos: { x: number; y: number }) {
+    const rm = this.reducedMotion();
+    if (st.halo) {
+      const h = this.add.image(skyPos.x, skyPos.y, 'glow').setTint(st.halo.color).setAlpha(0.3).setScale((st.halo.r * 2) / 32).setBlendMode(Phaser.BlendModes.ADD).setDepth(0.5);
+      this.stageObjects.push(h);
+      if (!rm) this.tweens.add({ targets: h, alpha: { from: 0.22, to: 0.38 }, scale: { from: (st.halo.r * 1.9) / 32, to: (st.halo.r * 2.2) / 32 }, duration: 3000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    }
+    // Lights grouped by flicker style, so a lamp's bulb, pool and reflection flicker together.
+    const groups = new Map<Flicker, { obj: Phaser.GameObjects.Image; a: number }[]>();
+    const join = (f: Flicker | undefined, obj: Phaser.GameObjects.Image, a: number) => {
+      this.stageObjects.push(obj);
+      if (!f) return;
+      if (!groups.has(f)) groups.set(f, []);
+      groups.get(f)!.push({ obj, a });
+    };
+    // The mirrored side copies of a layered stage carry the same lamps, so they get the same lights.
+    const xs = (x: number, f?: Flicker) => (this.layers && f !== 'neon' ? [x, -x, 2 * WORLD_W - x] : [x]);
+    for (const l of st.lights) for (const x of xs(l.x, l.flicker)) {
+      const g = this.add.image(x, l.y, 'glow').setTint(l.color).setAlpha(l.alpha).setBlendMode(Phaser.BlendModes.ADD).setDepth(8)
+        .setScale((l.r * 2) / 32, ((l.r * 2) / 32) * (l.squash ?? 1));
+      join(l.flicker, g, l.alpha);
+    }
+    for (const rf of st.reflections) for (const x of xs(rf.x, rf.flicker)) {
+      const s = this.add.image(x, rf.y, 'streak').setOrigin(0.5, 0).setTint(rf.color).setAlpha(rf.alpha).setBlendMode(Phaser.BlendModes.ADD).setDepth(1);
+      if (!rm) this.tweens.add({ targets: s, scaleX: { from: 0.8, to: 1.5 }, duration: 700 + Math.random() * 500, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      join(rf.flicker, s, rf.alpha);
+    }
+    if (st.cone) for (const x of xs(st.cone.x)) {
+      const c = this.add.image(x, st.cone.y, 'cone').setOrigin(0.5, 0).setTint(0xffd166).setAlpha(st.cone.alpha).setBlendMode(Phaser.BlendModes.ADD).setDepth(8);
+      join('lamp', c, st.cone.alpha);
+    }
+    if (st.neon) {
+      const n = this.add.image(st.neon.x, st.neon.y, `${key}_neon`).setDepth(1);
+      if (this.game.renderer.type === Phaser.WEBGL) n.preFX?.addGlow(0xff4fa3, 2, 0, false, 0.1, 6);
+      join('neon', n, 1);
+    }
+    this.runFlickers(groups, rm);
+
+    for (const sm of st.steam) {
+      const em = this.add.particles(sm.x, sm.y, 'puff', {
+        x: { min: -6, max: 6 },
+        speedY: { min: -9, max: -5 },
+        speedX: { min: -2, max: 3 },
+        lifespan: 2600,
+        alpha: { start: 0.28, end: 0 },
+        scale: { start: 1, end: 2.6 },
+        tint: 0xc9bfe0,
+        frequency: rm ? -1 : 700,
+      }).setDepth(9);
+      this.stageObjects.push(em);
+    }
+    if (st.moths && !rm) {
+      this.mothCenter = st.moths;
+      for (let i = 0; i < 3; i++) {
+        const m = this.add.rectangle(st.moths.x, st.moths.y, 1, 1, 0xfff1c9).setDepth(9);
+        this.moths.push({ obj: m, a: Math.random() * 6.28, s: 0.004 + Math.random() * 0.004, rx: 5 + Math.random() * 5, ry: 2 + Math.random() * 3 });
+        this.stageObjects.push(m);
+      }
+    }
+    if (st.drip && !rm) {
+      const d = st.drip;
+      this.stageTimers.push(this.time.addEvent({ delay: 2600, loop: true, callback: () => {
+        const drop = this.add.image(d.x, d.y, 'drop').setDepth(2).setTint(0x9fb8e8);
+        this.stageObjects.push(drop);
+        this.tweens.add({ targets: drop, y: GROUND_Y - 6, duration: 520, ease: 'Quad.in', onComplete: () => {
+          drop.destroy();
+          this.splashAt(d.x, GROUND_Y - 6);
+        } });
+      } }));
+    }
+    if (st.rain && !rm) this.startWeather();
+    if (st.traffic && !rm) {
+      const kind = st.traffic;
+      const carLoop = () => this.stageTimers.push(this.time.delayedCall(rand(9000, 22000), () => { this.passingCar(kind); carLoop(); }));
+      carLoop();
+    }
+  }
+
+  private runFlickers(groups: Map<Flicker, { obj: Phaser.GameObjects.Image; a: number }[]>, rm: boolean) {
+    const set = (list: { obj: Phaser.GameObjects.Image; a: number }[], k: number) => list.forEach(({ obj, a }) => obj.active && obj.setAlpha(a * k));
+    if (rm) return;
+    const candle = groups.get('candle');
+    if (candle) this.stageTimers.push(this.time.addEvent({ delay: 110, loop: true, callback: () => set(candle, 0.7 + Math.random() * 0.4) }));
+    const pulse = groups.get('pulse');
+    if (pulse) pulse.forEach(({ obj, a }) => this.tweens.add({ targets: obj, alpha: { from: a * 0.75, to: a }, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.inOut' }));
+    // Lamp: steady, with the odd stutter of a tired bulb.
+    const lamp = groups.get('lamp');
+    if (lamp) {
+      const stutter = () => this.stageTimers.push(this.time.delayedCall(rand(4000, 11000), () => {
+        const seq = [0.25, 1, 0.4, 1, 0.15, 1];
+        seq.forEach((k, i) => this.stageTimers.push(this.time.delayedCall(i * 70, () => set(lamp, k))));
+        stutter();
+      }));
+      stutter();
+    }
+    // Neon: a buzzing sign that drops out now and then.
+    const neon = groups.get('neon');
+    if (neon) {
+      const buzz = () => this.stageTimers.push(this.time.delayedCall(rand(3000, 9000), () => {
+        const seq = Math.random() < 0.3 ? [0.1, 1, 0.1, 0.1, 0.1, 1] : [0.2, 1, 0.5, 1];
+        seq.forEach((k, i) => this.stageTimers.push(this.time.delayedCall(i * 90, () => set(neon, k))));
+        buzz();
+      }));
+      buzz();
+    }
+  }
+
+  private splashAt(x: number, y: number) {
+    const s = this.add.image(x, y, 'splash').setDepth(13).setAlpha(0.8);
+    this.tweens.add({ targets: s, scaleX: 2.5, alpha: 0, y: y - 1, duration: 260, onComplete: () => s.destroy() });
+  }
+
+  /** Drizzle that comes and goes, with splashes on the pavement. */
+  private startWeather() {
+    const span = () => ({ min: this.view.left - 20, max: this.view.right + 30 });
+    const rain = this.add.particles(0, 0, 'drop', {
+      x: { onEmit: () => rand(span().min, span().max) },
+      y: { onEmit: () => this.view.top - 6 },
+      speedY: { min: 170, max: 210 },
+      speedX: { min: -34, max: -26 },
+      lifespan: { min: 650, max: 1000 },
+      alpha: { min: 0.35, max: 0.7 },
+      frequency: 14,
+      emitting: false,
+    }).setDepth(26);
+    const splash = this.add.particles(0, 0, 'splash', {
+      x: { onEmit: () => rand(span().min, span().max) },
+      y: { min: GROUND_Y - 6, max: WORLD_H - 2 },
+      lifespan: 220,
+      alpha: { start: 0.7, end: 0 },
+      scaleX: { start: 0.6, end: 2.2 },
+      frequency: 45,
+      emitting: false,
+    }).setDepth(13);
+    this.stageObjects.push(rain, splash);
+    let raining = Math.random() < 0.6;
+    const apply = () => {
+      if (raining) {
+        rain.start();
+        splash.start();
+      } else {
+        rain.stop();
+        splash.stop();
+      }
+    };
+    apply();
+    const cycle = () => this.stageTimers.push(this.time.delayedCall(raining ? rand(30000, 50000) : rand(25000, 45000), () => {
+      raining = !raining;
+      apply();
+      cycle();
+    }));
+    cycle();
+  }
+
+  /** A car rolls past with its headlights on, washing light along the road. */
+  private passingCar(kind: NonNullable<StageLife['traffic']>) {
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    if (kind === 'yacht' || kind === 'comet') return this.passingFar(kind, dir);
+    const night = kind === 'nightCar';
+    const from = dir > 0 ? this.view.left - 50 : this.view.right + 50;
+    const to = dir > 0 ? this.view.right + 50 : this.view.left - 50;
+    const model = this.stageIndex >= 4 ? 'sports_car' : 'used_car';
+    const car = this.add.image(from, WORLD_H + 1, model).setOrigin(0.5, 1).setFlipX(dir < 0).setDepth(12);
+    if (night) car.setTint(0x6a5a80);
+    const beam = this.add.image(from, WORLD_H - 8, 'glow').setScale(2.2, 0.5).setTint(0xfff1c9).setAlpha(night ? 0.5 : 0).setBlendMode(Phaser.BlendModes.ADD).setDepth(12);
+    const tail = this.add.image(from, WORLD_H - 8, 'glow').setScale(0.35).setTint(0xff3b3b).setAlpha(night ? 0.8 : 0).setBlendMode(Phaser.BlendModes.ADD).setDepth(12);
+    this.stageObjects.push(car, beam, tail);
+    this.tweens.add({
+      targets: car,
+      x: to,
+      duration: rand(3200, 4400),
+      onUpdate: () => {
+        beam.x = car.x + dir * 34;
+        tail.x = car.x - dir * 19;
+      },
+      onComplete: () => [car, beam, tail].forEach((o) => o.destroy()),
+    });
+  }
+
+  /** Traffic on the horizon: a yacht crossing the sea, or a comet across space. */
+  private passingFar(kind: 'yacht' | 'comet', dir: number) {
+    const from = dir > 0 ? this.view.left - 50 : this.view.right + 50;
+    const to = dir > 0 ? this.view.right + 50 : this.view.left - 50;
+    if (kind === 'yacht') {
+      const y = rand(92, 104);
+      const boat = this.add.image(from, y, 'yacht').setOrigin(0.5, 1).setFlipX(dir < 0).setDepth(1);
+      const wake = this.add.particles(0, 0, 'splash', { follow: boat, followOffset: { x: -dir * 22, y: -1 }, lifespan: 900, speedX: { min: -dir * 6, max: -dir * 2 }, alpha: { start: 0.8, end: 0 }, scaleX: { start: 1, end: 3 }, frequency: 120 }).setDepth(1);
+      this.stageObjects.push(boat, wake);
+      this.tweens.add({ targets: boat, y: y - 1, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      this.tweens.add({ targets: boat, x: to, duration: rand(14000, 20000), onComplete: () => { this.tweens.killTweensOf(boat); boat.destroy(); wake.destroy(); } });
+      return;
+    }
+    const y0 = rand(4, 30);
+    const head = this.add.image(from, y0, 'glow').setScale(0.4).setTint(0xfff6b0).setBlendMode(Phaser.BlendModes.ADD).setDepth(0.6);
+    const trail = this.add.particles(0, 0, 'confetti', { follow: head, lifespan: 700, alpha: { start: 0.8, end: 0 }, scale: { start: 1, end: 0.3 }, tint: [0x29f0ff, 0xffffff, 0xa259ff], frequency: 25, blendMode: Phaser.BlendModes.ADD }).setDepth(0.6);
+    this.stageObjects.push(head, trail);
+    this.tweens.add({ targets: head, x: to, y: y0 + rand(20, 40), duration: rand(1800, 2600), ease: 'Sine.in', onComplete: () => { head.destroy(); this.time.delayedCall(800, () => trail.destroy()); } });
   }
 
   /** Mirrored copies of the stage to the sides and sky/road colour above and below. */
-  private extendBackground(key: string, layout: StageScene) {
+  private extendBackground(key: string, layout: StageScene, layered = false) {
     const extKey = `${key}_ext`;
     const src = this.textures.get(key).getSourceImage() as HTMLCanvasElement;
+    if (layered && !this.textures.exists(extKey)) {
+      const c = document.createElement('canvas');
+      c.width = WORLD_W;
+      c.height = WORLD_H;
+      const ctx = c.getContext('2d')!;
+      ctx.translate(WORLD_W, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(src, 0, 0);
+      this.textures.addCanvas(extKey, c);
+    }
     if (!this.textures.exists(extKey)) {
       const c = document.createElement('canvas');
       c.width = WORLD_W;
@@ -536,9 +859,10 @@ export class StreetScene extends Phaser.Scene {
       this.add.image(WORLD_W, 0, extKey).setOrigin(0, 0).setDepth(0),
       this.add.image(-WORLD_W, 0, key).setOrigin(1, 0).setDepth(0),
       this.add.image(WORLD_W * 2, 0, key).setOrigin(0, 0).setDepth(0),
-      this.add.rectangle(-WORLD_W * 2, -400, WORLD_W * 5, 400, color(0)).setOrigin(0, 0).setDepth(0),
       this.add.rectangle(-WORLD_W * 2, WORLD_H, WORLD_W * 5, 400, color(WORLD_H - 1)).setOrigin(0, 0).setDepth(0),
     );
+    // Layered stages bring their own sky; flat ones extend their top row upwards.
+    if (!layered) this.stageObjects.push(this.add.rectangle(-WORLD_W * 2, -400, WORLD_W * 5, 400, color(0)).setOrigin(0, 0).setDepth(0));
   }
 
   /** World point → page coordinates, for the DOM effects layer. */
@@ -688,7 +1012,8 @@ export class StreetScene extends Phaser.Scene {
     const p = this.add.sprite(from, GROUND_Y - 1, `ped_${Math.floor(Math.random() * PED_VARIANTS)}`, 0).setOrigin(0.5, 1).setDepth(7).setFlipX(dir < 0);
     p.setInteractive({ useHandCursor: true });
     const walk = this.time.addEvent({ delay: 200, loop: true, callback: () => p.setFrame(p.frame.name === '0' ? 1 : 0) });
-    const tween = this.tweens.add({ targets: p, x: to, duration: (Math.abs(to - from) / rand(14, 22)) * 1000, onComplete: () => { walk.remove(); p.destroy(); } });
+    const shadow = this.add.ellipse(from, GROUND_Y - 1, 9, 2, 0x000000, 0.3).setDepth(6.9);
+    const tween = this.tweens.add({ targets: p, x: to, duration: (Math.abs(to - from) / rand(14, 22)) * 1000, onUpdate: () => (shadow.x = p.x), onComplete: () => { walk.remove(); p.destroy(); shadow.destroy(); } });
     let tapped = false;
     p.on('pointerdown', () => {
       if (tapped) return;
@@ -734,6 +1059,20 @@ export class StreetScene extends Phaser.Scene {
     const stage = STAGE_BY_ID[this.engine.rank.stage].index;
     if (stage !== this.stageIndex || (this.engine.state.equipped.ride ?? '') !== this.rideKey) this.syncWorld();
     if (this.aura) this.aura.x = this.hero.x;
+    this.shadow.x = this.hero.x;
+    this.shadow.scaleX = 1 - Math.min(0.4, (GROUND_Y + 1 - this.hero.y) * 0.08);
+    if (this.layers && !this.reducedMotion()) {
+      const now = this.time.now;
+      const target = now - this.pointerAt < 4000
+        ? Phaser.Math.Clamp((this.input.activePointer.x / this.scale.gameSize.width - 0.5) * 2, -1, 1)
+        : Math.sin(now / 9000) * 0.6 + (this.hero.x - HERO_X) / 60;
+      this.parallaxX += (target - this.parallaxX) * 0.04;
+      this.applyParallax();
+    }
+    for (const m of this.moths) {
+      m.a += m.s * this.game.loop.delta;
+      m.obj.setPosition(Math.round(this.mothCenter.x + Math.cos(m.a) * m.rx), Math.round(this.mothCenter.y + Math.sin(m.a * 1.7) * m.ry));
+    }
     const v = this.cameras.main.worldView;
     if (v.width > 0) {
       heroAnchor.x = (this.hero.x - v.x) / v.width;
@@ -784,6 +1123,16 @@ function buildPedestrian(i: number): HTMLCanvasElement {
   return c;
 }
 
+function solid(w: number, h: number, color: string): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, w, h);
+  return c;
+}
+
 function hash(s: string): string {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
@@ -791,7 +1140,7 @@ function hash(s: string): string {
 }
 
 export function createGame(parent: HTMLElement, engine: GameEngine): Phaser.Game {
-  return new Phaser.Game({
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     width: WORLD_W,
@@ -809,4 +1158,7 @@ export function createGame(parent: HTMLElement, engine: GameEngine): Phaser.Game
       },
     },
   });
+  // Dev builds expose the game so each class's street can be previewed from the console.
+  if (import.meta.env.DEV) (window as unknown as { __street?: Phaser.Game }).__street = game;
+  return game;
 }

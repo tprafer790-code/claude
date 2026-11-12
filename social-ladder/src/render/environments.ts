@@ -28,18 +28,18 @@ export interface StageScene {
   sparkles?: { x: number; y: number }[];
 }
 
-function rng(seed: number) {
+export function rng(seed: number) {
   let s = seed >>> 0;
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
 }
 
-const rect = (ctx: Ctx, c: string, x: number, y: number, w: number, h: number) => {
+export const rect = (ctx: Ctx, c: string, x: number, y: number, w: number, h: number) => {
   ctx.fillStyle = c;
   ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
 };
 
 /** Banded sky with a 2-row checker dither between bands (classic 16-bit look). */
-function sky(ctx: Ctx, colors: string[], top = 0, bottom = WORLD_H) {
+export function sky(ctx: Ctx, colors: string[], top = 0, bottom = WORLD_H) {
   const band = (bottom - top) / colors.length;
   colors.forEach((c, i) => rect(ctx, c, 0, top + i * band, WORLD_W, band + 1));
   for (let i = 1; i < colors.length; i++) {
@@ -52,7 +52,7 @@ function sky(ctx: Ctx, colors: string[], top = 0, bottom = WORLD_H) {
   }
 }
 
-function stars(ctx: Ctx, r: () => number, n: number, maxY: number) {
+export function stars(ctx: Ctx, r: () => number, n: number, maxY: number) {
   for (let i = 0; i < n; i++) {
     const x = Math.floor(r() * WORLD_W);
     const y = Math.floor(r() * maxY);
@@ -81,7 +81,7 @@ function moonDisc(ctx: Ctx, x: number, y: number) {
 }
 
 /** Generic building block with a window grid. */
-function building(ctx: Ctx, r: () => number, x: number, y: number, w: number, h: number, wall: string, win: string, lit: string, litChance: number, winW = 2, winH = 2, gapX = 2, gapY = 3) {
+export function building(ctx: Ctx, r: () => number, x: number, y: number, w: number, h: number, wall: string, win: string, lit: string, litChance: number, winW = 2, winH = 2, gapX = 2, gapY = 3) {
   rect(ctx, wall, x, y, w, h);
   rect(ctx, P.ink, x, y, w, 1);
   for (let wy = y + 3; wy < y + h - 3; wy += winH + gapY) {
@@ -91,7 +91,7 @@ function building(ctx: Ctx, r: () => number, x: number, y: number, w: number, h:
   }
 }
 
-function sidewalk(ctx: Ctx, top: string, line: string, road: string, lane: string | null) {
+export function sidewalk(ctx: Ctx, top: string, line: string, road: string, lane: string | null) {
   rect(ctx, top, 0, 112, WORLD_W, 9);
   for (let x = 0; x < WORLD_W; x += 16) rect(ctx, line, x, 112, 1, 9);
   rect(ctx, line, 0, 120, WORLD_W, 1);
