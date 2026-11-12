@@ -15,6 +15,8 @@ export class AudioManager {
   private master!: GainNode;
   private sfxGain!: GainNode;
   private musicGain!: GainNode;
+  /** Lead melody bus: feeds the music mix plus a filtered echo. */
+  private leadBus!: GainNode;
   private noiseBuf!: AudioBuffer;
   private lastClick = 0;
   private lastCrit = 0;
@@ -37,12 +39,52 @@ export class AudioManager {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
     this.ctx = new AC();
-    this.master = this.ctx.createGain();
-    this.master.connect(this.ctx.destination);
-    this.sfxGain = this.ctx.createGain();
+    const ctx = this.ctx;
+    this.master = ctx.createGain();
+    // Gentle bus compression glues music and effects together and stops peaks clipping.
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16;
+    comp.knee.value = 12;
+    comp.ratio.value = 3;
+    comp.attack.value = 0.008;
+    comp.release.value = 0.2;
+    this.master.connect(comp);
+    comp.connect(ctx.destination);
+    this.sfxGain = ctx.createGain();
     this.sfxGain.connect(this.master);
-    this.musicGain = this.ctx.createGain();
-    this.musicGain.connect(this.master);
+    this.musicGain = ctx.createGain();
+    // Music: a warm low-pass so square waves are less harsh, plus a short room reverb.
+    const warm = ctx.createBiquadFilter();
+    warm.type = 'lowpass';
+    warm.frequency.value = 5200;
+    warm.Q.value = 0.4;
+    this.musicGain.connect(warm);
+    warm.connect(this.master);
+    const verb = ctx.createConvolver();
+    verb.buffer = this.impulse(1.8, 2.6);
+    const verbGain = ctx.createGain();
+    verbGain.gain.value = 0.32;
+    warm.connect(verb);
+    verb.connect(verbGain);
+    verbGain.connect(this.master);
+    // Lead echo (filtered feedback delay).
+    this.leadBus = ctx.createGain();
+    this.leadBus.connect(this.musicGain);
+    const delay = ctx.createDelay(1);
+    delay.delayTime.value = 0.36;
+    const fb = ctx.createGain();
+    fb.gain.value = 0.32;
+    const dl = ctx.createBiquadFilter();
+    dl.type = 'lowpass';
+    dl.frequency.value = 2200;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.35;
+    this.leadBus.connect(delay);
+    delay.connect(dl);
+    dl.connect(fb);
+    fb.connect(delay);
+    dl.connect(wet);
+    wet.connect(this.musicGain);
     this.noiseBuf = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.5, this.ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -73,7 +115,59 @@ export class AudioManager {
   }
 
   setStage(stage: number) {
+    if (stage === this.stage) return;
     this.stage = stage;
+    // Each neighbourhood has its own theme: dip the music and restart it on bar one.
+    this.step = 0;
+    if (this.ctx) {
+      const t = this.ctx.currentTime;
+      this.musicGain.gain.cancelScheduledValues(t);
+      this.musicGain.gain.setTargetAtTime(0, t, 0.05);
+      this.musicGain.gain.setTargetAtTime(this.musicVolume * 0.22, t + 0.6, 0.4);
+    }
+  }
+
+  /** Decaying stereo noise impulse for the convolver reverb. */
+  private impulse(seconds: number, decay: number) {
+    const ctx = this.ctx!;
+    const len = Math.floor(ctx.sampleRate * seconds);
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
+  /** Melody voice: two slightly detuned oscillators with a soft attack and a touch of vibrato. */
+  private lead(freq: number, start: number, dur: number, wave: Wave, vol: number) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const g = ctx.createGain();
+    const attack = Math.min(0.03, dur * 0.2);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol, start + attack);
+    g.gain.setValueAtTime(vol, start + Math.max(attack, dur * 0.5));
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    g.connect(this.leadBus);
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 5.5;
+    const depth = ctx.createGain();
+    depth.gain.setValueAtTime(0, start);
+    depth.gain.linearRampToValueAtTime(dur > 0.4 ? 9 : 0, start + Math.min(dur, 0.35));
+    lfo.connect(depth);
+    for (const detune of [-7, 7]) {
+      const o = ctx.createOscillator();
+      o.type = wave;
+      o.frequency.setValueAtTime(freq, start);
+      o.detune.value = detune;
+      depth.connect(o.detune);
+      o.connect(g);
+      o.start(start);
+      o.stop(start + dur + 0.02);
+    }
+    lfo.start(start);
+    lfo.stop(start + dur + 0.02);
   }
 
   private tone(freq: number, start: number, dur: number, wave: Wave = 'square', vol = 0.3, dest?: AudioNode, slideTo?: number) {
@@ -179,6 +273,15 @@ export class AudioManager {
     this.noise(t + seq.length * 0.09, 0.5, 0.06, 7000);
   }
 
+  /** Cinematic transition: a rushing sweep that resolves into a rising chord. */
+  whoosh() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.noise(t, 0.7, 0.08, 1200);
+    this.noise(t + 0.18, 0.55, 0.06, 4200);
+    [N.C4, N.G4, N.C5, N.E5].forEach((n, i) => this.tone(NOTE(n), t + 0.35 + i * 0.07, 0.4, 'triangle', 0.08));
+  }
+
   coin() {
     const t = this.now;
     this.tone(NOTE(N.B5), t, 0.07, 'square', 0.15);
@@ -253,11 +356,20 @@ export class AudioManager {
     [N.C5, N.G5, N.C6, N.E6, N.G6].forEach((n, i) => this.tone(NOTE(n), t + 1.2 + i * 0.1, 0.5, 'square', 0.12));
   }
 
-  // ——— Music: a small original chiptune loop that shifts key/tempo with the social class ———
+  // ——— Music: an original chiptune theme for each neighbourhood ———
   private startMusic() {
     if (!this.ctx || this.musicTimer !== null) return;
     this.nextNoteTime = this.ctx.currentTime + 0.1;
     this.musicTimer = window.setInterval(() => this.scheduleMusic(), 50);
+  }
+
+  private drum(kind: string, t: number) {
+    if (kind === 'k') this.tone(150, t, 0.16, 'sine', 0.9, this.musicGain, 42);
+    else if (kind === 's') {
+      this.noise(t, 0.12, 0.35, 3500, this.musicGain);
+      this.tone(190, t, 0.06, 'triangle', 0.25, this.musicGain, 120);
+    } else if (kind === 'h') this.noise(t, 0.03, 0.14, 9500, this.musicGain);
+    else if (kind === 'o') this.noise(t, 0.14, 0.1, 8000, this.musicGain);
   }
 
   private scheduleMusic() {
@@ -265,25 +377,94 @@ export class AudioManager {
       if (this.ctx) this.nextNoteTime = this.ctx.currentTime + 0.1;
       return;
     }
-    const bpm = 92 + this.stage * 4;
-    const stepDur = 60 / bpm / 2; // eighth notes
-    const key = [0, 2, -3, 5, 3, 7, -1, 9][this.stage] ?? 0;
-    // I – V – vi – IV, 8 steps per chord
-    const chords = [[N.C4, N.E4, N.G4], [N.G4 - 12, N.B4 - 12, N.D4], [N.A4 - 12, N.C4, N.E4], [N.F4 - 12, N.A4 - 12, N.C4]];
-    const melody = [0, 1, 2, 1, 2, 0, 1, -1];
+    const th = THEMES[this.stage] ?? THEMES[0];
+    const sixteenth = 60 / th.bpm / 4;
     while (this.nextNoteTime < this.ctx.currentTime + 0.25) {
-      const t = this.nextNoteTime;
-      const chord = chords[Math.floor(this.step / 8) % 4];
-      const s = this.step % 8;
-      if (s % 4 === 0) this.tone(NOTE(chord[0] - 12 + key), t, stepDur * 1.8, 'triangle', 0.5, this.musicGain);
-      if (s % 4 === 2) this.tone(NOTE(chord[0] + key), t, stepDur * 0.9, 'triangle', 0.3, this.musicGain);
-      const m = melody[(s + Math.floor(this.step / 32)) % 8];
-      if (m >= 0 && (this.step % 16 < 12 || s % 2 === 0)) this.tone(NOTE(chord[m] + 12 + key), t, stepDur * 0.8, 'square', 0.12, this.musicGain);
-      if (s % 2 === 1) this.noise(t, 0.03, 0.15, 9000, this.musicGain);
-      this.nextNoteTime += stepDur;
+      const s = this.step % 16;
+      // Swing: off-beat sixteenths land a little late.
+      const t = this.nextNoteTime + (s % 2 ? sixteenth * th.swing : 0);
+      const bar = Math.floor(this.step / 16);
+      const [deg, quality] = th.chords[bar % th.chords.length];
+      const tones = quality === 'm' ? [0, 3, 7, 10] : quality === 'M7' ? [0, 4, 7, 11] : [0, 4, 7, 12];
+      const root = th.root + deg;
+      const b = th.bass[s];
+      if (b !== '.') this.tone(NOTE(root - 24 + (b === '5' ? 7 : b === '8' ? 12 : 0)), t, sixteenth * 1.7, th.bassWave, 0.5, this.musicGain);
+      if (th.pad && s === 0) for (const iv of tones.slice(0, 3)) this.tone(NOTE(root + iv - 12), t, sixteenth * 15, 'sine', 0.09, this.musicGain);
+      if (th.arp && s % 2 === 0) this.tone(NOTE(root + tones[(s / 2) % 4]), t, sixteenth * 0.9, 'square', 0.05, this.musicGain);
+      // Lead: an answering phrase every fourth bar so the loop breathes.
+      const phrase = bar % 4 === 3 ? th.answer : th.lead;
+      const m = phrase[s];
+      if (m !== '.') {
+        const n = Number(m);
+        this.lead(NOTE(root + 12 + tones[n % 4] + (n >= 4 ? 12 : 0)), t, sixteenth * th.legato, th.leadWave, th.leadVol * 0.7);
+      }
+      // Drums drop out on the first bar of every eight, like an intro.
+      const d = th.drums[s];
+      if (d !== '.' && bar % 8 !== 0) for (const k of d) this.drum(k, t);
+      this.nextNoteTime += sixteenth;
       this.step++;
     }
   }
 }
+
+interface Theme {
+  bpm: number;
+  /** Semitones from A4 for the tonic. */
+  root: number;
+  swing: number;
+  chords: [number, 'M' | 'm' | 'M7'][];
+  /** 16 steps: '0'..'7' chord tone (4+ = octave up), '.' rest. */
+  lead: string[];
+  answer: string[];
+  /** 16 steps: '1' root, '5' fifth, '8' octave, '.' rest. */
+  bass: string[];
+  /** 16 steps of drum letters (k kick, s snare, h hat, o open hat) or '.'. */
+  drums: string[];
+  leadWave: Wave;
+  bassWave: Wave;
+  leadVol: number;
+  legato: number;
+  pad: boolean;
+  arp: boolean;
+}
+
+const steps = (p: string) => p.replace(/ /g, '').split('');
+const beats = (p: string) => p.split(' ');
+
+/** One theme per social class, same order as STAGES. */
+const THEMES: Theme[] = [
+  // Supervivencia: slow minor lo-fi, sparse and rainy.
+  { bpm: 76, root: -3, swing: 0.18, chords: [[0, 'm'], [-4, 'M'], [-7, 'M'], [-5, 'M']],
+    lead: steps('2... .1.. 0... ....'), answer: steps('.... 2.3. 1... ....'), bass: steps('1... .... 5... ....'),
+    drums: beats('k . h . s . h . . k h . s . h .'), leadWave: 'triangle', bassWave: 'triangle', leadVol: 0.16, legato: 3.5, pad: true, arp: false },
+  // Clase trabajadora: urban funk, punchy bass.
+  { bpm: 98, root: -5, swing: 0.1, chords: [[0, 'm'], [0, 'm'], [3, 'M'], [5, 'M']],
+    lead: steps('0.2. 1.0. ..2. 3...'), answer: steps('4.3. 2.1. 0... ....'), bass: steps('1.18 ..1. 1.5. .8..'),
+    drums: beats('k h s h k k s h k h s h k h so h'), leadWave: 'square', bassWave: 'square', leadVol: 0.1, legato: 1.2, pad: false, arp: false },
+  // Clase media-baja: hopeful pop.
+  { bpm: 106, root: -2, swing: 0, chords: [[0, 'M'], [7, 'M'], [9, 'm'], [5, 'M']],
+    lead: steps('0.1. 2... 1.2. 4...'), answer: steps('4.2. 1... 2.1. 0...'), bass: steps('1.1. 1.1. 5.5. 8.5.'),
+    drums: beats('k h s h k h s h k h s h k k s o'), leadWave: 'square', bassWave: 'triangle', leadVol: 0.1, legato: 1.6, pad: false, arp: true },
+  // Clase media: bright suburban, major sevenths.
+  { bpm: 112, root: 3, swing: 0, chords: [[0, 'M7'], [5, 'M7'], [9, 'm'], [7, 'M']],
+    lead: steps('2.3. 4.3. 2... 1...'), answer: steps('0.1. 2.4. 5... ....'), bass: steps('1..1 ..5. 1..1 ..8.'),
+    drums: beats('k h s h k h s h k h s h k h s h'), leadWave: 'triangle', bassWave: 'triangle', leadVol: 0.15, legato: 1.8, pad: true, arp: true },
+  // Riqueza: swung lounge jazz.
+  { bpm: 92, root: 1, swing: 0.33, chords: [[0, 'M7'], [9, 'm'], [2, 'm'], [7, 'M']],
+    lead: steps('3..2 .1.. 3..4 ....'), answer: steps('2..1 .0.. .... ....'), bass: steps('1.5. 8.5. 1.5. 8.5.'),
+    drums: beats('h . . h s . . h h . . h s . h h'), leadWave: 'sine', bassWave: 'triangle', leadVol: 0.2, legato: 2.6, pad: true, arp: false },
+  // Riqueza extrema: grand and brassy.
+  { bpm: 120, root: -4, swing: 0, chords: [[0, 'M'], [5, 'M'], [7, 'M'], [0, 'M']],
+    lead: steps('0..0 1.2. 4... 2...'), answer: steps('4..4 5.4. 2... 0...'), bass: steps('1.1. 1.1. 1.1. 5.8.'),
+    drums: beats('k h s h k h s h k h s h k s s s'), leadWave: 'sawtooth', bassWave: 'square', leadVol: 0.07, legato: 1.4, pad: true, arp: false },
+  // Absurdo: glitter disco.
+  { bpm: 124, root: 0, swing: 0, chords: [[0, 'm'], [5, 'm'], [-2, 'M'], [3, 'M']],
+    lead: steps('4.4. 3.2. 4... 5.4.'), answer: steps('2.2. 1.0. 1... 2...'), bass: steps('1818 1818 1818 1818'),
+    drums: beats('k o ks o k o ks o k o ks o k o ks o'), leadWave: 'square', bassWave: 'square', leadVol: 0.09, legato: 1, pad: false, arp: true },
+  // Cósmico: slow ambient.
+  { bpm: 66, root: 2, swing: 0, chords: [[0, 'M7'], [-3, 'm'], [5, 'M7'], [2, 'm']],
+    lead: steps('4... .... 5... ....'), answer: steps('.... 2... .... 1...'), bass: steps('1... .... .... ....'),
+    drums: beats('. . . . . . . . . . . . . . . h'), leadWave: 'sine', bassWave: 'sine', leadVol: 0.18, legato: 6, pad: true, arp: true },
+];
 
 export const audio = new AudioManager();

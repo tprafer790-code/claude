@@ -291,8 +291,9 @@ function middle(ctx: Ctx, r: () => number): StageScene {
   for (let i = 0; i < 6; i++) building(ctx, r, 120 + i * 20, 30 + (i % 3) * 8, 16, 60, P.glass, P.glassDark, P.sky2, 0.3, 2, 3, 2, 3);
   rect(ctx, P.grass, 0, 88, WORLD_W, 24);
   for (let gx = 0; gx < WORLD_W; gx += 3) rect(ctx, P.grassDark, gx, 88 + ((gx * 7) % 5), 1, 1);
-  house(ctx, 8, 66, P.cream, P.red);
-  house(ctx, 92, 64, P.sky2, P.navy);
+  // Walls avoid the sky colours behind them, so the sky can be cut out cleanly (stageLayers).
+  house(ctx, 8, 66, '#f6e4b4', P.red);
+  house(ctx, 92, 64, '#c4e0ef', P.navy);
   house(ctx, 176, 66, P.sand, P.grassDark);
   fence(ctx, 104);
   // mailbox

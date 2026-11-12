@@ -15,8 +15,12 @@ export function SceneView() {
       if (cancelled || !ref.current) return;
       game = createGame(ref.current, engine);
     });
+    // The frame changes size with the layout (e.g. landscape side column), not only with the window.
+    const ro = new ResizeObserver(() => game?.scale.refresh());
+    if (ref.current) ro.observe(ref.current);
     return () => {
       cancelled = true;
+      ro.disconnect();
       game?.destroy(true);
     };
   }, [engine]);

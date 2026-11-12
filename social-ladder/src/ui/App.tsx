@@ -25,6 +25,10 @@ import { RankingPanel } from './panels/RankingPanel';
 import { EventModal } from './modals/EventModal';
 import { OfflineModal } from './modals/OfflineModal';
 import { PromotionModal } from './modals/PromotionModal';
+import { ClassCinematic } from './modals/ClassCinematic';
+import { TitleScreen } from './modals/TitleScreen';
+import { PORTAL } from '../edition';
+import { RANKS } from '../data/ranks';
 import { SettingsModal } from './modals/SettingsModal';
 import type { IconId } from '../data/types';
 import { Icon } from './components/Icon';
@@ -71,6 +75,11 @@ function Game({ runtime }: { runtime: Runtime }) {
   const [tab, setTab] = useState<Tab>(() => (localStorageGet('sl:tab') as Tab) || 'business');
   const [offline, setOffline] = useState<OfflineSummary | null>(runtime.pendingOffline);
   const [majorPromo, setMajorPromo] = useState<number | null>(null);
+  /** After a class change the player gets a few seconds back on the street before the next window. */
+  const [breather, setBreather] = useState(false);
+  // Portals expect to drop straight into play; the standalone game opens on its title card.
+  const [title, setTitle] = useState(PORTAL === 'none');
+  const [cinematic, setCinematic] = useState<{ from: number; to: number; rank: number } | null>(null);
   const [eventOpen, setEventOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -130,12 +139,17 @@ function Game({ runtime }: { runtime: Runtime }) {
         case 'click': audio.click(e.combo, e.crit, e.crit && (e.combo > engine.derived.comboMax || !!e.lucky) ? 1.4 : 1); if (e.lucky) audio.rare(); if (e.lucky) pushToast({ icon: 'coin', title: t('luckyFindTitle'), text: t('luckyFindText', { amount: money(e.lucky) }), tone: 'good' }); break;
         case 'purchase': audio.purchase(tierForStage(STAGE_BY_ID[engine.rank.stage].index)); break;
         case 'promotion': {
-                    audio.promotion(e.stageChanged);
-          // Ordinary promotions get the full-screen celebration band (FxOverlay); a new social class opens its modal.
+          // Ordinary promotions get the full-screen celebration band (FxOverlay); a new social class
+          // plays its cutscene (which carries its own fanfare) and then opens its modal.
           if (e.stageChanged) {
-            setMajorPromo(e.to);
+            const from = STAGE_BY_ID[RANKS[e.from].stage].index;
+            const to = STAGE_BY_ID[RANKS[e.to].stage].index;
+            if (reducedMotion(engine.state.settings)) {
+              audio.promotion(true);
+              setMajorPromo(e.to);
+            } else setCinematic({ from, to, rank: e.to });
             portal.happytime();
-          }
+          } else audio.promotion(false);
           break;
         }
         case 'achievement': {
@@ -243,9 +257,9 @@ function Game({ runtime }: { runtime: Runtime }) {
   const menuAlert = upgradeAlert || engine.visibleBusinesses().some((b) => s.money.gte(engine.businessCost(b.id, 1))) || engine.visibleMissions().some((m) => { const [c, g] = m.progress(s); return c >= g; });
   // One blocking pop-up at a time, most important first.
   const help = nextHelp(s);
-  const busy = !!offline || majorPromo !== null || settingsOpen || eventOpen || chestsOpen;
+  const busy = title || !!cinematic || !!offline || majorPromo !== null || settingsOpen || eventOpen || chestsOpen;
   const leagueResult = s.league.lastResult && !s.flags[`league_${s.league.lastResult.week}`];
-  const modal = busy ? null : jailed ? 'jail' : s.pendingVote ? 'vote' : s.login.pendingDay ? 'login' : leagueResult ? 'league' : s.family.pending ? 'romance' : s.pendingDilemma ? 'dilemma' : help ? 'help' : null;
+  const modal = busy || breather ? null : jailed ? 'jail' : s.pendingVote ? 'vote' : s.login.pendingDay ? 'login' : leagueResult ? 'league' : s.family.pending ? 'romance' : s.pendingDilemma ? 'dilemma' : help ? 'help' : null;
   const unlockAudio = () => {
     audio.unlock();
     setStarted(true);
@@ -293,7 +307,9 @@ function Game({ runtime }: { runtime: Runtime }) {
       <FxOverlay />
       <Celebration />
       {offline && <OfflineModal summary={offline} onClose={() => setOffline(null)} />}
-      {majorPromo !== null && <PromotionModal rankIndex={majorPromo} onClose={() => { setMajorPromo(null); breakAd(); }} />}
+      {title && <TitleScreen stageIndex={stage.index} onStart={() => { setTitle(false); setStarted(true); }} />}
+      {cinematic && <ClassCinematic fromStage={cinematic.from} toStage={cinematic.to} onDone={() => { setMajorPromo(cinematic.rank); setCinematic(null); }} />}
+      {majorPromo !== null && <PromotionModal rankIndex={majorPromo} onClose={() => { setMajorPromo(null); setBreather(true); window.setTimeout(() => setBreather(false), 6000); breakAd(); }} />}
       {eventOpen && s.pendingEvent && <EventModal onClose={() => setEventOpen(false)} />}
       {settingsOpen && <SettingsModal runtime={runtime} onClose={() => setSettingsOpen(false)} />}
       {fade && <div className="fade-black" onAnimationEnd={() => setFade(false)}><span>{t('fadeText')}</span></div>}

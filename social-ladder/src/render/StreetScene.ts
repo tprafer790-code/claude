@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameEngine, GameEvent } from '../game/engine';
 import { STAGE_BY_ID } from '../data/stages';
-import { applyEquipment, buildHeroSheet, HERO_FRAMES, HERO_H, HERO_W, STAGE_LOOKS } from './hero';
+import { applyEquipment, buildHeroSheet, HERO_FRAMES, HERO_H, HERO_W, HERO_WALK, STAGE_LOOKS } from './hero';
 import { buildProp, buildStage, GROUND_Y, WORLD_H, WORLD_W, type PropId, type StageScene } from './environments';
 import { P } from './palette';
 import { FX, reducedMotion, shakeAllowed } from '../fx/intensity';
@@ -585,10 +585,11 @@ export class StreetScene extends Phaser.Scene {
   private addLayers(key: string, st: LayeredStage) {
     const rm = this.reducedMotion();
     const skyTop = (st.sky.getContext('2d')!.getImageData(0, 0, 1, 1).data);
+    const haloScale = st.halo ? (st.halo.r * 2) / 32 : 1.6;
     const L: Layers = {
       topFill: this.add.rectangle(0, 0, 1, 1, (skyTop[0] << 16) | (skyTop[1] << 8) | skyTop[2]).setOrigin(0, 0).setDepth(-4),
       sky: this.add.tileSprite(0, 0, WORLD_W, WORLD_H, `${key}_sky`).setOrigin(0, 0).setDepth(-4),
-      moonHalo: this.add.image(st.scene.sky.x, st.scene.sky.y, 'glow').setScale(1.6).setTint(0xfff1c9).setAlpha(0.2).setBlendMode(Phaser.BlendModes.ADD).setDepth(-3.5),
+      moonHalo: this.add.image(st.scene.sky.x, st.scene.sky.y, 'glow').setScale(haloScale).setTint(st.halo?.color ?? 0xfff1c9).setAlpha(0.2).setBlendMode(Phaser.BlendModes.ADD).setDepth(-3.5),
       moon: this.add.image(st.scene.sky.x, st.scene.sky.y, `${key}_moon`).setDepth(-3.4),
       far: this.add.tileSprite(0, 0, WORLD_W, WORLD_H, `${key}_far`).setOrigin(0, 0).setDepth(-2),
       mid: this.add.tileSprite(0, 0, WORLD_W, WORLD_H, `${key}_mid`).setOrigin(0, 0).setDepth(-1),
@@ -596,13 +597,14 @@ export class StreetScene extends Phaser.Scene {
     };
     this.layers = L;
     this.stageObjects.push(L.topFill, L.sky, L.moonHalo, L.moon, L.far, L.mid);
-    if (!rm) this.tweens.add({ targets: L.moonHalo, alpha: { from: 0.14, to: 0.26 }, scale: { from: 1.5, to: 1.7 }, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    const glowA = st.halo ? [0.22, 0.38] : [0.14, 0.26];
+    if (!rm) this.tweens.add({ targets: L.moonHalo, alpha: { from: glowA[0], to: glowA[1] }, scale: { from: haloScale * 0.94, to: haloScale * 1.07 }, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.layoutLayers();
 
     // Far windows switch on and off: the city is awake.
     const farTex = this.textures.get(`${key}_far`) as Phaser.Textures.CanvasTexture;
     const fctx = st.far.getContext('2d')!;
-    if (!rm) this.stageTimers.push(this.time.addEvent({ delay: 900, loop: true, callback: () => {
+    if (!rm && st.farWindows.length) this.stageTimers.push(this.time.addEvent({ delay: 900, loop: true, callback: () => {
       const w = st.farWindows[Math.floor(Math.random() * st.farWindows.length)];
       w.lit = !w.lit && Math.random() < 0.6;
       fctx.fillStyle = w.lit ? st.farLit : st.farWall;
@@ -616,7 +618,8 @@ export class StreetScene extends Phaser.Scene {
   /** Live lights, steam, weather and passing traffic for any stage. */
   private addLife(key: string, st: StageLife & { neon?: LayeredStage['neon'] }, skyPos: { x: number; y: number }) {
     const rm = this.reducedMotion();
-    if (st.halo) {
+    // Layered stages put the halo on their sun/moon sprite instead (addLayers).
+    if (st.halo && !this.layers) {
       const h = this.add.image(skyPos.x, skyPos.y, 'glow').setTint(st.halo.color).setAlpha(0.3).setScale((st.halo.r * 2) / 32).setBlendMode(Phaser.BlendModes.ADD).setDepth(0.5);
       this.stageObjects.push(h);
       if (!rm) this.tweens.add({ targets: h, alpha: { from: 0.22, to: 0.38 }, scale: { from: (st.halo.r * 1.9) / 32, to: (st.halo.r * 2.2) / 32 }, duration: 3000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
@@ -929,9 +932,11 @@ export class StreetScene extends Phaser.Scene {
   private walkTo(x: number, done: () => void) {
     const dist = Math.abs(x - this.hero.x);
     this.hero.setFlipX(x < this.hero.x);
-    const steps = this.time.addEvent({ delay: 140, loop: true, callback: () => {
-      this.hero.setFrame(this.hero.frame.name === '1' ? 0 : 1);
-      this.hero.y = this.hero.y === GROUND_Y + 1 ? GROUND_Y : GROUND_Y + 1;
+    let w = 0;
+    this.hero.setFrame(HERO_WALK);
+    const steps = this.time.addEvent({ delay: 110, loop: true, callback: () => {
+      w = (w + 1) % 4;
+      this.hero.setFrame(HERO_WALK + w);
     } });
     this.idleTimers.push(steps);
     this.tweens.add({ targets: this.hero, x, duration: (dist / 22) * 1000, onComplete: () => {

@@ -1,5 +1,5 @@
 import { P } from './palette';
-import { rect, rng, sidewalk, sky, stars, WORLD_H, WORLD_W, type StageScene } from './environments';
+import { buildStage, rect, rng, sidewalk, sky, stars, WORLD_H, WORLD_W, type StageScene } from './environments';
 
 /**
  * Layered stages: the sky, a far skyline and the near rooftops are drawn into
@@ -390,7 +390,6 @@ function survival(): LayeredStage {
   };
 }
 
-const LAYERED: Partial<Record<number, () => LayeredStage>> = { 0: survival };
 
 const SUN = hex(P.sun);
 const CREAM = hex(P.cream);
@@ -478,12 +477,204 @@ export const STAGE_LIFE: Partial<Record<number, StageLife>> = {
   },
 };
 
+// ———————————————————————————————————— layering the baked stages
+
+interface Skyline {
+  kind: 'city' | 'ridge';
+  color: string;
+  /** city: range of roof heights; ridge: [baseline, amplitude]. */
+  top: [number, number];
+  w?: [number, number];
+  windows?: { colors: string[]; chance: number };
+  bottom?: number;
+}
+
+interface FlatLayering {
+  skyColors: string[];
+  skyBottom: number;
+  /** Colours that count as sky when cutting the baked stage out of its background. */
+  clear: string[];
+  /** Lowest row the cut may reach. */
+  maxY: number;
+  orb: { r: number; color: string; shade: string; earth?: boolean };
+  stars?: number;
+  far: Skyline;
+  mid: Skyline;
+}
+
+/**
+ * Turns a baked stage into a foreground: flood-fills from the top edge through
+ * sky-coloured (or empty) pixels and makes them transparent. Buildings are
+ * outlined, so the fill stops at their edges.
+ */
+function cutSky(c: HTMLCanvasElement, colors: string[], maxY: number) {
+  const ctx = c.getContext('2d')!;
+  const img = ctx.getImageData(0, 0, WORLD_W, WORLD_H);
+  const d = img.data;
+  const set = new Set(colors.map(hex));
+  const open = (i: number) => d[i * 4 + 3] < 255 || set.has((d[i * 4] << 16) | (d[i * 4 + 1] << 8) | d[i * 4 + 2]);
+  const seen = new Uint8Array(WORLD_W * WORLD_H);
+  const stack: number[] = [];
+  for (let x = 0; x < WORLD_W; x++) if (open(x)) stack.push(x);
+  while (stack.length) {
+    const i = stack.pop()!;
+    if (seen[i]) continue;
+    seen[i] = 1;
+    d[i * 4 + 3] = 0;
+    const x = i % WORLD_W;
+    const y = (i - x) / WORLD_W;
+    for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
+      if (nx < 0 || nx >= WORLD_W || ny < 0 || ny > maxY) continue;
+      const n = ny * WORLD_W + nx;
+      if (!seen[n] && open(n)) stack.push(n);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/** A tileable band of silhouettes: a city skyline or a rolling ridge. */
+function drawSkyline(cfg: Skyline, r: () => number, windows?: LayeredStage['farWindows']): HTMLCanvasElement {
+  const { c, ctx } = canvas(WORLD_W, WORLD_H);
+  const bottom = cfg.bottom ?? WORLD_H;
+  if (cfg.kind === 'ridge') {
+    const [base, amp] = cfg.top;
+    const ph = [r() * 6.28, r() * 6.28, r() * 6.28];
+    for (let x = 0; x < WORLD_W; x++) {
+      const t = (x / WORLD_W) * Math.PI * 2;
+      const h = amp * (0.55 * Math.sin(t * 2 + ph[0]) + 0.3 * Math.sin(t * 5 + ph[1]) + 0.15 * Math.sin(t * 11 + ph[2]));
+      const y = Math.round(base - amp - h);
+      rect(ctx, cfg.color, x, y, 1, bottom - y);
+    }
+    return c;
+  }
+  const [t0, t1] = cfg.top;
+  const [w0, w1] = cfg.w ?? [10, 20];
+  for (let x = 0; x < WORLD_W;) {
+    const w = w0 + Math.floor(r() * (w1 - w0));
+    const top = t0 + Math.floor(r() * (t1 - t0));
+    wrap(x, w, (bx) => {
+      rect(ctx, cfg.color, bx, top, w, bottom - top);
+      if (w > 14 && r() < 0.4) rect(ctx, cfg.color, bx + 3, top - 3, w - 6, 3);
+    });
+    if (r() < 0.25) rect(ctx, cfg.color, (x + (w >> 1)) % WORLD_W, top - 8, 1, 8);
+    if (cfg.windows) {
+      for (let wy = top + 3; wy < bottom - 2; wy += 4) {
+        for (let wx = x + 2; wx < x + w - 2; wx += 3) {
+          const px = ((wx % WORLD_W) + WORLD_W) % WORLD_W;
+          const lit = r() < cfg.windows.chance;
+          if (lit) rect(ctx, cfg.windows.colors[Math.floor(r() * cfg.windows.colors.length)], px, wy, 1, 1);
+          if (windows && windows.length < 300) windows.push({ x: px, y: wy, lit });
+        }
+      }
+    }
+    x += w + Math.floor(r() * 3);
+  }
+  return c;
+}
+
+/** The sun or the Earth as a sprite, so it can drift with the parallax. */
+function orb(cfg: FlatLayering['orb']): HTMLCanvasElement {
+  const size = cfg.r * 2 + 3;
+  const { c, ctx } = canvas(size, size);
+  const m = cfg.r + 1;
+  for (let dy = -cfg.r; dy <= cfg.r; dy++) for (let dx = -cfg.r; dx <= cfg.r; dx++) {
+    if (dx * dx + dy * dy > cfg.r * cfg.r) continue;
+    rect(ctx, dx + dy > cfg.r * 0.9 ? cfg.shade : cfg.color, m + dx, m + dy, 1, 1);
+  }
+  if (cfg.earth) {
+    rect(ctx, P.grass, m - 8, m - 8, 8, 5);
+    rect(ctx, P.grass, m + 4, m + 2, 6, 6);
+    rect(ctx, P.grassDark, m - 3, m + 5, 5, 3);
+    rect(ctx, P.white, m - 4, m - 12, 10, 2);
+    rect(ctx, P.white, m - 10, m + 1, 6, 1);
+  } else rect(ctx, P.white, m - Math.ceil(cfg.r / 2), m - Math.ceil(cfg.r / 2), 2, 1);
+  return c;
+}
+
+const FLAT: Partial<Record<number, FlatLayering>> = {
+  1: {
+    skyColors: [P.sky1, P.sky2, '#ffd9a8', P.cream], skyBottom: 80,
+    clear: [P.sky1, P.sky2, '#ffd9a8', P.cream, P.white], maxY: 112,
+    orb: { r: 6, color: P.cream, shade: '#ffe3a8' },
+    far: { kind: 'city', color: '#c7c6de', top: [34, 56], w: [10, 22] },
+    mid: { kind: 'city', color: '#a3a9c6', top: [46, 64], w: [14, 26], windows: { colors: [P.sun], chance: 0.06 } },
+  },
+  2: {
+    skyColors: [P.sky1, P.sky1, P.sky2], skyBottom: 90,
+    clear: [P.sky1, P.sky2, P.sun, P.cream, P.white], maxY: 112,
+    orb: { r: 8, color: P.sun, shade: P.orange },
+    far: { kind: 'city', color: '#acd3ea', top: [28, 48], w: [10, 20] },
+    mid: { kind: 'city', color: '#8ab8d6', top: [38, 56], w: [14, 24], windows: { colors: [P.glass], chance: 0.15 } },
+  },
+  3: {
+    skyColors: [P.sky1, P.sky2, P.cream], skyBottom: 92,
+    clear: [P.sky1, P.sky2, P.cream, P.sun, P.white], maxY: 88,
+    orb: { r: 8, color: P.sun, shade: P.orange },
+    far: { kind: 'city', color: '#cfe0ec', top: [36, 60], w: [8, 16] },
+    mid: { kind: 'ridge', color: '#7cbf6c', top: [88, 6] },
+  },
+  4: {
+    skyColors: [P.dusk, P.rose, P.coral, P.orange, P.sun], skyBottom: 96,
+    clear: [P.dusk, P.rose, P.coral, P.orange, P.sun], maxY: 112,
+    orb: { r: 14, color: P.sun, shade: P.orange },
+    far: { kind: 'city', color: '#b05a74', top: [22, 46], w: [10, 18], windows: { colors: [P.sun, P.orange], chance: 0.14 } },
+    mid: { kind: 'city', color: '#783c60', top: [34, 58], w: [12, 20], windows: { colors: [P.sun], chance: 0.22 } },
+  },
+  5: {
+    skyColors: [P.orange, P.sun, P.cream], skyBottom: 96,
+    clear: [P.orange, P.sun, P.cream, P.white], maxY: 112,
+    orb: { r: 10, color: P.white, shade: P.cream },
+    far: { kind: 'city', color: '#f2b874', top: [16, 40], w: [8, 14], windows: { colors: [P.white], chance: 0.1 } },
+    mid: { kind: 'city', color: '#d68c5c', top: [28, 52], w: [10, 18], windows: { colors: [P.cream, P.gold], chance: 0.2 } },
+  },
+  6: {
+    skyColors: [P.sky1, P.sky1, P.sky2], skyBottom: 80,
+    clear: [P.sky1, P.sky2, P.sun, P.cream], maxY: 79,
+    orb: { r: 9, color: P.sun, shade: P.orange },
+    far: { kind: 'ridge', color: '#a6d2ec', top: [81, 9] },
+    mid: { kind: 'ridge', color: '#7fb9dc', top: [81, 4] },
+  },
+  7: {
+    skyColors: [P.ink, P.night, P.plum], skyBottom: 100, stars: 120,
+    clear: [P.ink, P.night, P.plum, P.sun, P.cream, P.sea, P.grass, P.white], maxY: 107,
+    orb: { r: 14, color: P.sea, shade: P.seaDark, earth: true },
+    far: { kind: 'ridge', color: '#4f4270', top: [110, 14] },
+    mid: { kind: 'ridge', color: '#6b5c8c', top: [110, 7] },
+  },
+};
+
+function fromFlat(index: number, cfg: FlatLayering): LayeredStage {
+  const r = rng(9000 + index * 31);
+  const flat = buildStage(index);
+  cutSky(flat.canvas, cfg.clear, cfg.maxY);
+  const skyC = canvas(WORLD_W, WORLD_H);
+  sky(skyC.ctx, cfg.skyColors, 0, cfg.skyBottom);
+  rect(skyC.ctx, cfg.skyColors[cfg.skyColors.length - 1], 0, cfg.skyBottom, WORLD_W, WORLD_H - cfg.skyBottom);
+  if (cfg.stars) stars(skyC.ctx, r, cfg.stars, cfg.skyBottom);
+  const farWindows: LayeredStage['farWindows'] = [];
+  const far = drawSkyline(cfg.far, r, farWindows);
+  return {
+    ...STAGE_LIFE[index]!,
+    sky: skyC.c,
+    far,
+    mid: drawSkyline(cfg.mid, r),
+    base: flat.canvas,
+    moon: orb(cfg.orb),
+    farWindows,
+    farWall: cfg.far.color,
+    farLit: cfg.far.windows?.colors[0] ?? cfg.far.color,
+    scene: flat.scene,
+  };
+}
+
 export function hasLayeredStage(index: number): boolean {
-  return !!LAYERED[index];
+  return index === 0 || !!FLAT[index];
 }
 
 export function buildLayeredStage(index: number): LayeredStage | undefined {
-  return LAYERED[index]?.();
+  if (index === 0) return survival();
+  const cfg = FLAT[index];
+  return cfg ? fromFlat(index, cfg) : undefined;
 }
 
 // ———————————————————————————————————— shared light textures

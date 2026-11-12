@@ -7,7 +7,9 @@ import { P } from './palette';
  */
 export const HERO_W = 20;
 export const HERO_H = 28;
-export const HERO_FRAMES = 6; // idle, idle2, work, work2, cheer, cheer2
+export const HERO_FRAMES = 10; // idle, idle2, work, work2, cheer, cheer2, walk×4
+/** First of the four walk-cycle frames (contact, pass, contact, pass). */
+export const HERO_WALK = 6;
 
 export interface HeroLook {
   shirt: string;
@@ -69,7 +71,10 @@ function px(ctx: Ctx, color: string, x: number, y: number, w = 1, h = 1) {
 export function drawHero(ctx: Ctx, ox: number, oy: number, look: HeroLook, frame: number) {
   const working = frame === 2 || frame === 3;
   const cheering = frame === 4 || frame === 5;
-  const bob = frame === 1 ? 1 : frame === 5 ? -2 : 0;
+  const walk = frame >= HERO_WALK ? frame - HERO_WALK : -1;
+  // Walk cycle: legs split on contact frames, body rises on the passing frames.
+  const stride = walk === 0 ? 1 : walk === 2 ? -1 : 0;
+  const bob = frame === 1 ? 1 : frame === 5 ? -2 : walk === 1 || walk === 3 ? -1 : 0;
   const o = (x: number, y: number, w = 1, h = 1, c: string = P.ink) => px(ctx, c, ox + x, oy + y + bob, w, h);
 
   // Glow aura (cosmic)
@@ -88,18 +93,21 @@ export function drawHero(ctx: Ctx, ox: number, oy: number, look: HeroLook, frame
 
   // ——— Legs ———
   const legY = 20;
-  o(5, legY, 4, 7); // outlines
-  o(11, legY, 4, 7);
-  o(6, legY, 2, 5, look.pants);
-  o(12, legY, 2, 5, look.pants);
-  o(7, legY, 1, 5, look.pantsShade);
-  o(13, legY, 1, 5, look.pantsShade);
-  if (look.patches) o(6, legY + 2, 1, 1, P.cardboard);
-  // shoes
-  o(4, legY + 5, 5, 2);
-  o(11, legY + 5, 5, 2);
-  o(5, legY + 5, 3, 1, look.shoes);
-  o(12, legY + 5, 3, 1, look.shoes);
+  // dx moves a foot forward/back; lift raises the trailing foot off the ground.
+  const leg = (x: number, dx: number, lift: number) => {
+    const fx = x + dx;
+    o(x, legY, 4, 2);
+    o(fx, legY + 2, 4, 5 - lift);
+    o(x + 1, legY, 2, 2, look.pants);
+    o(x + 2, legY, 1, 2, look.pantsShade);
+    o(fx + 1, legY + 2, 2, 3 - lift, look.pants);
+    o(fx + 2, legY + 2, 1, 3 - lift, look.pantsShade);
+    o(fx - 1, legY + 5 - lift, 5, 2);
+    o(fx, legY + 5 - lift, 3, 1, look.shoes);
+  };
+  leg(5, -stride * 2, stride < 0 ? 1 : 0);
+  leg(11, stride * 2, stride > 0 ? 1 : 0);
+  if (look.patches) o(6 - stride * 2, legY + 2, 1, 1, P.cardboard);
 
   // ——— Torso ———
   o(4, 10, 12, 11);
@@ -138,22 +146,23 @@ export function drawHero(ctx: Ctx, ox: number, oy: number, look: HeroLook, frame
   // ——— Arms ———
   const sleeve = look.jacket ?? look.shirt;
   const sleeveShade = look.jacketShade ?? look.shirtShade;
-  const arm = (x: number, up: boolean, raised: number) => {
+  const arm = (x: number, up: boolean, raised: number, swing = 0) => {
     if (up) {
       o(x - 1, 4 - raised, 4, 9);
       o(x, 5 - raised, 2, 6, sleeve);
       o(x, 5 - raised, 2, 2, P.skin);
       o(x + 1, 7 - raised, 1, 4, sleeveShade);
     } else {
-      o(x - 1, 10, 4, 10);
-      o(x, 11, 2, 7, sleeve);
-      o(x + 1, 11, 1, 7, sleeveShade);
-      o(x, 18, 2, 1, P.skin);
-      o(x, 18, 1, 1, P.skinShade);
+      o(x - 1 + swing, 10, 4, 10);
+      o(x + swing, 11, 2, 7, sleeve);
+      o(x + 1 + swing, 11, 1, 7, sleeveShade);
+      o(x + swing, 18, 2, 1, P.skin);
+      o(x + swing, 18, 1, 1, P.skinShade);
     }
   };
-  arm(2, cheering, frame === 5 ? 1 : 0);
-  arm(16, cheering || frame === 2, frame === 2 ? 1 : 0);
+  // Arms swing against the legs while walking.
+  arm(2, cheering, frame === 5 ? 1 : 0, stride);
+  arm(16, cheering || frame === 2, frame === 2 ? 1 : 0, -stride);
   if (working && frame === 3) {
     // follow-through: fist forward
     o(15, 15, 4, 4);
