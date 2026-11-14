@@ -4,7 +4,7 @@ import { ABILITIES } from '../../data/abilities';
 import { BUSINESSES } from '../../data/businesses';
 import { RANKS } from '../../data/ranks';
 import { STAGE_BY_ID } from '../../data/stages';
-import { applyEquipment, drawHero, HERO_H, HERO_W, STAGE_LOOKS } from '../../render/hero';
+import { applyEquipment, drawHero, HERO_PX_H, HERO_PX_W, STAGE_LOOKS } from '../../render/hero';
 import { t } from '../../i18n';
 import { useEngine } from '../hooks';
 import { Modal } from './Modal';
@@ -19,9 +19,9 @@ export function PromotionModal({ rankIndex, onClose }: { rankIndex: number; onCl
   const [before, after] = useMemo(() => {
     const draw = (stageIdx: number, frame: number) => {
       const c = document.createElement('canvas');
-      c.width = HERO_W;
-      c.height = HERO_H + 4;
-      drawHero(c.getContext('2d')!, 0, 4, applyEquipment(STAGE_LOOKS[stageIdx], engine.state.equipped), frame);
+      c.width = HERO_PX_W;
+      c.height = HERO_PX_H;
+      drawHero(c.getContext('2d')!, 0, 0, applyEquipment(STAGE_LOOKS[stageIdx], engine.state.equipped), frame);
       return c.toDataURL();
     };
     return [draw(prevStage.index, 0), draw(stage.index, 4)];

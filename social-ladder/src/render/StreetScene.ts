@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { GameEngine, GameEvent } from '../game/engine';
 import { STAGE_BY_ID } from '../data/stages';
-import { applyEquipment, buildHeroSheet, HERO_FRAMES, HERO_H, HERO_W, HERO_WALK, STAGE_LOOKS } from './hero';
+import { applyEquipment, buildHeroSheet, HERO_FRAMES, HERO_H, HERO_PX_H, HERO_PX_W, HERO_RES, HERO_WALK, STAGE_LOOKS } from './hero';
 import { buildProp, buildStage, GROUND_Y, WORLD_H, WORLD_W, type PropId, type StageScene } from './environments';
 import { P } from './palette';
 import { FX, reducedMotion, shakeAllowed } from '../fx/intensity';
@@ -26,6 +26,8 @@ interface Layers {
 const HERO_X = 84;
 const GROUND_RIDES: PropId[] = ['chainless_bicycle', 'secondhand_bicycle', 'motorcycle', 'used_car', 'sports_car'];
 const PED_VARIANTS = 6;
+/** Render resolution relative to the 240×135 world (matches the hero's drawing density). */
+const VIEW_RES = HERO_RES;
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /**
@@ -76,8 +78,8 @@ export class StreetScene extends Phaser.Scene {
 
   create() {
     this.makeStaticTextures();
-    this.shadow = this.add.ellipse(HERO_X, GROUND_Y + 1, 16, 3, 0x000000, 0.35).setDepth(9.5);
-    this.hero = this.add.sprite(HERO_X, GROUND_Y + 1, 'hero_0', 0).setOrigin(0.5, 1).setDepth(10);
+    this.shadow = this.add.ellipse(HERO_X, GROUND_Y + 1, 20, 3, 0x000000, 0.35).setDepth(9.5);
+    this.hero = this.add.sprite(HERO_X, GROUND_Y + 1, 'hero_0', 0).setOrigin(0.5, 1).setScale(1 / HERO_RES).setDepth(10);
     this.input.on('pointermove', () => (this.pointerAt = this.time.now));
     // Soft vignette pulls the eye to the middle of the street (WebGL only).
     if (this.game.renderer.type === Phaser.WEBGL) this.cameras.main.postFX?.addVignette(0.5, 0.5, 0.95, 0.28);
@@ -220,7 +222,7 @@ export class StreetScene extends Phaser.Scene {
     if (!this.textures.exists(key)) {
       const sheet = buildHeroSheet(look);
       const tex = this.textures.addCanvas(key, sheet)!;
-      for (let f = 0; f < HERO_FRAMES; f++) tex.add(f, 0, f * HERO_W, 0, HERO_W, HERO_H + 4);
+      for (let f = 0; f < HERO_FRAMES; f++) tex.add(f, 0, f * HERO_PX_W, 0, HERO_PX_W, HERO_PX_H);
     }
     return key;
   }
@@ -542,10 +544,12 @@ export class StreetScene extends Phaser.Scene {
    * tall (phone) screens get a gentle zoom on the hero's corner of the street.
    */
   private layoutView() {
-    const { width: w, height: h } = this.scale.gameSize;
+    // The canvas renders at VIEW_RES× the world so the hero's extra detail survives.
+    const w = this.scale.gameSize.width / VIEW_RES;
+    const h = this.scale.gameSize.height / VIEW_RES;
     const cam = this.cameras.main;
     const zoom = h > WORLD_H * 1.15 ? Phaser.Math.Clamp((h / WORLD_H) * 0.72, 1, 1.45) : 1;
-    cam.setZoom(zoom);
+    cam.setZoom(zoom * VIEW_RES);
     const visW = w / zoom;
     const visH = h / zoom;
     const cx = visW >= WORLD_W ? WORLD_W / 2 : Phaser.Math.Clamp(105, visW / 2, WORLD_W - visW / 2);
@@ -1148,8 +1152,8 @@ export function createGame(parent: HTMLElement, engine: GameEngine): Phaser.Game
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
-    width: WORLD_W,
-    height: WORLD_H,
+    width: WORLD_W * VIEW_RES,
+    height: WORLD_H * VIEW_RES,
     pixelArt: true,
     roundPixels: true,
     backgroundColor: '#14101c',
